@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useGetRolesQuery } from "@/redux/api/roleApi";
 import {
   useCreateUserMutation,
-  useGetExternalUserTypesQuery,
   useGetUserTypesQuery,
 } from "@/redux/api/userApi";
 import { CreateUserPayload } from "@/redux/types/user";
@@ -20,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetStructureNodesQuery } from "@/redux/api/structureNodeApi";
 import {
   Popover,
   PopoverContent,
@@ -47,15 +45,17 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [selectedStructure, setSelectedStructure] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("");
 
-  const { data: userTypeResponse } = useGetExternalUserTypesQuery();
   const { data: rolesResponse } = useGetRolesQuery();
-  const { data: structureResponse = [] } = useGetStructureNodesQuery(
-    undefined,
-    { skip: !!structure_node_id }
-  );
-  const types = userTypeResponse || [];
+
   const roles = rolesResponse || [];
-  const structures = structureResponse || [];
+  const structures = [{
+    structure_node_id: "1",
+    name: "Select Structure"
+  },
+  {
+    structure_node_id: "2",
+    name: "Select Structure"
+  }];
 
   const {
     data: userTypes = [],
@@ -84,7 +84,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       full_name: fullName,
       email,
       role_ids: selectedRoles,
-      // external_user_type_id: selectedType,
+      user_type_id: userTypeId || "",
       // structure_node_id: structure_node_id
       //   ? structure_node_id
       //   : selectedStructure,
@@ -157,31 +157,6 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                       <SelectItem
                         key={s.structure_node_id}
                         value={s.structure_node_id}
-                      >
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {/* External User Types */}
-            {user_type === "external" && (
-              <div className="w-full space-y-2">
-                <Label className="block text-sm text-[#094C81] font-medium mb-2">
-                  User Type <span className="text-red-500">*</span>
-                </Label>
-
-                <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger className="w-full h-12 border border-gray-300 px-4 py-5 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none">
-                    <SelectValue placeholder="Select User Type" />
-                  </SelectTrigger>
-
-                  <SelectContent className="text-[#094C81] bg-white max-h-64 overflow-y-auto">
-                    {types.map((s: any) => (
-                      <SelectItem
-                        key={s.external_user_type_id}
-                        value={s.external_user_type_id}
                       >
                         {s.name}
                       </SelectItem>
@@ -305,10 +280,10 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     {roles.filter(
                       (r: any) => !selectedRoles.includes(r.role_id)
                     ).length === 0 && (
-                      <div className="px-3 py-2 text-sm text-gray-400 text-center">
-                        All roles selected
-                      </div>
-                    )}
+                        <div className="px-3 py-2 text-sm text-gray-400 text-center">
+                          All roles selected
+                        </div>
+                      )}
                   </div>
                 </PopoverContent>
               </Popover>

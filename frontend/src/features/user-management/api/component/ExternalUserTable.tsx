@@ -179,11 +179,11 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
                     currentIndex={pageIndex}
                 />
             </TableLayout>
-            {/* <CreateUserModal
+            <CreateUserModal
                 user_type="external"
                 isOpen={isModalOpen}
                 onClose={() => setModalOpen(false)}
-            /> */}
+            />
         </>
     );
 }

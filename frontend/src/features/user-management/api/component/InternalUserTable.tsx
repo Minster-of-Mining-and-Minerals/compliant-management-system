@@ -198,11 +198,11 @@ export default function InternalUserTable({ sideActions }: UserTableProps) {
                     currentIndex={pageIndex}
                 />
             </TableLayout>
-            {/* <CreateUserModal
+            <CreateUserModal
                 user_type="internal"
                 isOpen={isModalOpen}
                 onClose={() => setModalOpen(false)}
-            /> */}
+            />
         </>
     );
 }
