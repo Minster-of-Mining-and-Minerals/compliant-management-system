@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Shield,
   Key,
+  User2,
 } from "lucide-react";
 
 import {
@@ -63,6 +64,11 @@ const navigationItems = [
 
 // Nested menu for User Management
 const userManagementItems = [
+  {
+    title: "Users List",
+    url: "/users/list",
+    icon: User2,
+  },
   {
     title: "Role Management",
     url: "/users/roles",
