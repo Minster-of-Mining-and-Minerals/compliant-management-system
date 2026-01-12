@@ -124,6 +124,18 @@ export const userApi = baseApi.injectEndpoints({
       transformResponse: (response: any): UserPosition[] => response.data ?? [],
       providesTags: ["User"],
     }),
+
+    /** ---------------------------
+     * EXPORT USERS
+     * --------------------------- */
+    exportUsers: builder.mutation<Blob, void>({
+      query: () => ({
+        url: "/users/export",
+        method: "GET",
+        responseHandler: (response) => response.blob(), // <-- handle file
+        cache: "no-cache",
+      }),
+    }),
   }),
 });
 
@@ -138,4 +150,5 @@ export const {
   useResetUserPasswordMutation,
   useGetUserTypesQuery,
   useGetUserPositionsQuery,
+  useExportUsersMutation,
 } = userApi;
