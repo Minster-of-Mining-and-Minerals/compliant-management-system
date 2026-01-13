@@ -46,18 +46,8 @@ const navigationItems = [
     icon: ClipboardCheck,
   },
   {
-    title: "Students",
-    url: "/students",
-    icon: Users,
-  },
-  {
-    title: "Vehicles",
-    url: "/vehicles",
-    icon: Car,
-  },
-  {
-    title: "Reports",
-    url: "/reports",
+    title: "Base Data",
+    url: "/basedata",
     icon: FileText,
   },
 ];
