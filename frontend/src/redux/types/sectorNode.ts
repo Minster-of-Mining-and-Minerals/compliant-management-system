@@ -1,5 +1,5 @@
 // ==========================
-// Structure Node Entity
+// Sector Node Entity
 // ==========================
 export interface SectorNode {
   sector_node_id: string; // Unique ID

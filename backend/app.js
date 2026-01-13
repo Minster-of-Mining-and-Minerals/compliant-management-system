@@ -19,6 +19,9 @@ const authRoute = require("./routers/user-routes/authRoutes");
 const permissionRoute = require("./routers/user-routes/permissionRoutes");
 const changePasswordRoutes = require("./routers/user-routes/passwordChangeRoutes");
 
+// ================== Sector Routes ==========================
+const sectorRoute = require("./routers/sector-routes/sectorRoutes");
+
 // const issueFileAttachmentRoutes = require("./routers/issueAttachmentRoutes");
 // const fileAttachmentRoutes = require("./routers/attachementRoutes");
 
@@ -107,6 +110,9 @@ app.use("/api/permissions", permissionRoute);
 
 // app.use("/api/issue-attachments", issueFileAttachmentRoutes);
 // app.use("/api/attachments", fileAttachmentRoutes);
+
+// ================== Api Sector Routes =====================
+app.use("/api/sector-nodes", sectorRoute);
 
 // ================== Root Endpoint ==================
 app.get("/", (req, res) => {

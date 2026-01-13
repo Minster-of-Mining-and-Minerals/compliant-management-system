@@ -17,6 +17,12 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: "role_id",
         as: "roles",
       });
+
+      // User belongs to SectorNode
+      User.belongsTo(models.SectorNode, {
+        foreignKey: "sector_node_id",
+        as: "sectorNode",
+      });
     }
   }
 
@@ -26,6 +32,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+      },
+      sector_node_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "sector_nodes",
+          key: "sector_node_id",
+        },
       },
       full_name: {
         type: DataTypes.STRING(100),
