@@ -22,8 +22,8 @@ const changePasswordRoutes = require("./routers/user-routes/passwordChangeRoutes
 // ================== Sector Routes ==========================
 const sectorRoute = require("./routers/sector-routes/sectorRoutes");
 
-// const issueFileAttachmentRoutes = require("./routers/issueAttachmentRoutes");
-// const fileAttachmentRoutes = require("./routers/attachementRoutes");
+// ================== Compliant Routes ==========================
+const complaintCategoryRoute = require("./routers/compliant-routes/compliantCategoryRoute");
 
 const app = express();
 const appServer = http.createServer(app);
@@ -113,6 +113,9 @@ app.use("/api/permissions", permissionRoute);
 
 // ================== Api Sector Routes =====================
 app.use("/api/sector-nodes", sectorRoute);
+
+// ================== Api Complaint Category Routes =====================
+app.use("/api/complaint-categories", complaintCategoryRoute);
 
 // ================== Root Endpoint ==================
 app.get("/", (req, res) => {
