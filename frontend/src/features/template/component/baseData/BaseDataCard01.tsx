@@ -16,10 +16,10 @@ const dataCards: DataCardItem[] = [
   },
   {
     id: 0,
-    title: "Total Exams",
-    subtitle: "All registered exams",
+    title: "Complaint Categories",
+    subtitle: "All registered complaint categories",
     icon: FileText,
-    link: "/basedata/exams",
+    link: "/basedata/complaint-categories",
   },
 
   {
