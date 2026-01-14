@@ -109,13 +109,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      priority: {
-        type: DataTypes.ENUM("low", "medium", "high", "critical"),
-        defaultValue: "medium",
-      },
       status: {
         type: DataTypes.ENUM(
-          "submitted",
+          "pending",
           "under_review",
           "assigned",
           "in_progress",
@@ -123,15 +119,7 @@ module.exports = (sequelize, DataTypes) => {
           "rejected",
           "closed"
         ),
-        defaultValue: "submitted",
-      },
-      resolution_summary: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      resolved_at: {
-        type: DataTypes.DATE,
-        allowNull: true,
+        defaultValue: "pending",
       },
       is_anonymous: {
         type: DataTypes.BOOLEAN,
@@ -144,14 +132,6 @@ module.exports = (sequelize, DataTypes) => {
       ip_address: {
         type: DataTypes.STRING(45), // IPv6 compatible
         allowNull: true,
-      },
-      user_agent: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      consent_accepted: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
       },
       created_at: {
         type: DataTypes.DATE,

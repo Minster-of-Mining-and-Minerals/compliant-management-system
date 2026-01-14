@@ -1,7 +1,9 @@
-import BaseDataCard01 from "@/features/template/component/baseData/BaseDataCard01";
+import ComplaintTable from "@/features/complaint-management/component/ComplaintList";
 
-function BasedataPage() {
-  return <BaseDataCard01 />;
+function Compliants() {
+  return (
+    <ComplaintTable />
+  );
 }
 
-export default BasedataPage;
+export default Compliants;

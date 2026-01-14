@@ -23,7 +23,7 @@ const columns: ColumnDef<User>[] = [
         accessorKey: "full_name",
         header: "Full Name",
         cell: ({ row }) => (
-            <span className="font-medium text-secondary">
+            <span className="font-medium text-primary">
                 {row.getValue("full_name")}
             </span>
         ),
