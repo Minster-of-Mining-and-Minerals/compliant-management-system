@@ -78,13 +78,6 @@ const getComplaintCategories = async (req, res) => {
 
     const categories = await ComplaintCategory.findAll({
       where: whereClause,
-      include: [
-        {
-          model: sequelize.models.Complaint,
-          as: "complaints",
-          attributes: ["complaint_id", "title", "status", "created_at"],
-        },
-      ],
       order: [["created_at", "ASC"]],
     });
 
