@@ -38,7 +38,7 @@ export const ResourceGroup: React.FC<ResourceGroupProps> = ({
       {/* Resource Header */}
       <div
         onClick={() => onToggleExpand(group.resource)}
-        className="flex transition-all hover:bg-[#094C81]/10 duration-200 cursor-pointer items-center justify-between p-4 bg-gray-50 rounded-t-lg"
+        className="flex transition-all bg-golden-dark10 hover:bg-golden-dark20 duration-200 cursor-pointer items-center justify-between p-4  rounded-t-lg"
       >
         <div className="flex items-center space-x-3 flex-1">
           <button
