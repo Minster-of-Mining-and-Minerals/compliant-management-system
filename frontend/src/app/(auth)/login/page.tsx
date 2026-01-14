@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -10,12 +9,18 @@ import { ArrowLeftIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/auth";
 import { login } from "@/actions/user";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function ExternalLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   const router = useRouter();
+  const { update } = useSession();
 
+  const searchParams = useSearchParams();
+
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const [formData, setFormData] = useState({
     email: "",
     password: ""
@@ -31,14 +36,16 @@ export default function ExternalLogin() {
     }
 
     if (result?.success) {
-      router.push("/dashboard");
+      await update(); // Force session refresh
+      router.push(callbackUrl || "/dashboard");
+
     }
   };
 
   return (
     <div className="min-h-screen bg-[#F9FBFC]  flex items-center justify-center px-4">
       <div className="w-full relative max-w-6xl min-h-[80vh] shadow-2xl rounded-2xl border border-[#DCE7F1] overflow-hidden flex flex-col lg:flex-row">
-        
+
         {/* Back Button */}
         <Button
           onClick={() => router.push("/")}
@@ -52,9 +59,9 @@ export default function ExternalLogin() {
         <div className="w-full bg-cover bg-center p-8 flex items-center justify-center">
           <div className="backdrop-blur-md p-6 rounded-xl text-center">
             <img
-              src="/logo-aii.png"
+              src="/logo-mom.png"
               alt="Organization Logo"
-              className="h-72 mx-auto mb-3 rounded-xl p-2"
+              className="h-96 mx-auto mb-3 rounded-xl p-2"
             />
           </div>
         </div>
@@ -62,7 +69,7 @@ export default function ExternalLogin() {
         {/* Right Section */}
         <div className="w-full px-16 py-8 flex items-center justify-center">
           <div className="w-full max-w-md">
-            <h1 className="text-3xl font-semibold text-center text-[#0C4A6E] mb-6">
+            <h1 className="text-3xl font-bold  font-semibold text-center text-golden-dark mb-6">
               Login
             </h1>
 
@@ -76,20 +83,20 @@ export default function ExternalLogin() {
 
               {/* Email */}
               <div>
-                <Label className="text-[#0C4A6E]">Email</Label>
+                <Label className="text-golden-dark">Email</Label>
                 <Input
                   placeholder="example.xx@gov.et"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full h-14 mt-1 px-3 py-2   rounded-md text-sm border-blue-300 focus:ring-0 focus:outline-none focus:border-none"
+                  className="w-full h-14 mt-1 px-3 py-2   rounded-md text-sm border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
                 />
               </div>
 
               {/* Password */}
               <div>
-                <Label className="text-[#0C4A6E]">Password</Label>
+                <Label className="text-golden-dark">Password</Label>
                 <div className="relative mt-1">
                   <Input
                     type={showPassword ? "text" : "password"}
@@ -98,7 +105,7 @@ export default function ExternalLogin() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    className="w-full h-14 px-3 py-2 pr-10 border rounded-md text-sm border-blue-300 focus:ring-0 focus:outline-none focus:border-none"
+                    className="w-full h-14 px-3 py-2 pr-10 border rounded-md text-sm border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
                   />
 
                   <button
@@ -125,7 +132,7 @@ export default function ExternalLogin() {
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full bg-[#073954] h-14 hover:bg-[#073954]/90 text-xl text-white py-2 rounded-md shadow-md"
+                className="w-full bg-golden-dark hover:bg-golden-darkHover h-14  text-xl text-white py-2 rounded-md shadow-md"
               >
                 Log In
               </button>

@@ -86,7 +86,7 @@ export function DataTable<TData, TValue>({
 					{table.getHeaderGroups().map((headerGroup) => (
 						<TableRow
 							key={headerGroup.id}
-							className="bg-primary rounded-md hover:bg-primary/90 overflow-clip"
+							className="bg-golden-dark hover:bg-golden-darkHover rounded-md overflow-clip"
 						>
 							{headerGroup.headers.map((header) => {
 								return (
@@ -97,9 +97,9 @@ export function DataTable<TData, TValue>({
 										{header.isPlaceholder
 											? null
 											: flexRender(
-													header.column.columnDef.header,
-													header.getContext()
-											  )}
+												header.column.columnDef.header,
+												header.getContext()
+											)}
 									</TableHead>
 								);
 							})}
@@ -115,18 +115,16 @@ export function DataTable<TData, TValue>({
 								className={`
                                            bg-white shadow-sm transition-shadow duration-200
                                             even:bg-[#F7F9FF]
-                                            ${
-																							i === 0
-																								? "first:rounded-t-lg"
-																								: "rounded-lg"
-																						}
-                                            ${
-																							i ===
-																							table.getRowModel().rows.length -
-																								1
-																								? "last:rounded-b-lg"
-																								: "rounded-xl"
-																						}
+                                            ${i === 0
+										? "first:rounded-t-lg"
+										: "rounded-lg"
+									}
+                                            ${i ===
+										table.getRowModel().rows.length -
+										1
+										? "last:rounded-b-lg"
+										: "rounded-xl"
+									}
                                            `}
 							>
 								{row.getVisibleCells().map((cell) => (

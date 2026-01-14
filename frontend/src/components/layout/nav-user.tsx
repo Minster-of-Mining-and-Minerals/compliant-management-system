@@ -11,6 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { signOut } from "@/auth";
+import { logout } from "@/actions/user";
 
 interface NavUserProps {
   user: {
@@ -29,10 +31,11 @@ export function NavUser({ user }: NavUserProps) {
     .toUpperCase()
     .slice(0, 2);
 
-  const handleLogout = () => {
-    // TODO: Implement logout logic
-    console.log("Logout clicked");
+  const handleLogout = async () => {
+    await logout()
+    // signOut({ redirectTo: "/login" });
   };
+
 
   return (
     <DropdownMenu>
