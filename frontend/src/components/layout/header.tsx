@@ -15,6 +15,7 @@ const userData = {
   avatar: "/avatars/user.jpg",
 };
 
+
 export function Header({ title }: HeaderProps) {
   const notificationCount = 3; // Replace with actual notification count
 

@@ -97,9 +97,9 @@ export function DataTable<TData, TValue>({
 										{header.isPlaceholder
 											? null
 											: flexRender(
-													header.column.columnDef.header,
-													header.getContext()
-											  )}
+												header.column.columnDef.header,
+												header.getContext()
+											)}
 									</TableHead>
 								);
 							})}
@@ -115,18 +115,16 @@ export function DataTable<TData, TValue>({
 								className={`
                                            bg-white shadow-sm transition-shadow duration-200
                                             even:bg-[#F7F9FF]
-                                            ${
-																							i === 0
-																								? "first:rounded-t-lg"
-																								: "rounded-lg"
-																						}
-                                            ${
-																							i ===
-																							table.getRowModel().rows.length -
-																								1
-																								? "last:rounded-b-lg"
-																								: "rounded-xl"
-																						}
+                                            ${i === 0
+										? "first:rounded-t-lg"
+										: "rounded-lg"
+									}
+                                            ${i ===
+										table.getRowModel().rows.length -
+										1
+										? "last:rounded-b-lg"
+										: "rounded-xl"
+									}
                                            `}
 							>
 								{row.getVisibleCells().map((cell) => (

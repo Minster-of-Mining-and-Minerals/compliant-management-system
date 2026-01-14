@@ -62,12 +62,20 @@ const config = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        golden: {
+          dark: "hsl(var(--golden-dark))",
+          metallic: "hsl(var(--golden-metallic))",
+          soft: "hsl(var(--golden-soft))",
+          classic: "hsl(var(--golden-classic))",
+          darkHover: "hsl(var(--golden-dark-hover))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+
     },
   },
   // eslint-disable-next-line @typescript-eslint/no-require-imports
