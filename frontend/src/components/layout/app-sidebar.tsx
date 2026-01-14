@@ -42,23 +42,13 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Evaluations",
-    url: "/evaluations",
+    title: "Compliants",
+    url: "/compliants",
     icon: ClipboardCheck,
   },
   {
-    title: "Students",
-    url: "/students",
-    icon: Users,
-  },
-  {
-    title: "Vehicles",
-    url: "/vehicles",
-    icon: Car,
-  },
-  {
-    title: "Reports",
-    url: "/reports",
+    title: "Base Data",
+    url: "/basedata",
     icon: FileText,
   },
 ];
