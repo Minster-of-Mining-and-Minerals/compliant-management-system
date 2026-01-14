@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
         comment:
-          "created | accepted | updated | assigned | escalated | resolved | reopened | commented | assigned",
+          "created | accepted | updated | assigned  | resolved | reopened | commented | assigned",
       },
       notes: {
         type: DataTypes.TEXT,

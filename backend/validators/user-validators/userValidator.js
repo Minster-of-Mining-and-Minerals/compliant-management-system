@@ -26,6 +26,10 @@ const createUserSchema = Joi.object({
     "any.required": "User type ID is required.",
   }),
 
+  sector_node_id: Joi.string().guid({ version: "uuidv4" }).optional().messages({
+    "string.guid": "Sector node ID must be a valid UUID.",
+  }),
+
   role_ids: Joi.array()
     .items(
       Joi.string()

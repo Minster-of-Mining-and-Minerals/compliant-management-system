@@ -38,14 +38,14 @@ const columns: ColumnDef<User>[] = [
         header: "Phone Number",
         cell: ({ row }: any) => <div>{row.getValue("phone_number")}</div>,
     },
-    {
-        id: "internalUserType",
-        header: "User Type",
-        cell: ({ row }) => {
-            const type = row.original.internalUserType;
-            return <span className="text-sm font-medium">{type?.name ?? "—"}</span>;
-        },
-    },
+    // {
+    //     id: "internalUserType",
+    //     header: "User Type",
+    //     cell: ({ row }) => {
+    //         const type = row.original.internalUserType;
+    //         return <span className="text-sm font-medium">{type?.name ?? "—"}</span>;
+    //     },
+    // },
     {
         id: "sector",
         header: "Sector",

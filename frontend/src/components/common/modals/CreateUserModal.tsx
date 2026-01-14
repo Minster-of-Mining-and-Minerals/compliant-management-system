@@ -24,17 +24,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
 
 interface CreateUserModalProps {
   user_type?: string;
-  structure_node_id?: string;
+  sector_node_id?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
 export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   user_type,
-  structure_node_id,
+  sector_node_id,
   isOpen,
   onClose,
 }) => {
@@ -42,20 +43,19 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [selectedStructure, setSelectedStructure] = useState<string>("");
+  const [selectedSector, setSelectedSector] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("");
 
   const { data: rolesResponse } = useGetRolesQuery();
+  const {
+    data: sectorsResponse,
+    refetch,
+  } = useGetSectorNodesQuery();
+
+
 
   const roles = rolesResponse || [];
-  const structures = [{
-    structure_node_id: "1",
-    name: "Select Structure"
-  },
-  {
-    structure_node_id: "2",
-    name: "Select Structure"
-  }];
+  const sectors = sectorsResponse || [];
 
   const {
     data: userTypes = [],
@@ -85,9 +85,13 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       email,
       role_ids: selectedRoles,
       user_type_id: userTypeId || "",
-      // structure_node_id: structure_node_id
-      //   ? structure_node_id
-      //   : selectedStructure,
+      ...(
+        sector_node_id
+          ? { sector_node_id }
+          : selectedSector
+            ? { sector_node_id: selectedSector }
+            : {}
+      ),
       ...(phoneNumber && { phone_number: phoneNumber }),
       ...(userTypeId && { user_type_id: userTypeId }),
     };
@@ -137,26 +141,26 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
         <div className="w-full flex flex-col space-y-4">
           {/* User Detail */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4  mt-2 pr-2">
-            {/* Structure Selection (only if not passed from parent) */}
-            {!structure_node_id && user_type === "external" && (
+            {/* Sector Selection (only if not passed from parent) */}
+            {!sector_node_id && user_type === "internal" && (
               <div className="w-full space-y-2">
                 <Label className="block text-sm text-[#094C81] font-medium mb-2">
-                  Structure <span className="text-red-500">*</span>
+                  Sector <span className="text-red-500">*</span>
                 </Label>
 
                 <Select
-                  value={selectedStructure}
-                  onValueChange={setSelectedStructure}
+                  value={selectedSector}
+                  onValueChange={setSelectedSector}
                 >
                   <SelectTrigger className="w-full h-12 border border-gray-300 px-4 py-5 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none">
-                    <SelectValue placeholder="Select Structure" />
+                    <SelectValue placeholder="Select Sector" />
                   </SelectTrigger>
 
                   <SelectContent className="text-[#094C81] bg-white max-h-64 overflow-y-auto">
-                    {structures.map((s: any) => (
+                    {sectors.map((s: any) => (
                       <SelectItem
-                        key={s.structure_node_id}
-                        value={s.structure_node_id}
+                        key={s.sector_node_id}
+                        value={s.sector_node_id}
                       >
                         {s.name}
                       </SelectItem>
