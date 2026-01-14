@@ -119,12 +119,12 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
             return (
               <div
                 key={group.resource}
-                className="border border-gray-200 rounded-lg self-start"
+                className="border border-golden-dark20 rounded-lg self-start"
               >
                 {/* Resource Header */}
                 <div
                   onClick={() => toggleResource(group.resource)}
-                  className="flex transition-all hover:bg-[#094C81]/10 duration-200 cursor-pointer items-center justify-between p-4 bg-gray-50 rounded-t-lg"
+                  className="flex transition-all bg-golden-dark10 hover:bg-golden-dark30 duration-200 cursor-pointer items-center justify-between p-4  rounded-t-lg"
                 >
                   <div className="flex items-center space-x-3 flex-1">
                     <button
@@ -138,7 +138,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                         <ChevronRight className="h-5 w-5 text-[#094C81] hover:text-[#073954]" />
                       )}
                     </button>
-                    <div className="p-2 text-[#094C81] bg-white rounded-lg shadow-sm">
+                    <div className="p-2 text-golden-dark  rounded-lg  ">
                       {resourceIcons[group.resource] || (
                         <Shield className="h-4 w-4" />
                       )}
@@ -194,7 +194,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                           {group.permissions.map((permission) => (
                             <label
                               key={permission.permission_id}
-                              className="flex w-full items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-150"
+                              className="flex w-full items-center space-x-3 p-3 border border-golden-darkLight rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-150"
                             >
                               <div className="relative">
                                 <input
@@ -217,13 +217,13 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                     permissionMatrix[group.resource]?.[
                                       permission.action
                                     ]
-                                      ? "bg-[#094C81] border-[#094C81]"
-                                      : "border-[#094C81]"
+                                      ? "bg-golden-dark border-golden-dark"
+                                      : "border-golden-dark"
                                   }`}
                                 >
                                   {permissionMatrix[group.resource]?.[
                                     permission.action
-                                  ] && <Check className="h-3 w-3 text-white" />}
+                                  ] && <Check className="h-3 w-3 text-white font-extrabold" />}
                                 </div>
                               </div>
 
