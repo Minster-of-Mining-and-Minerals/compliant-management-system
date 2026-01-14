@@ -23,7 +23,7 @@ const columns: ColumnDef<User>[] = [
         accessorKey: "full_name",
         header: "Full Name",
         cell: ({ row }) => (
-            <span className="font-medium text-secondary">
+            <span className="font-medium text-primary">
                 {row.getValue("full_name")}
             </span>
         ),
@@ -38,14 +38,14 @@ const columns: ColumnDef<User>[] = [
         header: "Phone Number",
         cell: ({ row }: any) => <div>{row.getValue("phone_number")}</div>,
     },
-    {
-        id: "internalUserType",
-        header: "User Type",
-        cell: ({ row }) => {
-            const type = row.original.internalUserType;
-            return <span className="text-sm font-medium">{type?.name ?? "—"}</span>;
-        },
-    },
+    // {
+    //     id: "internalUserType",
+    //     header: "User Type",
+    //     cell: ({ row }) => {
+    //         const type = row.original.internalUserType;
+    //         return <span className="text-sm font-medium">{type?.name ?? "—"}</span>;
+    //     },
+    // },
     {
         id: "sector",
         header: "Sector",

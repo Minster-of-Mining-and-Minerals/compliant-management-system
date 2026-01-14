@@ -24,6 +24,7 @@ const sectorRoute = require("./routers/sector-routes/sectorRoutes");
 
 // ================== Compliant Routes ==========================
 const complaintCategoryRoute = require("./routers/compliant-routes/compliantCategoryRoute");
+const complaintRoute = require("./routers/compliant-routes/complaintRoutes");
 
 const app = express();
 const appServer = http.createServer(app);
@@ -116,6 +117,7 @@ app.use("/api/sector-nodes", sectorRoute);
 
 // ================== Api Complaint Category Routes =====================
 app.use("/api/complaint-categories", complaintCategoryRoute);
+app.use("/api/complaints", complaintRoute);
 
 // ================== Root Endpoint ==================
 app.get("/", (req, res) => {

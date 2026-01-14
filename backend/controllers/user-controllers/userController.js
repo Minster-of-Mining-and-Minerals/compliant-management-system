@@ -4,6 +4,7 @@ const {
   UserPosition,
   Role,
   UserRoles,
+  SectorNode,
   sequelize,
 } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
@@ -70,7 +71,14 @@ const getUserPositions = async (req, res) => {
 const createUser = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { full_name, email, user_type_id, role_ids, phone_number } = req.body;
+    const {
+      full_name,
+      email,
+      user_type_id,
+      sector_node_id,
+      role_ids,
+      phone_number,
+    } = req.body;
 
     // ====== Check existing email ======
     const existingUser = await User.findOne({
@@ -91,6 +99,19 @@ const createUser = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "Invalid user type." });
+    }
+
+    // ====== Validate sector node ======
+    if (sector_node_id) {
+      const sectorNode = await SectorNode.findByPk(sector_node_id, {
+        transaction: t,
+      });
+      if (!sectorNode) {
+        await t.rollback();
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid sector node." });
+      }
     }
 
     // ====== MULTIPLE ROLE VALIDATION ======
@@ -123,6 +144,7 @@ const createUser = async (req, res) => {
         password: hashedPassword,
         phone_number,
         user_type_id,
+        sector_node_id,
         is_first_logged_in: true,
         is_active: true,
         created_at: new Date(),
@@ -322,6 +344,11 @@ const getUsers = async (req, res) => {
           model: UserType,
           as: "userType",
           attributes: ["user_type_id", "name"],
+        },
+        {
+          model: SectorNode,
+          as: "sectorNode",
+          attributes: ["sector_node_id", "name"],
         },
       ],
       order: [["created_at", "DESC"]],

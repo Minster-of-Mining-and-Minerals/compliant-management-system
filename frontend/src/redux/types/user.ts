@@ -58,6 +58,7 @@ export interface CreateUserPayload {
   email: string;
   phone_number?: string;
   user_type_id: string;
+  sector_node_id?: string;
   role_ids?: string[];
 }
 
