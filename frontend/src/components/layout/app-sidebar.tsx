@@ -41,8 +41,8 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Evaluations",
-    url: "/evaluations",
+    title: "Compliants",
+    url: "/compliants",
     icon: ClipboardCheck,
   },
   {
