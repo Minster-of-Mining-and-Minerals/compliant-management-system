@@ -27,6 +27,7 @@ export default {
             }
           );
 
+          console.log("Authorize response status:", res.status);
           const data = await res.json();
 
           if (!data?.success) {
