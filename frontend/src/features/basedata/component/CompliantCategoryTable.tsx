@@ -45,7 +45,7 @@ export const columns: ColumnDef<ComplaintCategory>[] = [
         cell: ({ row }) => {
             const complaints = row.original.complaints || [];
             return (
-                <Badge variant="outline" className="text-xs">
+                <Badge status="outline" className="text-xs">
                     {complaints.length} complaint{complaints.length !== 1 ? 's' : ''}
                 </Badge>
             );
@@ -69,7 +69,7 @@ export const columns: ColumnDef<ComplaintCategory>[] = [
         cell: ({ row }) => {
             const isActive = row.getValue("is_active") as boolean;
             return (
-                <Badge variant={isActive ? "default" : "secondary"}>
+                <Badge status={isActive ? "default" : "secondary"}>
                     {isActive ? "Active" : "Inactive"}
                 </Badge>
             );
