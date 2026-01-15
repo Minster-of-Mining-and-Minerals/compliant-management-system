@@ -1,3 +1,4 @@
+import PublicHeader from "@/components/layout/public-header";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -24,42 +25,9 @@ export default function Home() {
           className="object-contain"
         />
       </div> */}
-
+      
       {/* Navigation */}
-      <header className="w-full z-20 bg-white/80 backdrop-blur-md shadow-md border-b border-gray-100 fixed top-0 left-0">
-        <div className=" mx-auto px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/logo-only.png"
-              alt="Logo"
-              width={40}
-              height={40}
-              className="object-contain"
-            />
-            <div className="">
-              <h1 className="text-base font-semibold text-golden-dark tracking-wide hidden sm:block">
-                የማዕድን ሚኒስቴር
-              </h1>
-              <h1 className="text-base font-semibold text-golden-dark tracking-wide hidden -mt-[5px] sm:block">
-                Minister of Mining
-              </h1>
-              
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white 
-                bg-golden-dark hover:bg-golden-darkHover 
-                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary 
-                transition-all duration-200 shadow-sm"
-            >
-              Login
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       {/* Hero Section */}
       <main className="flex justify-center items-center min-h-screen z-10 relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
@@ -87,7 +55,7 @@ export default function Home() {
           {/* CTA Buttons */}
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/login"
+              href="/complaint"
               className="px-8 py-4 bg-golden-dark text-white font-semibold rounded-xl 
                 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 
                 hover:bg-golden-darkHover transition-all duration-200 text-lg"
@@ -95,7 +63,7 @@ export default function Home() {
               Submit a Complaint
             </Link>
             <Link
-              href="#features"
+              href="/feedback"
               className="px-8 py-4 bg-white text-primary font-semibold rounded-xl 
                 border border-primary/20 hover:border-primary/40 hover:bg-golden-metallic
                 transition-all duration-200 text-lg"

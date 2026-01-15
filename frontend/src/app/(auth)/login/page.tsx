@@ -51,8 +51,8 @@ export default function ExternalLogin() {
           onClick={() => router.push("/")}
           className="cursor-pointer shadow-none z-50 bg-transparent hover:bg-slate-100 p-2 top-4 left-4 absolute flex items-center gap-1"
         >
-          <ArrowLeftIcon className="w-5 h-5 text-[#0C4A6E]" />
-          <span className="text-sm text-[#0C4A6E] font-medium">Back</span>
+          <ArrowLeftIcon className="w-5 h-5 text-golden-dark" />
+          <span className="text-sm text-golden-dark font-medium">Back</span>
         </Button>
 
         {/* Left Section */}
@@ -114,9 +114,9 @@ export default function ExternalLogin() {
                     className="absolute top-1/2 right-3 -translate-y-1/2"
                   >
                     {showPassword ? (
-                      <EyeIcon className="h-5 w-5 text-[#0C4A6E]" />
+                      <EyeIcon className="h-5 w-5 text-golden-dark" />
                     ) : (
-                      <EyeOffIcon className="h-5 w-5 text-[#0C4A6E]" />
+                      <EyeOffIcon className="h-5 w-5 text-golden-dark" />
                     )}
                   </button>
                 </div>

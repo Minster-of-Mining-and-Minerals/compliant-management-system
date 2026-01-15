@@ -1,7 +1,7 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { TextArea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -80,7 +80,7 @@ export const BasicInfo: React.FC<BasicInfoProps> = ({
             >
               Description <span className="text-red-500">*</span>
             </Label>
-            <Textarea
+            <TextArea
               id="description"
               placeholder="Brief description of the role"
               rows={4}
