@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { TextArea } from "@/components/ui/textarea";
 import { useCreateSectorNodeMutation } from "@/redux/api/sectorNodeApi";
 import { XIcon } from "lucide-react";
 
@@ -81,15 +81,15 @@ export function CreateChildModal({
 
   return (
     <div
-    
-    className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
-    onClick={handleBackdropClick}
+
+      className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+      onClick={handleBackdropClick}
     >
       <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] max-h-[85vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-secondary">
-            Create Child  
+            Create Child
           </h2>
           <button
             onClick={handleClose}
@@ -130,11 +130,11 @@ export function CreateChildModal({
               >
                 Description
               </Label>
-              <Textarea
+              <TextArea
                 id="sector-description"
                 placeholder="Enter sector description (optional)"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(val) => setDescription(val)}
                 className="w-full min-h-[80px] border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none resize-none"
                 disabled={isCreatingNode}
               />

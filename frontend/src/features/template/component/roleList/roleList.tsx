@@ -18,7 +18,7 @@ const columns: ColumnDef<Role>[] = [
     accessorKey: "name",
     header: "Role Name",
     cell: ({ row }) => (
-      <span className="font-medium text-blue-600">{row.getValue("name")}</span>
+      <span className="font-medium text-primary">{row.getValue("name")}</span>
     ),
   },
   {

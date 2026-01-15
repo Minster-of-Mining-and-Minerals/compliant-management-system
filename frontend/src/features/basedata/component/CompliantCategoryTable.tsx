@@ -25,7 +25,7 @@ export const columns: ColumnDef<ComplaintCategory>[] = [
         accessorKey: "name",
         header: "Category Name",
         cell: ({ row }) => (
-            <span className="font-medium text-secondary">
+            <span className="font-medium text-primary">
                 {row.getValue("name")}
             </span>
         ),

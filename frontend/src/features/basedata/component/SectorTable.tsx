@@ -22,7 +22,7 @@ export const columns: ColumnDef<SectorNode>[] = [
     cell: ({ row }) => (
       console.log(row.original.name, "row.original.name"),
       (
-        <span className="font-medium text-secondary">
+        <span className="font-medium text-primary">
           {row.getValue("name")}
         </span>
       )
