@@ -60,6 +60,18 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
     permissions: <Shield className="h-4 w-4" />,
     system: <Settings className="h-4 w-4" />,
   };
+  const isAllSelected = () => {
+    const total = getTotalPermissionsCount();
+    const selected = getSelectedPermissionsCount();
+    return total > 0 && total === selected;
+  };
+  const toggleSelectAll = () => {
+    const select = !isAllSelected();
+
+    resourceGroups.forEach((group) => {
+      selectAllInResource(group.resource, select);
+    });
+  };
 
   if (loadingPermissions) {
     return (
@@ -99,13 +111,36 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
           <h3 className="text-xl font-bold text-[#094C81]">
             Permission Matrix
           </h3>
-          <div className="flex items-center space-x-2 text-sm">
-            <span className="text-[#094C81]">Selected:</span>
-            <span className="font-semibold text-[#094C81]">
-              {getSelectedPermissionsCount()}
-            </span>
-            <span className="text-[#094C81]">/</span>
-            <span className="text-[#094C81]">{getTotalPermissionsCount()}</span>
+
+          <div className="flex gap-4">
+            <div className="flex items-center space-x-2 text-sm">
+              <span className="text-[#094C81]">Selected:</span>
+              <span className="font-semibold text-[#094C81]">
+                {getSelectedPermissionsCount()}
+              </span>
+              <span className="text-[#094C81]">/</span>
+              <span className="text-[#094C81]">
+                {getTotalPermissionsCount()}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                isAllSelected() ? "bg-green-600" : "bg-gray-400"
+              }`}
+              title={isAllSelected() ? "Deselect All" : "Select All"}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                  isAllSelected() ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+            {/* select all, Deselect All text */}
+            <div className="text-sm font-medium text-gray-700">
+              {isAllSelected() ? "Deselect All" : "Select All"}
+            </div>
           </div>
         </div>
       </div>
@@ -223,7 +258,9 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                 >
                                   {permissionMatrix[group.resource]?.[
                                     permission.action
-                                  ] && <Check className="h-3 w-3 text-white font-extrabold" />}
+                                  ] && (
+                                    <Check className="h-3 w-3 text-white font-extrabold" />
+                                  )}
                                 </div>
                               </div>
 

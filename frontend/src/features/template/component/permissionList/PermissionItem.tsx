@@ -1,5 +1,5 @@
 import React from "react";
-import { ToggleLeft, ToggleRight } from "lucide-react";
+import { BiToggleLeft, BiToggleRight } from "react-icons/bi";
 import { Permission } from "../../types/permission";
 
 interface PermissionItemProps {
@@ -41,9 +41,17 @@ export const PermissionItem: React.FC<PermissionItemProps> = ({
             <div className="h-6 w-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
           </div>
         ) : isActive ? (
-          <ToggleRight className="h-10 w-10 text-green-600 hover:text-green-700" />
+          <BiToggleRight
+            className={`h-10 w-10 transition-transform duration-300 ${
+              isActive ? "scale-100 rotate-0" : "scale-90 rotate-180"
+            }`}
+          />
         ) : (
-          <ToggleLeft className="h-10 w-10 text-gray-400 hover:text-gray-600" />
+          <BiToggleLeft
+            className={`h-10 w-10 transition-transform duration-300 ${
+              isActive ? "scale-100 rotate-0" : "scale-90 rotate-180"
+            } text-red-200 hover:text-red-300`}
+          />
         )}
       </button>
     </div>

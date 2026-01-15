@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 // Define which routes are public (don't need authentication)
-const publicRoutes = ["/", "/login"];
+const publicRoutes = ["/", "/login", "/feedback", "/complaint"];
 
 // Define which routes are auth routes (redirect to dashboard if logged in)
 const authRoutes = ["/login"];
