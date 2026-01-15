@@ -17,7 +17,7 @@ import {
     XIcon,
 } from "lucide-react";
 import { SectorNode } from "@/redux/types/sectorNode";
-import { Textarea } from "@/components/ui/textarea";
+import { TextArea } from "@/components/ui/textarea";
 import { shortenText } from "@/utils/shortenText";
 import { buildSectorTree } from "@/utils/buildSectorTree";
 
@@ -350,13 +350,13 @@ export function CreateSectorModal({
                                     <Label className="block text-sm text-secondary font-medium mt-3 mb-2">
                                         Sector Description
                                     </Label>
-                                    <Textarea
+                                    <TextArea
                                         rows={3}
                                         id="sector-description"
                                         placeholder="Enter sector description"
                                         value={description}
                                         className="w-full  border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
-                                        onChange={(e) => setDescription(e.target.value)}
+                                        onChange={(val) => setDescription(val)}
                                     />
                                 </div>
 

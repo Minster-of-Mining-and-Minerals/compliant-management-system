@@ -25,7 +25,7 @@ const columns: ColumnDef<Complaint>[] = [
         accessorKey: "ticketing_code",
         header: "Ticket Code",
         cell: ({ row }) => (
-            <span className="font-medium text-secondary">
+            <span className="font-medium text-primary">
                 {row.getValue("ticketing_code")}
             </span>
         ),
