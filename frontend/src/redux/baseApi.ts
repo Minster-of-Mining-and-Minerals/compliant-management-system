@@ -24,6 +24,7 @@ export const baseApi = createApi({
     "Complaint",
     "ComplaintCategory",
     "Attachment",
+    "Feedback",
   ],
   endpoints: () => ({}),
 });
