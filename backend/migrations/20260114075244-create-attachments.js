@@ -19,7 +19,7 @@ module.exports = {
       },
       uploaded_by: {
         type: Sequelize.UUID,
-        allowNull: false,
+        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,

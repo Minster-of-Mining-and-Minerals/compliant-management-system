@@ -1,13 +1,12 @@
 const express = require("express");
 const router = express.Router();
 
-const { authenticateToken } = require("../middlewares/authMiddleware");
-const upload = require("../middlewares/uploadMiddleware");
+const upload = require("../../middlewares/uploadMiddleware");
 const {
   uploadFiles,
   getAllAttachments,
   deleteAttachment,
-} = require("../controllers/attachemntController");
+} = require("../../controllers/attachment-controller/attachmentController");
 
 /**
  * @swagger
@@ -17,8 +16,6 @@ const {
  *     description: Upload multiple files to the server without linking to any issue yet. Returns the uploaded attachment IDs.
  *     tags:
  *       - Attachments
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -63,7 +60,7 @@ const {
  *       500:
  *         description: Internal server error
  */
-router.post("/", authenticateToken, upload.array("files", 10), uploadFiles);
+router.post("/", upload.array("files", 10), uploadFiles);
 
 /**
  * @swagger
@@ -73,8 +70,6 @@ router.post("/", authenticateToken, upload.array("files", 10), uploadFiles);
  *     description: Retrieve all attachments uploaded to the system
  *     tags:
  *       - Attachments
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of attachments retrieved successfully
@@ -109,7 +104,7 @@ router.post("/", authenticateToken, upload.array("files", 10), uploadFiles);
  *       500:
  *         description: Internal server error
  */
-router.get("/", authenticateToken, getAllAttachments);
+router.get("/", getAllAttachments);
 
 /**
  * @swagger
@@ -119,8 +114,6 @@ router.get("/", authenticateToken, getAllAttachments);
  *     description: Deletes an attachment from both the database and local storage
  *     tags:
  *       - Attachments
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - name: attachment_id
  *         in: path
@@ -157,6 +150,6 @@ router.get("/", authenticateToken, getAllAttachments);
  *       500:
  *         description: Internal server error
  */
-router.delete("/:attachment_id", authenticateToken, deleteAttachment);
+router.delete("/:attachment_id", deleteAttachment);
 
 module.exports = router;

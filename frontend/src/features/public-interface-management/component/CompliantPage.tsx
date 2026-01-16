@@ -47,15 +47,15 @@ const ComplaintPage = () => {
   };
 
   const [formValues, setFormValues] = useState<ComplaintFormValues>({
-  attachment_id: [],
-});
+    attachment_id: [],
+  });
 
-const handleChange = (field: keyof ComplaintFormValues, value: any) => {
-  setFormValues((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
+  const handleChange = (field: keyof ComplaintFormValues, value: any) => {
+    setFormValues((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   return (
     <main className="flex flex-col min-h-screen z-10 relative  mx-auto px-4 sm:px-6 lg:px-20 pt-32 pb-16">
@@ -81,9 +81,8 @@ const handleChange = (field: keyof ComplaintFormValues, value: any) => {
 
                 <button
                   type="button"
-                  className={`p-0 transition-all duration-200 ${
-                    isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
-                  }`}
+                  className={`p-0 transition-all duration-200 ${isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
+                    }`}
                   onClick={handlePersonalInfoToggle}
                   disabled={isTogglingPersonalInfo}
                   title={
@@ -218,24 +217,7 @@ const handleChange = (field: keyof ComplaintFormValues, value: any) => {
                 Complaint Details
               </h1>
               <div className="mt-4  gap-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
-                <div className="w-full">
-                  <label
-                    htmlFor="complaintDescription"
-                    className="block text-sm  text-golden-dark"
-                  >
-                    Complaint Description
-                    <span className="text-red-500"> *</span>
-                  </label>
-                  <TextArea
-                    placeholder="Describe your complaint in detail"
-                    rows={4}
-                    id="complaintDescription"
-                    className="mt-1 w-full rounded-md text-sm focus:border-none"
-                    error={false}
-                    value={complaintDescription}
-                    onChange={(val) => setComplaintDescription(val)}
-                  />
-                </div>
+
                 <div className="w-full">
                   <label
                     htmlFor="woreda"
@@ -326,6 +308,24 @@ const handleChange = (field: keyof ComplaintFormValues, value: any) => {
                 </div>
                 <div className="w-full">
                   <label
+                    htmlFor="complaintDescription"
+                    className="block text-sm  text-golden-dark"
+                  >
+                    Complaint Description
+                    <span className="text-red-500"> *</span>
+                  </label>
+                  <TextArea
+                    placeholder="Describe your complaint in detail"
+                    rows={3}
+                    id="complaintDescription"
+                    className="mt-1 w-full rounded-md text-sm focus:border-none"
+                    error={false}
+                    value={complaintDescription}
+                    onChange={(val) => setComplaintDescription(val)}
+                  />
+                </div>
+                <div className="w-full">
+                  <label
                     htmlFor="requestedAction"
                     className="block text-sm  text-golden-dark"
                   >
@@ -357,7 +357,7 @@ const handleChange = (field: keyof ComplaintFormValues, value: any) => {
                     onChange={(val) => handleChange("attachment_id", val)}
                   />
                 </div>
-                
+
               </div>
             </div>
 

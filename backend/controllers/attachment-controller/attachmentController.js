@@ -1,4 +1,4 @@
-const { Attachment } = require("../models");
+const { Attachment } = require("../../models");
 const path = require("path");
 const fs = require("fs");
 
@@ -7,8 +7,7 @@ const fs = require("fs");
 // ================================
 const uploadFiles = async (req, res) => {
   try {
-    const user_id = req.user.user_id;
-
+    // Check if files exist
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
         success: false,
@@ -16,7 +15,7 @@ const uploadFiles = async (req, res) => {
       });
     }
 
-    // Create upload directory if not exists
+    // Create upload directory if it doesn't exist
     const uploadDir = path.join("uploads", "attachments");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -28,13 +27,20 @@ const uploadFiles = async (req, res) => {
       const newPath = path.join(uploadDir, file.filename);
       fs.renameSync(file.path, newPath);
 
-      // Save entry in Attachment table
-      const record = await Attachment.create({
+      // Build the record data
+      const recordData = {
         file_name: file.filename,
         file_path: newPath,
-        uploaded_by: user_id,
         created_at: new Date(),
-      });
+      };
+
+      // Only add uploaded_by if req.user exists
+      if (req.user && req.user.user_id) {
+        recordData.uploaded_by = req.user.user_id;
+      }
+
+      // Save entry in Attachment table
+      const record = await Attachment.create(recordData);
 
       uploadedFiles.push({
         attachment_id: record.attachment_id,
