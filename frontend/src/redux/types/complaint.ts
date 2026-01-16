@@ -1,29 +1,25 @@
+import { ComplaintCategory } from "./complaintCategory";
+import { SectorNode } from "./sectorNode";
+import { User } from "./user";
+
+export interface Location {
+  city: string;
+  subcity: string;
+  woreda: string;
+}
+
 export interface Complaint {
   complaint_id: string;
   ticketing_code: string;
-  title: string;
   description: string;
   status: "pending" | "in_progress" | "resolved" | "rejected";
   is_anonymous: boolean;
   incident_date?: string | null;
-  location?: string | null;
+  location?: Location | null;
   created_at: string;
-
-  user?: {
-    user_id: string;
-    full_name: string;
-    email?: string;
-  };
-
-  assignedSector?: {
-    sector_node_id: string;
-    name: string;
-  };
-
-  category?: {
-    category_id: string;
-    name: string;
-  };
+  user?: User;
+  assignedSector?: SectorNode;
+  category?: ComplaintCategory;
 }
 
 /** ---------- CREATE ---------- */
@@ -33,19 +29,22 @@ export interface CreateComplaintPayload {
   phone_number?: string;
   category_id: string;
   sector_node_id: string;
-  title: string;
+  department_id: string;
   description: string;
-  location?: string;
+  concern_to_user_name: string;
+  request: string;
+  location?: Location | null;
   incident_date?: string;
   is_anonymous?: boolean;
-  captcha_token: string;
+  captcha_token?: string;
   ip_address?: string;
+  attachment_ids?: string;
 }
 
 /** ---------- UPDATE ---------- */
 export interface UpdateComplaintPayload {
-  title?: string;
   description?: string;
+  department_id: string;
   location?: string;
   incident_date?: string;
   status?: "pending" | "in_progress" | "resolved" | "rejected";

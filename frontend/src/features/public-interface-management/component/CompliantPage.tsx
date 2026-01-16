@@ -11,6 +11,14 @@ import {
 import { TextArea } from "@/components/ui/textarea";
 import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
 import { useState } from "react";
+/*
+send location as json object
+location: {
+  city: "Addis Ababa",
+  subcity: "Bole",
+  woreda: "03",
+}
+ */
 const ComplaintPage = () => {
     const [sectorId, setSectorId] = useState("");
     const [departments, setDepartments] = useState([]);

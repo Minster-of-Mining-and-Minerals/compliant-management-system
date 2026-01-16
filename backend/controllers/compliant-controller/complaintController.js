@@ -3,6 +3,7 @@ const {
   User,
   SectorNode,
   ComplaintCategory,
+  ComplaintAttachment,
   sequelize,
 } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
@@ -20,13 +21,16 @@ const createComplaint = async (req, res) => {
       phone_number,
       category_id,
       sector_node_id,
-      title,
+      department_id,
       description,
+      concern_to_user_name,
+      request,
       location,
       incident_date,
       is_anonymous,
       captcha_token,
       ip_address,
+      attachment_ids,
     } = req.body;
 
     // ====== Validate category ======
@@ -49,6 +53,17 @@ const createComplaint = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "Invalid sector node." });
+    }
+
+    // ====== Validate department if provided ======
+    const department = await SectorNode.findByPk(department_id, {
+      transaction: t,
+    });
+    if (!department) {
+      await t.rollback();
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid department." });
     }
 
     // ====== Handle user creation (if not anonymous) ======
@@ -117,8 +132,10 @@ const createComplaint = async (req, res) => {
         compliant_user_id,
         category_id,
         sector_node_id: sector_node_id || null,
-        title,
+        department_id: department_id || null,
         description,
+        concern_to_user_name,
+        request,
         location: location || null,
         incident_date: incident_date || null,
         status: "pending",
@@ -130,6 +147,19 @@ const createComplaint = async (req, res) => {
       },
       { transaction: t }
     );
+
+    // Link attachments if provided
+    if (
+      attachment_ids &&
+      Array.isArray(attachment_ids) &&
+      attachment_ids.length > 0
+    ) {
+      const links = attachment_ids.map((attachment_id) => ({
+        complaint_id: complaint.complaint_id,
+        attachment_id,
+      }));
+      await ComplaintAttachment.bulkCreate(links, { transaction: t });
+    }
 
     await t.commit();
 
