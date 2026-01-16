@@ -117,7 +117,7 @@ const getFeedbacks = async (req, res) => {
         {
           model: SectorNode,
           as: "sectorNode",
-          attributes: ["sector_node_id", "name", "code"],
+          attributes: ["sector_node_id", "name"],
         },
       ],
       order: [[sort_by, sort_order]],
@@ -174,7 +174,7 @@ const getFeedbackById = async (req, res) => {
         {
           model: SectorNode,
           as: "sectorNode",
-          attributes: ["sector_node_id", "name", "code", "description"],
+          attributes: ["sector_node_id", "name", "description"],
         },
       ],
       paranoid: true,
