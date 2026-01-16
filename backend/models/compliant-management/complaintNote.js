@@ -18,10 +18,10 @@ module.exports = (sequelize, DataTypes) => {
       });
 
       //   Can Have many Attachments
-      ComplaintNote.hasMany(models.Attachment, {
-        foreignKey: "note_id",
-        as: "attachments",
-      });
+      // ComplaintNote.hasMany(models.Attachment, {
+      //   foreignKey: "note_id",
+      //   as: "attachments",
+      // });
     }
   }
 

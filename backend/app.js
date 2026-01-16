@@ -26,6 +26,12 @@ const sectorRoute = require("./routers/sector-routes/sectorRoutes");
 const complaintCategoryRoute = require("./routers/compliant-routes/compliantCategoryRoute");
 const complaintRoute = require("./routers/compliant-routes/complaintRoutes");
 
+// ================== Feedback Routes ==========================
+const feedbackRoute = require("./routers/feedback-routes/feedbackRoutes");
+
+// ================== Attachment Routes ==========================
+const attachmentRoute = require("./routers/attachment-routes/attachmentRoute");
+
 const app = express();
 const appServer = http.createServer(app);
 
@@ -118,6 +124,12 @@ app.use("/api/sector-nodes", sectorRoute);
 // ================== Api Complaint Category Routes =====================
 app.use("/api/complaint-categories", complaintCategoryRoute);
 app.use("/api/complaints", complaintRoute);
+
+// ================== Api Feedback Routes =====================
+app.use("/api/feedbacks", feedbackRoute);
+
+// ================== Api Attachment Routes =====================
+app.use("/api/attachments", attachmentRoute);
 
 // ================== Root Endpoint ==================
 app.get("/", (req, res) => {

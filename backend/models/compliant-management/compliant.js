@@ -85,6 +85,14 @@ module.exports = (sequelize, DataTypes) => {
           key: "sector_node_id",
         },
       },
+      department_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "sector_nodes",
+          key: "sector_node_id",
+        },
+      },
       assigned_to_user_id: {
         type: DataTypes.UUID,
         allowNull: true,
@@ -93,17 +101,22 @@ module.exports = (sequelize, DataTypes) => {
           key: "user_id",
         },
       },
-      title: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
+      concern_to_user_name: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
       },
       description: {
         type: DataTypes.TEXT,
         allowNull: false,
       },
+      request: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
       location: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.JSON,
         allowNull: true,
+        comment: "Location details: city, subcity, woreda",
       },
       incident_date: {
         type: DataTypes.DATE,
