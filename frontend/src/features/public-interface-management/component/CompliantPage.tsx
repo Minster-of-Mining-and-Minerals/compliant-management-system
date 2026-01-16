@@ -81,8 +81,9 @@ const ComplaintPage = () => {
 
                 <button
                   type="button"
-                  className={`p-0 transition-all duration-200 ${isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
-                    }`}
+                  className={`p-0 transition-all duration-200 ${
+                    isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
+                  }`}
                   onClick={handlePersonalInfoToggle}
                   disabled={isTogglingPersonalInfo}
                   title={
@@ -103,7 +104,7 @@ const ComplaintPage = () => {
                 </button>
               </div>
               <div
-                className={`mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full
+                className={`mt-4 p-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full
     overflow-hidden transition-all duration-500 ease-in-out
     ${isPersonalInfoOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}
   `}
@@ -213,11 +214,37 @@ const ComplaintPage = () => {
               </div>
             </div>
             <div className="flex flex-col rounded-md w-full shadow-md px-10 pt-5 pb-10 ">
-              <h1 className="block text-primary font-semibold text-lg ">
-                Complaint Details
-              </h1>
-              <div className="mt-4  gap-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h1 className="block text-primary font-semibold text-lg ">
+                  Complaint Details
+                </h1>
+                <div className=" min-w-40">
+                  <label
+                    htmlFor="departmentReceivingComplaint"
+                    className="block text-sm  text-golden-dark"
+                  >
+                    Category
+                    <span className="text-red-500"> *</span>
+                  </label>
+                  <Select value={sectorId} onValueChange={handleSectorChange}>
+                    <SelectTrigger className="w-full h-12 mt-1">
+                      <SelectValue placeholder="Select Sector" />
+                    </SelectTrigger>
 
+                    <SelectContent>
+                      {sectors.map((sector) => (
+                        <SelectItem
+                          key={sector.sector_node_id}
+                          value={sector.sector_node_id}
+                        >
+                          {sector.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="mt-4  gap-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
                 <div className="w-full">
                   <label
                     htmlFor="woreda"
@@ -232,7 +259,6 @@ const ComplaintPage = () => {
                     name="dateOfIncident"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
                     placeholder="Enter your date of incident"
-
                   />
                 </div>
                 <div className="w-full">
@@ -357,7 +383,6 @@ const ComplaintPage = () => {
                     onChange={(val) => handleChange("attachment_id", val)}
                   />
                 </div>
-
               </div>
             </div>
 
