@@ -8,8 +8,8 @@ import {
   useUploadAttachmentsMutation,
   useDeleteAttachmentMutation,
   useGetAttachmentsQuery,
-} from "../../redux/services/attachmentApi";
-
+} 
+from "../../redux/api/attachementApi";
 
 import { getFileUrl, getFileType } from "../../utils/fileUrl";
 
@@ -136,15 +136,10 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <Label
-        htmlFor={id}
-        className={`${labelClass ?? "text-sm font-medium"}  cursor-pointer`}
-      >
-        {label} {required && <span className="text-red-500">*</span>}
-      </Label>
+       
 
       <div
-        className={`${fieldClass} mt-2 relative flex flex-col items-center justify-center border border-[#B1C9E3] rounded-md border-dashed p-3 hover:bg-gray-50 transition cursor-pointer ${
+        className={`${fieldClass} mt-2 relative flex flex-col items-center justify-center border border-golden-dark rounded-md border-dashed p-3 hover:bg-gray-50 transition cursor-pointer ${
           error ? "border-red-500" : ""
         }`}
       >

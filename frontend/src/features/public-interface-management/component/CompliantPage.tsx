@@ -14,6 +14,10 @@ import { TextArea } from "@/components/ui/textarea";
 import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
 import { useState } from "react";
 import { FileUploadField } from "@/components/ui/FileUploadField";
+interface ComplaintFormValues {
+  attachment_id: File[];
+}
+
 const ComplaintPage = () => {
   const [sectorId, setSectorId] = useState("");
   const [departments, setDepartments] = useState([]);
@@ -41,6 +45,17 @@ const ComplaintPage = () => {
 
     setIsTogglingPersonalInfo(false);
   };
+
+  const [formValues, setFormValues] = useState<ComplaintFormValues>({
+  attachment_id: [],
+});
+
+const handleChange = (field: keyof ComplaintFormValues, value: any) => {
+  setFormValues((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
 
   return (
     <main className="flex flex-col min-h-screen z-10 relative  mx-auto px-4 sm:px-6 lg:px-20 pt-32 pb-16">
@@ -223,6 +238,23 @@ const ComplaintPage = () => {
                 </div>
                 <div className="w-full">
                   <label
+                    htmlFor="woreda"
+                    className="block text-sm  text-golden-dark"
+                  >
+                    Date of Incident
+                    <span className="text-gray-500"> </span>
+                  </label>
+                  <Input
+                    type="date"
+                    id="dateOfIncident"
+                    name="dateOfIncident"
+                    className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
+                    placeholder="Enter your date of incident"
+
+                  />
+                </div>
+                <div className="w-full">
+                  <label
                     htmlFor="departmentReceivingComplaint"
                     className="block text-sm  text-golden-dark"
                   >
@@ -294,6 +326,22 @@ const ComplaintPage = () => {
                 </div>
                 <div className="w-full">
                   <label
+                    htmlFor="requestedAction"
+                    className="block text-sm  text-golden-dark"
+                  >
+                    Requested Action
+                    <span className="text-gray-500"> (Optional)</span>
+                  </label>
+                  <TextArea
+                    placeholder="Enter your requested action"
+                    rows={3}
+                    id="requestedAction"
+                    className="mt-1 w-full  rounded-md text-sm border-golden-dark  focus:border-none"
+                    error={false}
+                  />
+                </div>
+                <div className="w-full">
+                  <label
                     htmlFor="city"
                     className="block text-sm  text-golden-dark"
                   >
@@ -309,22 +357,7 @@ const ComplaintPage = () => {
                     onChange={(val) => handleChange("attachment_id", val)}
                   />
                 </div>
-                <div className="w-full">
-                  <label
-                    htmlFor="requestedAction"
-                    className="block text-sm  text-golden-dark"
-                  >
-                    Requested Action
-                    <span className="text-gray-500"> (Optional)</span>
-                  </label>
-                  <TextArea
-                    placeholder="Enter your requested action"
-                    rows={3}
-                    id="requestedAction"
-                    className="mt-1 w-full  rounded-md text-sm border-golden-dark  focus:border-none"
-                    error={false}
-                  />
-                </div>
+                
               </div>
             </div>
 
