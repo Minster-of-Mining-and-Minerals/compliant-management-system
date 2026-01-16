@@ -12,8 +12,10 @@ import {
 } from "@/components/ui/select";
 import { TextArea } from "@/components/ui/textarea";
 import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileUploadField } from "@/components/ui/FileUploadField";
+import { useGetComplaintCategoriesQuery } from "@/redux/api/complaintCategoryApi";
+import { Cat } from "lucide-react";
 interface ComplaintFormValues {
   attachment_id: File[];
 }
@@ -24,19 +26,35 @@ const ComplaintPage = () => {
   const [departmentId, setDepartmentId] = useState("");
   const [complaintDescription, setComplaintDescription] = useState("");
   const [isPersonalInfoOpen, setIsPersonalInfoOpen] = useState(true);
-  const [isTogglingPersonalInfo, setIsTogglingPersonalInfo] = useState(false);
+  const [isTogglingPersonalInfo, setIsTogglingPersonalInfo] = useState(false); 
+  const [complaintCategoryId, setComplaintCategoryId] = useState("");
+const [complaintCategoryName, setComplaintCategoryName] = useState("");
 
   const { data = [], isLoading, isError, refetch } = useGetSectorNodesQuery();
   const root = data.filter((item) => item.parent_id === null);
+  const {
+    data: complaintCategories = [],
+    isLoading: isLoadingCategories,
+    isError: isErrorCategories,
+  } = useGetComplaintCategoriesQuery({ is_active: true });
 
   const sectors = root.flatMap((root) => root.children || []);
-
   const handleSectorChange = (value: string) => {
     setSectorId(value);
     setDepartmentId("");
     const selectedSector = data.find((item) => item.sector_node_id === value);
     setDepartments(selectedSector?.children || []);
   };
+
+  const handleComplaintCategoryChange = (value: string) => {
+  const selectedCategory = complaintCategories.find(
+    (cat) => cat.category_id === value
+  );
+
+  setComplaintCategoryId(value);
+  setComplaintCategoryName(selectedCategory?.name || "");
+};
+
 
   const handlePersonalInfoToggle = () => {
     setIsTogglingPersonalInfo(true);
@@ -46,6 +64,16 @@ const ComplaintPage = () => {
     setIsTogglingPersonalInfo(false);
   };
 
+  useEffect(() => {
+  if (
+    complaintCategories.length > 0 &&
+    !complaintCategoryId
+  ) {
+    setComplaintCategoryId(complaintCategories[0].category_id);
+    setComplaintCategoryName(complaintCategories[0].name);
+  }
+}, [complaintCategories, complaintCategoryId]);
+    
   const [formValues, setFormValues] = useState<ComplaintFormValues>({
     attachment_id: [],
   });
@@ -165,7 +193,7 @@ const ComplaintPage = () => {
                     htmlFor="city"
                     className="block text-sm  text-golden-dark"
                   >
-                    City
+                    City/Region
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -182,7 +210,7 @@ const ComplaintPage = () => {
                     htmlFor="subCity"
                     className="block text-sm  text-golden-dark"
                   >
-                    Subcity
+                    Subcity/Zone
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -226,18 +254,21 @@ const ComplaintPage = () => {
                     Category
                     <span className="text-red-500"> *</span>
                   </label>
-                  <Select value={sectorId} onValueChange={handleSectorChange}>
+                  <Select
+                    value={complaintCategoryId}
+                    onValueChange={handleComplaintCategoryChange}
+                  >
                     <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder="Select Sector" />
+                      <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
 
                     <SelectContent>
-                      {sectors.map((sector) => (
+                      {complaintCategories?.map((category) => (
                         <SelectItem
-                          key={sector.sector_node_id}
-                          value={sector.sector_node_id}
+                          key={category.category_id}
+                          value={category.category_id}
                         >
-                          {sector.name}
+                          {category.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -266,7 +297,7 @@ const ComplaintPage = () => {
                     htmlFor="departmentReceivingComplaint"
                     className="block text-sm  text-golden-dark"
                   >
-                    Sector Receiving the Complaint
+                    Sector Receiving the {complaintCategoryName}
                     <span className="text-red-500"> *</span>
                   </label>
                   <Select value={sectorId} onValueChange={handleSectorChange}>
@@ -291,7 +322,7 @@ const ComplaintPage = () => {
                     htmlFor="departmentReceivingComplaint"
                     className="block text-sm  text-golden-dark"
                   >
-                    Department Receiving the Complaint
+                    Department Receiving the {complaintCategoryName}
                     <span className="text-red-500"> *</span>
                   </label>
                   <Select
@@ -337,11 +368,11 @@ const ComplaintPage = () => {
                     htmlFor="complaintDescription"
                     className="block text-sm  text-golden-dark"
                   >
-                    Complaint Description
+                    {complaintCategoryName} Description
                     <span className="text-red-500"> *</span>
                   </label>
                   <TextArea
-                    placeholder="Describe your complaint in detail"
+                    placeholder={`Describe your ${complaintCategoryName} in detail`}
                     rows={3}
                     id="complaintDescription"
                     className="mt-1 w-full rounded-md text-sm focus:border-none"
@@ -371,7 +402,7 @@ const ComplaintPage = () => {
                     htmlFor="city"
                     className="block text-sm  text-golden-dark"
                   >
-                    Evidence for the Complaint
+                    Evidence for the {complaintCategoryName}
                     <span className="text-gray-500"> (Optional)</span>
                   </label>
                   <FileUploadField
@@ -391,7 +422,7 @@ const ComplaintPage = () => {
                 Cancel
               </Button>
               <Button className=" bg-golden-dark min-w-52 hover:bg-golden-darkHover h-12  text-base text-white py-1 rounded-md shadow-md">
-                Submit Complaint
+                Submit {complaintCategoryName}
               </Button>
             </div>
           </form>
