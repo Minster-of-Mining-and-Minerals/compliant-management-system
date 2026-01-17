@@ -94,7 +94,7 @@ const Input: FC<InputProps> = forwardRef<HTMLInputElement, InputProps>(
           disabled={disabled}
           defaultValue={defaultValue}
           className={inputClasses}
-          readOnly={type === "date" || type === "time"}
+          // readOnly={type === "date" || type === "time"}
         />
         {hint && (
           <p

@@ -85,6 +85,8 @@
       "fullName": "ሙሉ ስም",
       "fullNamePlaceholder": "ሙሉ ስምዎን ያስገቡ",
       "fullNameOptional": "(አማራጭ)",
+      "sector": "ዘርፍ የሚቀበል አስተያየት",
+      "sectorPlaceholder": "ዘርፍ ይምረጡ",
       "feedbackDescription": "መግለጫ",
       "feedbackPlaceholder": "አስተያየትዎን በዝርዝር ይግለጹ",
       "rating": "ደረጃ",

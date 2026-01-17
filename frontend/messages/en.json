@@ -84,6 +84,8 @@
       "fullName": "Full Name",
       "fullNameOptional": "(Optional)",
       "fullNamePlaceholder": "Enter your full name",
+      "sector": "Sector Receiving the Feedback",
+      "sectorPlaceholder": "Select Sector",
       "feedbackDescription": "Description",
       "feedbackPlaceholder": "Describe your feedback in detail",
       "rating": "Rating",

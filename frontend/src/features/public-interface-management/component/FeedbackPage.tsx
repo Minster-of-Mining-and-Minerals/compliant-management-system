@@ -5,11 +5,20 @@ import { TextArea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
 const FeedbackPage = () => {
   const [feedbackDescription, setFeedbackDescription] = useState("");
   const t = useTranslations("Feedback");
   const [rating, setRating] = useState<number>(0);
-
+  const [sectorId, setSectorId] = useState("");
+  const { data = [], isLoading, isError, refetch } = useGetSectorNodesQuery();
+  const root = data.filter((item) => item.parent_id === null); 
+    const sectors = root.flatMap((root) => root.children || []);
+  const handleSectorChange = (value: string) => {
+    setSectorId(value);
+    const selectedSector = data.find((item) => item.sector_node_id === value);
+  }; 
   return (
     <main className="flex flex-col min-h-screen z-10 relative justify-center items-center border py-16">
       <div className="border px-5 md:px-10 lg:px-20 py-10 shadow-md  bg-white rounded-md">
@@ -43,6 +52,31 @@ const FeedbackPage = () => {
                       error={false}
                     />
                   </div>
+                  <div className="w-full">
+                  <label
+                    htmlFor="departmentReceivingComplaint"
+                    className="block text-sm  text-golden-dark"
+                  >
+                    {t ("fields.sector")}
+                    <span className="text-red-500"> *</span>
+                  </label>
+                  <Select value={sectorId} onValueChange={handleSectorChange}>
+                    <SelectTrigger className="w-full h-12 mt-1">
+                      <SelectValue placeholder={t("fields.sectorPlaceholder")} />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {sectors.map((sector) => (
+                        <SelectItem
+                          key={sector.sector_node_id}
+                          value={sector.sector_node_id}
+                        >
+                          {sector.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                   <div className=" w-full">
                     <div className="w-full">
                       <label
