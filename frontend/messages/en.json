@@ -1,0 +1,27 @@
+{
+  "HomePage": {
+    "badge": "Official Public Complaint & Feedback Platform",
+    "heading": {
+      "line1": "Ensure Transparency and Accountability",
+      "line2": "in the Mining Sector"
+    },
+    "description": "A secure and transparent digital platform established by the Ministry of Mining to receive, track, and resolve public complaints and feedback related to mining activities. Empowering citizens, improving service delivery, and strengthening governance through accountability.",
+    "actions": {
+      "complaint": "Submit a Complaint",
+      "feedback": "Provide Feedback"
+    }
+  },
+  "PublicHeader": {
+    "logoLine1": "Minister of Mining",
+    "tabs": {
+      "home": "Home",
+      "complaint": "Complaint",
+      "feedback": "Feedback"
+    },
+    "login": "Login"
+  },
+  "LocaleSwitcher": {
+    "label": "Language",
+    "locale": "{locale, select, en {English} am {Amharic} other {Unknown}}"
+  }
+}
