@@ -20,6 +20,80 @@
     },
     "login": "Login"
   },
+  "ComplaintPage": {
+    "title": "Submit a Complaint",
+    "subtitle": "Please fill out the form below to submit your complaint. Provide accurate and complete information to help us process your complaint efficiently.",
+
+    "personalInfo": {
+      "title": "Personal Information",
+      "optional": "(Optional)",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter your full name",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter your phone number",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email address",
+      "city": "City/Region",
+      "cityPlaceholder": "Enter your city or region",
+      "subCity": "Subcity/Zone",
+      "subCityPlaceholder": "Enter your subcity or zone",
+      "woreda": "Woreda",
+      "woredaPlaceholder": "Enter your woreda"
+    },
+
+    "details": {
+      "title": "{category} Details",
+      "category": "Category",
+      "categoryPlaceholder": "Select Category",
+      "incidentDate": "Date of Incident",
+      "sector": "Sector Receiving the {category}",
+      "sectorPlaceholder": "Select Sector",
+      "department": "Department Receiving the {category}",
+      "departmentPlaceholder": "Enter the department",
+      "personConcerned": "Name of the Person Concerned",
+      "personConcernedPlaceholder": "Enter the name of the person concerned",
+      "description": "{category} Description",
+      "descriptionPlaceholder": "Provide a detailed description of your {category}",
+      "requestedAction": "Requested Action",
+      "requestedActionPlaceholder": "Specify the action you would like to be taken",
+      "evidence": "Evidence for the {category}",
+      "evidencePlaceholder": "Upload any supporting documents or evidence",
+      "optional": "Optional"
+    },
+
+    "buttons": {
+      "cancel": "Cancel",
+      "submit": "Submit {category}"
+    },
+
+    "tips": {
+      "title": "Complaint Tips",
+      "items": [
+        "Be clear and concise in your description.",
+        "Include relevant dates and details.",
+        "Attach any supporting documents if necessary.",
+        "Provide your contact information for follow-up.",
+        "Incomplete or unclear complaints may take longer to process."
+      ]
+    }
+  },
+  "Feedback": {
+    "title": "Submit Feedback",
+    "description": "Please fill out the form below to submit your feedback. Provide accurate and complete information to help us process your feedback efficiently.",
+    "fields": {
+      "fullName": "Full Name",
+      "fullNameOptional": "(Optional)",
+      "fullNamePlaceholder": "Enter your full name",
+      "feedbackDescription": "Description",
+      "feedbackPlaceholder": "Describe your feedback in detail",
+      "rating": "Rating",
+      "selectRating": "Select a rating"
+    },
+    "actions": {
+      "submit": "Submit Feedback",
+      "cancel": "Cancel"
+    }
+  },
   "LocaleSwitcher": {
     "label": "Language",
     "locale": "{locale, select, en {English} am {Amharic} other {Unknown}}"

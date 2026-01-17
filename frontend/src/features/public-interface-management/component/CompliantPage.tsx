@@ -16,6 +16,8 @@ import { useEffect, useState } from "react";
 import { FileUploadField } from "@/components/ui/FileUploadField";
 import { useGetComplaintCategoriesQuery } from "@/redux/api/complaintCategoryApi";
 import { Cat } from "lucide-react";
+import { useTranslations } from "next-intl";
+
 interface ComplaintFormValues {
   attachment_id: File[];
 }
@@ -29,6 +31,7 @@ const ComplaintPage = () => {
   const [isTogglingPersonalInfo, setIsTogglingPersonalInfo] = useState(false); 
   const [complaintCategoryId, setComplaintCategoryId] = useState("");
 const [complaintCategoryName, setComplaintCategoryName] = useState("");
+const t = useTranslations("ComplaintPage");
 
   const { data = [], isLoading, isError, refetch } = useGetSectorNodesQuery();
   const root = data.filter((item) => item.parent_id === null);
@@ -88,11 +91,9 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
   return (
     <main className="flex flex-col min-h-screen z-10 relative  mx-auto px-4 sm:px-6 lg:px-20 pt-32 pb-16">
       <div className="mb-8 border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Submit a Complaint</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
         <p className="mt-2 text-sm text-gray-600 max-w-2xl">
-          Please fill out the form below to submit your complaint. Provide
-          accurate and complete information to help us process your complaint
-          efficiently.
+          {t("subtitle")}
         </p>
       </div>
       <div className="grid grid-cols-3 gap-8">
@@ -101,9 +102,9 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
             <div className="flex flex-col rounded-md w-full shadow-md px-10 pt-5 pb-10 ">
               <div className="flex justify-between">
                 <h1 className="block text-primary font-semibold text-lg ">
-                  Personal Information
+                  {t("personalInfo.title")}
                   <span className="ml-2 text-sm font-normal text-gray-500">
-                    (Optional)
+                    {t("personalInfo.optional")}
                   </span>
                 </h1>
 
@@ -142,7 +143,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="fullName"
                     className="block text-sm  text-golden-dark"
                   >
-                    Full Name
+                    {t("personalInfo.fullName")}
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -150,7 +151,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     id="fullName"
                     name="fullName"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder="Enter your full name"
+                    placeholder={t("personalInfo.fullNamePlaceholder")}
                     error={false}
                   />
                 </div>
@@ -159,7 +160,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="phoneNumber"
                     className="block text-sm  text-golden-dark"
                   >
-                    Phone Number
+                    {t("personalInfo.phone")}
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -167,7 +168,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     id="phoneNumber"
                     name="phoneNumber"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder="Enter your phone number"
+                    placeholder={t("personalInfo.phonePlaceholder")}
                     error={false}
                   />
                 </div>
@@ -176,7 +177,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="email"
                     className="block text-sm  text-golden-dark"
                   >
-                    Email
+                    {t("personalInfo.email")}
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -184,7 +185,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     id="email"
                     name="email"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder="Enter your email address"
+                    placeholder={t("personalInfo.emailPlaceholder")}
                     error={false}
                   />
                 </div>
@@ -193,7 +194,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="city"
                     className="block text-sm  text-golden-dark"
                   >
-                    City/Region
+                    {t("personalInfo.city")}
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -201,7 +202,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     id="city"
                     name="city"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder="Enter your city"
+                    placeholder={t("personalInfo.cityPlaceholder")}
                     error={false}
                   />
                 </div>
@@ -210,7 +211,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="subCity"
                     className="block text-sm  text-golden-dark"
                   >
-                    Subcity/Zone
+                    {t("personalInfo.subCity")}
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -218,7 +219,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     id="subCity"
                     name="subCity"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder="Enter your subcity"
+                    placeholder={t("personalInfo.subCityPlaceholder")}
                     error={false}
                   />
                 </div>
@@ -227,7 +228,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="woreda"
                     className="block text-sm  text-golden-dark"
                   >
-                    Woreda
+                    {t("personalInfo.woreda")}
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -235,7 +236,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     id="woreda"
                     name="woreda"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder="Enter your woreda"
+                    placeholder={t("personalInfo.woredaPlaceholder")}
                     error={false}
                   />
                 </div>
@@ -244,14 +245,14 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
             <div className="flex flex-col rounded-md w-full shadow-md px-10 pt-5 pb-10 ">
               <div className="flex justify-between items-center mb-4">
                 <h1 className="block text-primary font-semibold text-lg ">
-                  Complaint Details
+                  {t("details.title",{ category: complaintCategoryName })}
                 </h1>
                 <div className=" min-w-40">
                   <label
                     htmlFor="departmentReceivingComplaint"
                     className="block text-sm  text-golden-dark"
                   >
-                    Category
+                    {t("details.category")}
                     <span className="text-red-500"> *</span>
                   </label>
                   <Select
@@ -259,7 +260,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     onValueChange={handleComplaintCategoryChange}
                   >
                     <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder="Select Category" />
+                      <SelectValue placeholder={t("details.categoryPlaceholder")} />
                     </SelectTrigger>
 
                     <SelectContent>
@@ -281,7 +282,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="woreda"
                     className="block text-sm  text-golden-dark"
                   >
-                    Date of Incident
+                    {t("details.incidentDate")}
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -289,7 +290,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     id="dateOfIncident"
                     name="dateOfIncident"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder="Enter your date of incident"
+                    placeholder={t("details.incidentDatePlaceholder")}
                   />
                 </div>
                 <div className="w-full">
@@ -297,12 +298,14 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="departmentReceivingComplaint"
                     className="block text-sm  text-golden-dark"
                   >
-                    Sector Receiving the {complaintCategoryName}
+                    {t("details.sector",
+                      { category: complaintCategoryName }
+                    )}
                     <span className="text-red-500"> *</span>
                   </label>
                   <Select value={sectorId} onValueChange={handleSectorChange}>
                     <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder="Select Sector" />
+                      <SelectValue placeholder={t("details.sectorPlaceholder", { category: complaintCategoryName })} />
                     </SelectTrigger>
 
                     <SelectContent>
@@ -322,7 +325,9 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="departmentReceivingComplaint"
                     className="block text-sm  text-golden-dark"
                   >
-                    Department Receiving the {complaintCategoryName}
+                    {t("details.department",
+                      { category: complaintCategoryName }
+                    )}
                     <span className="text-red-500"> *</span>
                   </label>
                   <Select
@@ -331,7 +336,7 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     disabled={!sectorId}
                   >
                     <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder="Select Department" />
+                      <SelectValue placeholder={t("details.departmentPlaceholder", { category: complaintCategoryName })} />
                     </SelectTrigger>
 
                     <SelectContent>
@@ -351,15 +356,17 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="nameOfPersonConcerned"
                     className="block text-sm  text-golden-dark"
                   >
-                    Name of the Person Concerned
-                    <span className="text-gray-500"> (Optional)</span>
+                    {t("details.personConcerned",
+                      { category: complaintCategoryName }
+                    )}
+                    <span className="text-gray-500"> ({t("details.optional")})</span>
                   </label>
                   <Input
                     type="text"
                     id="nameOfPersonConcerned"
                     name="nameOfPersonConcerned"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder="Enter the name of the person concerned"
+                    placeholder={t("details.personConcernedPlaceholder", { category: complaintCategoryName })}
                     error={false}
                   />
                 </div>
@@ -368,11 +375,13 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="complaintDescription"
                     className="block text-sm  text-golden-dark"
                   >
-                    {complaintCategoryName} Description
+                    {t("details.description",
+                      { category: complaintCategoryName }
+                    )}
                     <span className="text-red-500"> *</span>
                   </label>
                   <TextArea
-                    placeholder={`Describe your ${complaintCategoryName} in detail`}
+                    placeholder={t("details.descriptionPlaceholder", { category: complaintCategoryName })}
                     rows={3}
                     id="complaintDescription"
                     className="mt-1 w-full rounded-md text-sm focus:border-none"
@@ -386,11 +395,13 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                     htmlFor="requestedAction"
                     className="block text-sm  text-golden-dark"
                   >
-                    Requested Action
-                    <span className="text-gray-500"> (Optional)</span>
+                    {t("details.requestedAction",
+                      { category: complaintCategoryName }
+                    )}
+                    <span className="text-gray-500"> ({t("details.optional")})</span>
                   </label>
                   <TextArea
-                    placeholder="Enter your requested action"
+                    placeholder={t("details.requestedActionPlaceholder", { category: complaintCategoryName })}
                     rows={3}
                     id="requestedAction"
                     className="mt-1 w-full  rounded-md text-sm border-golden-dark  focus:border-none"
@@ -399,17 +410,19 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
                 </div>
                 <div className="w-full">
                   <label
-                    htmlFor="city"
+                    htmlFor="evidence"
                     className="block text-sm  text-golden-dark"
                   >
-                    Evidence for the {complaintCategoryName}
+                    {t("details.evidence",
+                      { category: complaintCategoryName }
+                    )}
                     <span className="text-gray-500"> (Optional)</span>
                   </label>
                   <FileUploadField
                     className=""
                     labelClass="text-sm  text-start w-fit font-medium text-[#094C81]"
                     id="attachment"
-                    label="Attach File"
+                    label={t("details.evidencePlaceholder", { category: complaintCategoryName })}
                     value={formValues.attachment_id || []}
                     onChange={(val) => handleChange("attachment_id", val)}
                   />
@@ -419,24 +432,24 @@ const [complaintCategoryName, setComplaintCategoryName] = useState("");
 
             <div className="flex justify-end gap-4 mt-6">
               <Button className="bg-golden-dark20 min-w-40 hover:bg-golden-dark30 h-12  text-base text-gray-600 py-2 rounded-md ">
-                Cancel
+                {t("buttons.cancel",{ category: complaintCategoryName })}
               </Button>
               <Button className=" bg-golden-dark min-w-52 hover:bg-golden-darkHover h-12  text-base text-white py-1 rounded-md shadow-md">
-                Submit {complaintCategoryName}
+                {t("buttons.submit",{ category: complaintCategoryName })}
               </Button>
             </div>
           </form>
         </div>
         <div className="col-span-3  md:col-span-1">
           <div className="sticky top-20  border border-gray-200 rounded-lg p-6 shadow-lg">
-            <h2 className="text-lg  text-gray-900 mb-4">Complaint Tips</h2>
+            <h2 className="text-lg  text-gray-900 mb-4">{t("tips.title")}</h2>
             <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
-              <li>Be clear and concise in your description.</li>
-              <li>Include relevant dates and details.</li>
-              <li>Attach any supporting documents if necessary.</li>
-              <li>Provide your contact information for follow-up.</li>
+              <li>{t("tips.items.0")}</li>
+              <li>{t("tips.items.1")}</li>
+              <li>{t("tips.items.2")}</li>
+              <li>{t("tips.items.3")}</li>
               <li>
-                Incomplete or unclear complaints may take longer to process.
+                {t("tips.items.4")}
               </li>
             </ul>
           </div>

@@ -4,10 +4,10 @@ import { Input } from "@/components/ui/input";
 import { TextArea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { Star } from "lucide-react";
-
+import { useTranslations } from "next-intl";
 const FeedbackPage = () => {
   const [feedbackDescription, setFeedbackDescription] = useState("");
-
+  const t = useTranslations("Feedback");
   const [rating, setRating] = useState<number>(0);
 
   return (
@@ -15,12 +15,10 @@ const FeedbackPage = () => {
       <div className="border px-5 md:px-10 lg:px-20 py-10 shadow-md  bg-white rounded-md">
         <div className="mb-8 border-gray-200 pb-4 ">
           <h1 className="text-2xl font-bold text-gray-900">
-            Submit a Feedback
+            {t("title")}
           </h1>
           <p className="mt-2 text-sm text-gray-600 text-break-words">
-            Please fill out the form below to submit your feedback. Provide
-            accurate and complete information to help us process your feedback
-            efficiently.
+            {t("description")}
           </p>
         </div>
         <div className="">
@@ -33,15 +31,15 @@ const FeedbackPage = () => {
                       htmlFor="fullName"
                       className="block text-sm  text-golden-dark"
                     >
-                      Full Name
-                      <span className="text-gray-500"> (Optional)</span>
+                      {t("fields.fullName")}
+                      <span className="text-gray-500"> {t("fields.fullNameOptional")}</span>
                     </label>
                     <Input
                       type="text"
                       id="fullName"
                       name="fullName"
                       className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                      placeholder="Enter your full name"
+                      placeholder={t("fields.fullNamePlaceholder")}
                       error={false}
                     />
                   </div>
@@ -51,11 +49,11 @@ const FeedbackPage = () => {
                         htmlFor="feedbackDescription"
                         className="block text-sm  text-golden-dark"
                       >
-                        Description
+                        {t("fields.feedbackDescription")}
                         <span className="text-red-500"> *</span>
                       </label>
                       <TextArea
-                        placeholder="Describe your feedback in detail"
+                        placeholder={t("fields.feedbackPlaceholder")}
                         rows={6}
                         id="feedbackDescription"
                         className="mt-1 w-full rounded-md text-sm focus:border-none"
@@ -67,7 +65,7 @@ const FeedbackPage = () => {
                 </div>
                 <div className="w-full">
                   <label className="block text-sm text-golden-dark mb-1">
-                    Rating
+                    {t("fields.rating")}
                     <span className="text-red-500"> *</span>
                   </label>
 
@@ -92,16 +90,16 @@ const FeedbackPage = () => {
                       {rating > 0 ? `${rating} / 5` : ""}
                     </span>
                   </div>
-                  <span>{rating > 0 ? `` : " Select a rating"} </span>
+                  <span>{rating > 0 ? `` : t("fields.selectRating")} </span>
                 </div>
               </div>
 
               <div className="flex justify-start gap-2 md:gap-4 mt-6 w-full flex-col md:flex-row">
                 <Button className=" bg-golden-dark w-full md:w-0 md:min-w-52 hover:bg-golden-darkHover h-12  text-base text-white py-1 rounded-md shadow-md">
-                  Submit Complaint
+                  {t("actions.submit")}
                 </Button>
                 <Button className="bg-golden-dark20 w-full md:w-0 md:min-w-40 hover:bg-golden-dark30 h-12  text-base text-gray-600 py-2 rounded-md ">
-                  Cancel
+                  {t("actions.cancel")}
                 </Button>
                 
               </div>
