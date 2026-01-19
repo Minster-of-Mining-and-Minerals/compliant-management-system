@@ -24,7 +24,7 @@ export default function PrivateLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <Header title={title || "Dashboard"} />
+        <Header title={""} />
         <div className="p-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>

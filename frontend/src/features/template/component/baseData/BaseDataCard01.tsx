@@ -22,20 +22,20 @@ const dataCards: DataCardItem[] = [
     link: "/basedata/complaint-categories",
   },
 
-  {
-    id: 2,
-    title: "Applicants",
-    subtitle: "Registered drivers",
-    icon: Users,
-    link: "/basedata/applicants",
-  },
-  {
-    id: 3,
-    title: "Vehicle Categories",
-    subtitle: "License classifications",
-    icon: Car,
-    link: "/basedata/vehicle-categories",
-  },
+  // {
+  //   id: 2,
+  //   title: "Applicants",
+  //   subtitle: "Registered drivers",
+  //   icon: Users,
+  //   link: "/basedata/applicants",
+  // },
+  // {
+  //   id: 3,
+  //   title: "Vehicle Categories",
+  //   subtitle: "License classifications",
+  //   icon: Car,
+  //   link: "/basedata/vehicle-categories",
+  // },
 ];
 
 
