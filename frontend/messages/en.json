@@ -16,7 +16,8 @@
     "tabs": {
       "home": "Home",
       "complaint": "Complaint",
-      "feedback": "Feedback"
+      "feedback": "Feedback",
+      "trackComplaint": "Track Complaint"
     },
     "login": "Login"
   },
@@ -77,6 +78,55 @@
       ]
     }
   },
+"ComplaintTrackPage": {
+    "title": "Track Your Complaint",
+    "subtitle": "Enter your complaint tracking ID to view the current status and details of your submission.",
+
+    "trackingId": "Tracking ID",
+    "track": "Track Complaint",
+    "loading": "Checking complaint status...",
+
+    "errors": {
+      "required": "Tracking ID is required.",
+      "notFound": "No complaint was found with the provided tracking ID."
+    },
+
+    "details": {
+      "title": "Complaint Details",
+      "trackingId": "Tracking ID",
+      "category": "Complaint Category",
+      "sector": "Sector",
+      "department": "Department",
+      "incidentDate": "Date of Incident",
+      "submittedAt": "Date Submitted",
+      "description": "Complaint Description",
+      "requestedAction": "Requested Action"
+    },
+
+    "status": {
+      "submitted": "Submitted",
+      "underReview": "Under Review",
+      "resolved": "Resolved"
+    },
+
+    "personalInfo": {
+      "toggle": "Show / Hide Personal Information",
+      "fullName": "Full Name",
+      "phone": "Phone Number",
+      "email": "Email Address",
+      "city": "City"
+    },
+    "response": {
+      "title": "Official Response",
+      "status": "Response Status",
+      "date": "Response Date",
+      "description": "Response Description",
+      "attachments": "Response Attachments",
+      "noResponse": "No official response has been provided yet.",
+      "download": "Download"
+    }
+  },
+
   "Feedback": {
     "title": "Submit Feedback",
     "description": "Please fill out the form below to submit your feedback. Provide accurate and complete information to help us process your feedback efficiently.",

@@ -39,6 +39,11 @@ const PublicHeader = () => {
       href: "/feedback",
       icon: MessageSquare,
     },
+    {
+      label: t("tabs.trackComplaint"),
+      href: "/track-complaint",
+      icon: AlertTriangle,
+    }
   ];
 
   return (

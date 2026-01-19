@@ -17,7 +17,8 @@
     "tabs": {
       "home": "መነሻ",
       "complaint": "ቅሬታ",
-      "feedback": "አስተያየት"
+      "feedback": "አስተያየት",
+      "trackComplaint": "ቅሬታ ይከታተሉ"
     },
     "login": "ግባ"
   },
