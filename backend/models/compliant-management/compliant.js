@@ -130,7 +130,7 @@ module.exports = (sequelize, DataTypes) => {
           "in_progress",
           "resolved",
           "rejected",
-          "closed"
+          "closed",
         ),
         defaultValue: "pending",
       },
@@ -140,7 +140,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       captcha_token: {
         type: DataTypes.STRING(500),
-        allowNull: false,
+        allowNull: true,
       },
       ip_address: {
         type: DataTypes.STRING(45), // IPv6 compatible
@@ -166,7 +166,7 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: false,
       underscored: true,
       paranoid: true,
-    }
+    },
   );
 
   return Complaint;

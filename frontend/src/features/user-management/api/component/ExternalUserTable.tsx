@@ -142,12 +142,12 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
             },
         },
 
-        {
-            label: "New External User",
-            icon: <Plus className="h-4 w-4" />,
-            variant: "default",
-            onClick: () => setModalOpen(true),
-        },
+        // {
+        //     label: "New External User",
+        //     icon: <Plus className="h-4 w-4" />,
+        //     variant: "default",
+        //     onClick: () => setModalOpen(true),
+        // },
     ];
 
     // Apply filters locally (client-side)

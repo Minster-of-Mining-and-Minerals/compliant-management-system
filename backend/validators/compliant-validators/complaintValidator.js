@@ -4,13 +4,13 @@ const { validate: isUuid } = require("uuid");
 
 // =================== Create Complaint Schema ===================
 const createComplaintSchema = Joi.object({
-  full_name: Joi.string().min(3).max(255).allow(null, "").optional(),
+  full_name: Joi.string().min(3).max(255).optional().allow(null, ""),
 
-  email: Joi.string().email().allow(null, "").optional().messages({
+  email: Joi.string().email().optional().allow(null, "").messages({
     "string.email": "Email must be a valid email address.",
   }),
 
-  phone_number: Joi.string().min(7).max(20).allow(null, "").optional(),
+  phone_number: Joi.string().min(7).max(20).optional().allow(null, ""),
 
   category_id: Joi.string()
     .required()
@@ -34,37 +34,64 @@ const createComplaintSchema = Joi.object({
       "any.invalid": "Sector node ID must be a valid UUID.",
     }),
 
-  title: Joi.string().min(5).max(255).required().messages({
-    "string.empty": "Complaint title is required.",
-    "string.min": "Title must be at least 5 characters long.",
-  }),
+  department_id: Joi.string()
+    .required()
+    .custom((value, helpers) => {
+      if (!isUuid(value)) return helpers.error("any.invalid");
+      return value;
+    })
+    .messages({
+      "any.required": "Department node is required.",
+      "any.invalid": "Department node ID must be a valid UUID.",
+    }),
 
   description: Joi.string().min(10).required().messages({
     "string.empty": "Complaint description is required.",
     "string.min": "Description must be at least 10 characters long.",
   }),
 
-  location: Joi.string().allow(null, "").optional(),
+  concern_to_user_name: Joi.string().min(10).optional().allow("").messages({
+    "string.min": "Concern User Name must be at least 10 characters long.",
+  }),
 
-  incident_date: Joi.date().allow(null).optional().messages({
+  location: Joi.object({
+    city: Joi.string().required().messages({
+      "any.required": "City is required.",
+      "string.base": "City must be a string.",
+    }),
+    subcity: Joi.string().required().messages({
+      "any.required": "Subcity is required.",
+      "string.base": "Subcity must be a string.",
+    }),
+    woreda: Joi.string().required().messages({
+      "any.required": "Woreda is required.",
+      "string.base": "Woreda must be a string.",
+    }),
+  })
+    .optional()
+    .allow(null),
+
+  incident_date: Joi.date().optional().allow(null).messages({
     "date.base": "Incident date must be a valid date.",
   }),
 
   is_anonymous: Joi.boolean().optional(),
 
-  captcha_token: Joi.string().required().messages({
-    "string.empty": "Captcha token is required.",
-  }),
+  request: Joi.string().optional().allow(null, ""),
 
-  ip_address: Joi.string().ip().allow(null, "").optional(),
+  ip_address: Joi.string().ip().optional().allow(null, ""),
+
+  attachment_ids: Joi.array()
+    .items(Joi.string().guid({ version: "uuidv4" }))
+    .optional()
+    .allow(null),
 });
 
 // =================== Update Complaint Schema ===================
 const updateComplaintSchema = Joi.object({
-  title: Joi.string().min(5).max(255).optional(),
   description: Joi.string().min(10).optional(),
-  location: Joi.string().allow(null, "").optional(),
-  incident_date: Joi.date().allow(null).optional(),
+  location: Joi.string().optional().allow(null, ""),
+  incident_date: Joi.date().optional().allow(null),
   status: Joi.string()
     .valid("pending", "in_progress", "resolved", "rejected")
     .optional(),
