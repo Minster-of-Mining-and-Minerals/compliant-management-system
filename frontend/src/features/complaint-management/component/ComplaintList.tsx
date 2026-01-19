@@ -85,12 +85,12 @@ const columns: ColumnDef<Complaint>[] = [
               <Eye className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon">
+          {/* <Button variant="ghost" size="icon">
             <Edit className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon">
             <Trash className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </div>
       );
     },

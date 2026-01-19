@@ -61,7 +61,12 @@
       "evidencePlaceholder": "Upload any supporting documents or evidence",
       "optional": "Optional"
     },
-
+    "toast": {
+      "success": {
+        "submitted": "Your complaint has been submitted successfully.",
+        "errors": "There were some errors. Please check the form and try again."
+      }
+    },
     "buttons": {
       "cancel": "Cancel",
       "submit": "Submit {category}"
@@ -140,6 +145,15 @@
       "feedbackPlaceholder": "Describe your feedback in detail",
       "rating": "Rating",
       "selectRating": "Select a rating"
+    },
+    "toast": {
+      "success": {
+        "submitted": "Your feedback has been submitted successfully."
+      },
+      "error": {
+        "unexpected": "An unexpected error occurred. Please try again later.",
+        "errors": "There were some errors. Please check the form and try again."
+      }
     },
     "actions": {
       "submit": "Submit Feedback",

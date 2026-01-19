@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ReduxProvider from "@/providers/ReduxProvider";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { NextIntlClientProvider } from "next-intl";
-import {setRequestLocale} from 'next-intl/server';
-import {hasLocale} from 'next-intl';
-import {notFound} from 'next/navigation';
-import {routing} from '@/i18n/routing';
+import { setRequestLocale } from "next-intl/server";
+import { hasLocale } from "next-intl";
+import { notFound } from "next/navigation";
+import { routing } from "@/i18n/routing";
+import { Toaster } from "@/components/ui/sonner";
+import NextTopLoader from "nextjs-toploader";
 
 type Props = {
   children: React.ReactNode;
@@ -43,12 +44,11 @@ export default async function LocaleLayout({ children, params }: Props) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased text-primary`}
       >
+        <NextTopLoader showSpinner={false} />
         <NextIntlClientProvider>
-          <ReduxProvider>
-            {children}
-            <ToastContainer position="top-right" autoClose={3000} />
-          </ReduxProvider>
+          <ReduxProvider>{children}</ReduxProvider>
         </NextIntlClientProvider>
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

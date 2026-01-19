@@ -18,7 +18,7 @@ function Compliants() {
       onClick: () => setActiveTab("complaints"),
     },
     {
-      label: "Complainants",
+      label: "Complainers",
       icon: <Users className="h-4 w-4" />,
       variant: activeTab === "complainants" ? "default" : "outline",
       size: "default",

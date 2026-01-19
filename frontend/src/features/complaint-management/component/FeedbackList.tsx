@@ -16,6 +16,7 @@ import {
 import { Feedback } from "@/redux/types/feedback";
 import { Star } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
+import Link from "next/link";
 
 /* ----------------------------------
    TABLE COLUMNS
@@ -77,14 +78,18 @@ const columns: ColumnDef<Feedback>[] = [
     {
         id: "actions",
         header: "Actions",
-        cell: ({ row }) => (
+        cell: ({ row }) => { 
+            const feedbackId = row.original.feedback_id;
+            return (
             <div className="flex items-center gap-1">
                 <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleView(row.original)}
                 >
+                    <Link href={`/feedbacks/${feedbackId}`}>
                     <Eye className="h-4 w-4" />
+                    </Link>
                 </Button>
                 <Button
                     variant="ghost"
@@ -102,7 +107,7 @@ const columns: ColumnDef<Feedback>[] = [
                     <Trash className="h-4 w-4" />
                 </Button>
             </div>
-        ),
+        )}
     },
 ];
 
@@ -252,23 +257,19 @@ export default function FeedbackTable() {
                             size="icon"
                             onClick={() => handleView(row.original)}
                         >
-                            <Eye className="h-4 w-4" />
+                            <Link href={`/feedbacks/${row.original.feedback_id}`}> 
+                                 <Eye className="h-4 w-4" />
+                            </Link>
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(row.original)}
-                        >
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
+                         
+                        {/* <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDeleteFeedback(row.original.feedback_id)}
                             className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
                             <Trash className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                     </div>
                 ),
             };

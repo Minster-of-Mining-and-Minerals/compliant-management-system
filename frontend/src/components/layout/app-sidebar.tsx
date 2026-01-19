@@ -76,10 +76,18 @@ const userManagementItems = [
     icon: Key,
   },
 ];
+const stripLocale = (pathname: string) => {
+  const segments = pathname.split("/");
+  // if first segment is locale (en, am, etc)
+  if (segments.length > 1 && ["en", "am"].includes(segments[1])) {
+    return "/" + segments.slice(2).join("/");
+  }
+  return pathname;
+};
 
 export function AppSidebar() {
-  const pathname = usePathname();
-
+  const allPathname = usePathname();
+  const pathname = stripLocale(allPathname);
   return (
     <Sidebar collapsible="icon" variant="floating" className="">
       <SidebarHeader className="py-10">
