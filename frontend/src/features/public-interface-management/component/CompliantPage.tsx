@@ -162,9 +162,8 @@ const ComplaintPage = () => {
       };
 
       const result = await createComplaint(payload).unwrap();
-
-      if (result?.success) {
-        toast.success(result.message || t("success.submitted"));
+        console.log(t("toast.success.submitted"));
+        toast.success(t("toast.success.submitted"));
 
         // Reset all form fields
         setSectorId("");
@@ -185,12 +184,9 @@ const ComplaintPage = () => {
         if (complaintCategories.length > 0) {
           setComplaintCategoryId(complaintCategories[0].category_id);
           setComplaintCategoryName(complaintCategories[0].name);
-        }
-      } else {
-        toast.error(result?.message || t("error.submitFailed"));
-      }
+        }      
     } catch (err: any) {
-      toast.error(err?.data?.message || err?.message || t("error.unexpected"));
+      toast.error(err?.data?.message || err?.message || t("toast.error.unexpected"));
     }
   };
 

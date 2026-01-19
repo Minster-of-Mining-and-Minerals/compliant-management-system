@@ -59,7 +59,7 @@ const FeedbackPage = () => {
       };
 
       const result = await createFeedback(feedbackData).unwrap();
-      toast.success(t("success.message"));
+      toast.success(t("toast.success.submitted"));
       // Reset form
       setSectorId("");
       setFullName("");
@@ -74,7 +74,7 @@ const FeedbackPage = () => {
       } else if (error.message) {
         toast.error(error.message);
       } else {
-        toast.error(t("error.unexpected"));
+        toast.error(t("toast.error.errors"));
       }
     }
   };

@@ -11,10 +11,12 @@ import { signIn } from "@/auth";
 import { login } from "@/actions/user";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { set } from "react-hook-form";
 
 export default function ExternalLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { update } = useSession();
 
@@ -27,6 +29,7 @@ export default function ExternalLogin() {
   });
 
   const onSubmit = async (e: React.FormEvent) => {
+    setIsLoading(true);
     e.preventDefault();
     console.log(formData.email, formData.password, "formData");
     const result = await login(formData.email as string, formData.password as string);
@@ -40,6 +43,7 @@ export default function ExternalLogin() {
       router.push(callbackUrl || "/dashboard");
 
     }
+    setIsLoading(false);
   };
 
   return (
@@ -134,7 +138,7 @@ export default function ExternalLogin() {
                 type="submit"
                 className="w-full bg-golden-dark hover:bg-golden-darkHover h-14  text-xl text-white py-2 rounded-md shadow-md"
               >
-                Log In
+                {isLoading ? "Logging In..." : "Log In"}
               </button>
             </form>
 
