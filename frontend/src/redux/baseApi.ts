@@ -23,6 +23,8 @@ export const baseApi = createApi({
     "SectorNode",
     "Complaint",
     "ComplaintCategory",
+    "ComplaintAssignment",
+    "ComplaintResolution",
     "Attachment",
     "Feedback",
   ],

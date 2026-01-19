@@ -9,6 +9,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "attachment_id",
         as: "complaintAttachments",
       });
+      // Junction: Attachment ↔ ResolutionAttachemnt
+      Attachment.hasMany(models.ResolutionAttachment, {
+        foreignKey: "attachment_id",
+        as: "resolutionAttachments",
+      });
       // Junction: Attachment ↔ ComplaintNote
       Attachment.hasMany(models.ComplaintNote, {
         foreignKey: "attachment_id",
@@ -47,7 +52,7 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "attachments",
       timestamps: false,
       underscored: true,
-    }
+    },
   );
 
   return Attachment;
