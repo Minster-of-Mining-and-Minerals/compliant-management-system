@@ -25,6 +25,8 @@ const sectorRoute = require("./routers/sector-routes/sectorRoutes");
 // ================== Compliant Routes ==========================
 const complaintCategoryRoute = require("./routers/compliant-routes/compliantCategoryRoute");
 const complaintRoute = require("./routers/compliant-routes/complaintRoutes");
+const complaintResolutionRoute = require("./routers/compliant-routes/complaintResolutionRoutes");
+const complaintAssignmentRoute = require("./routers/compliant-routes/complaintAssignmentRoutes");
 
 // ================== Feedback Routes ==========================
 const feedbackRoute = require("./routers/feedback-routes/feedbackRoutes");
@@ -49,7 +51,7 @@ app.use(
         throw error;
       }
     },
-  })
+  }),
 );
 
 app.use(bodyParser.json({ limit: "10mb" }));
@@ -66,7 +68,7 @@ app.use(
         res.set("Content-Disposition", "inline");
       }
     },
-  })
+  }),
 );
 
 app.use(
@@ -77,7 +79,7 @@ app.use(
       res.set("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS");
       res.set("Access-Control-Allow-Headers", "Content-Type");
     },
-  })
+  }),
 );
 
 // ================== CORS Configuration ==================
@@ -124,6 +126,8 @@ app.use("/api/sector-nodes", sectorRoute);
 // ================== Api Complaint Category Routes =====================
 app.use("/api/complaint-categories", complaintCategoryRoute);
 app.use("/api/complaints", complaintRoute);
+app.use("/api/complaint-assignments", complaintAssignmentRoute);
+app.use("/api/complaint-resolutions", complaintResolutionRoute);
 
 // ================== Api Feedback Routes =====================
 app.use("/api/feedbacks", feedbackRoute);
