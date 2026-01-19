@@ -30,11 +30,15 @@ const createUserSchema = Joi.object({
     "string.guid": "Sector node ID must be a valid UUID.",
   }),
 
+  department_id: Joi.string().guid({ version: "uuidv4" }).optional().messages({
+    "string.guid": "Department ID must be a valid UUID.",
+  }),
+
   role_ids: Joi.array()
     .items(
       Joi.string()
         .guid({ version: "uuidv4" })
-        .messages({ "string.guid": "Each role ID must be a valid UUID." })
+        .messages({ "string.guid": "Each role ID must be a valid UUID." }),
     )
     .optional()
     .allow(null)

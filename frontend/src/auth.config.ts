@@ -24,7 +24,7 @@ export default {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({ email, password }),
-            }
+            },
           );
 
           console.log("Authorize response status:", res.status);
@@ -44,10 +44,12 @@ export default {
             phone_number: user.phone_number,
             profile_image: user.profile_image,
             is_first_logged_in: user.is_first_logged_in,
+            sector: user.sector,
+            department: user.department,
             role: roles?.[0]?.name ?? null,
             roles: roles ?? [],
             permissions: data.roles?.flatMap((r: Role) =>
-              r.permissions.map((p: any) => p.name)
+              r.permissions.map((p: any) => p.name),
             ),
           };
         } catch (err) {

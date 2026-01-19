@@ -1,5 +1,5 @@
 "use client";
-
+import { useSession } from "next-auth/react";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -39,35 +39,37 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { data: session, status } = useSession();
+  console.log("session: ", session)
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [selectedSector, setSelectedSector] = useState<string>("");
-  const [selectedType, setSelectedType] = useState<string>("");
+  const [sectorId, setSectorId] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [departmentId, setDepartmentId] = useState("");
 
   const { data: rolesResponse } = useGetRolesQuery();
-  const {
-    data: sectorsResponse,
-    refetch,
-  } = useGetSectorNodesQuery();
-
+  const { data = [] } = useGetSectorNodesQuery();
+  const { data: userTypes = [] } = useGetUserTypesQuery();
 
 
   const roles = rolesResponse || [];
-  const sectors = sectorsResponse || [];
+  const root = data.filter((item) => item.parent_id === null);
+  const sectors = root.flatMap((root) => root.children || []);
 
-  const {
-    data: userTypes = [],
-    isLoading: isLoadingType,
-    isError: typeError,
-    refetch: refetchType,
-  } = useGetUserTypesQuery();
 
   const [createUser, { isLoading }] = useCreateUserMutation();
   const userTypeId = userTypes?.find(
     (type: any) => type.name === user_type
   )?.user_type_id;
+
+  const handleSectorChange = (value: string) => {
+    setSectorId(value);
+    setDepartmentId("");
+    const selectedSector = data.find((item) => item.sector_node_id === value);
+    setDepartments(selectedSector?.children || []);
+  };
 
   const handleSubmit = async () => {
     if (!fullName || !email || !selectedRoles.length) {
@@ -88,10 +90,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       ...(
         sector_node_id
           ? { sector_node_id }
-          : selectedSector
-            ? { sector_node_id: selectedSector }
+          : sectorId
+            ? { sector_node_id: sectorId }
             : {}
       ),
+      ...(departmentId && { department_id: departmentId }),
       ...(phoneNumber && { phone_number: phoneNumber }),
       ...(userTypeId && { user_type_id: userTypeId }),
     };
@@ -109,7 +112,6 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     setFullName("");
     setEmail("");
     setPhoneNumber("");
-    setSelectedType("");
     setSelectedRoles([]);
     onClose();
   };
@@ -149,8 +151,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 </Label>
 
                 <Select
-                  value={selectedSector}
-                  onValueChange={setSelectedSector}
+                  value={sectorId} onValueChange={handleSectorChange} disabled={isLoading}
                 >
                   <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-[#094C81] bg-white">
                     <SelectValue placeholder="Select Sector" />
@@ -169,6 +170,33 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 </Select>
               </div>
             )}
+            {/* Department Selection */}
+            <div className="w-full space-y-2">
+              <Label className="block text-sm text-golden-dark font-medium mb-2">
+                Department <span className="text-red-500">*</span>
+              </Label>
+
+              <Select
+                value={departmentId}
+                onValueChange={setDepartmentId}
+                disabled={!sectorId || isLoading}
+              >
+                <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-[#094C81] bg-white">
+                  <SelectValue placeholder="Select Sector" />
+                </SelectTrigger>
+
+                <SelectContent className="text-[#094C81] bg-white max-h-64 overflow-y-auto">
+                  {departments.map((dept) => (
+                    <SelectItem
+                      key={dept.sector_node_id}
+                      value={dept.sector_node_id}
+                    >
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-2">
               <Label className="block text-sm text-golden-dark font-medium mb-2">
