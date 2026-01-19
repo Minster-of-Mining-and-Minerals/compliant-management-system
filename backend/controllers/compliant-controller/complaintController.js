@@ -5,6 +5,7 @@ const {
   ComplaintCategory,
   ComplaintAttachment,
   sequelize,
+  UserType,
 } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const bcrypt = require("bcrypt");
@@ -85,6 +86,15 @@ const createComplaint = async (req, res) => {
         // Create user
         const tempPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        // Find the ID of the 'external' user type
+        const externalUserType = await UserType.findOne({
+          where: { name: "external" },
+          attributes: ["user_type_id"],
+        });
+
+        const externalUserTypeId = externalUserType
+          ? externalUserType.user_type_id
+          : null;
 
         const newUser = await User.create(
           {
@@ -95,33 +105,20 @@ const createComplaint = async (req, res) => {
             password: hashedPassword,
             is_first_logged_in: true,
             is_active: true,
+            user_type_id: externalUserTypeId,
             created_at: new Date(),
             updated_at: new Date(),
           },
-          { transaction: t }
+          { transaction: t },
         );
 
         compliant_user_id = newUser.user_id;
-
-        // Optional: send welcome email if email provided
-        if (email) {
-          await sendEmail(
-            email,
-            `Welcome to ${process.env.APP_NAME}`,
-            `
-            Dear ${full_name || "User"},
-            Your complaint has been submitted successfully.
-            Ticketing Code: ${ticketing_code}
-            Please save this ticketing code for future reference and tracking status of your complaint.
-          `
-          );
-        }
       }
     }
 
     // ====== Generate unique ticket code ======
     const ticketing_code = `TCK-${Date.now()}-${Math.floor(
-      Math.random() * 1000
+      Math.random() * 1000,
     )}`;
 
     // ====== Create complaint ======
@@ -145,7 +142,7 @@ const createComplaint = async (req, res) => {
         created_at: new Date(),
         updated_at: new Date(),
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     // Link attachments if provided
@@ -159,6 +156,21 @@ const createComplaint = async (req, res) => {
         attachment_id,
       }));
       await ComplaintAttachment.bulkCreate(links, { transaction: t });
+    }
+
+    // Send Email
+    // Optional: send welcome email if email provided
+    if (email) {
+      await sendEmail(
+        email,
+        `Welcome to ${process.env.APP_NAME}`,
+        `
+          Dear ${full_name || "User"},
+          Your complaint has been submitted successfully.
+          Ticketing Code: ${ticketing_code}
+          Please save this ticketing code for future reference and tracking status of your complaint.
+          `,
+      );
     }
 
     await t.commit();
@@ -307,7 +319,7 @@ const updateComplaint = async (req, res) => {
 
     await complaint.update(
       { ...updateData, updated_at: new Date() },
-      { transaction: t }
+      { transaction: t },
     );
     await t.commit();
 

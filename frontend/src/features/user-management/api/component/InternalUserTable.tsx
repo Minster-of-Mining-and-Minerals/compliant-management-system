@@ -162,7 +162,7 @@ export default function InternalUserTable({ sideActions }: UserTableProps) {
         },
 
         {
-            label: "New Internal User",
+            label: "Create User",
             icon: <Plus className="h-4 w-4" />,
             variant: "default",
             onClick: () => setModalOpen(true),

@@ -31,9 +31,13 @@ const columns: ColumnDef<Complaint>[] = [
         ),
     },
     {
-        accessorKey: "title",
-        header: "Title",
-        cell: ({ row }) => <div>{row.getValue("title")}</div>,
+        accessorKey: "complainer",
+        header: "Complainer",
+        cell: ({ row }) => (
+            <span className="text-sm">
+                {row.original.user?.full_name ?? "Anonymous"}
+            </span>
+        ),
     },
     {
         id: "category",
@@ -90,10 +94,13 @@ const columns: ColumnDef<Complaint>[] = [
     },
 ];
 
+export interface ComplaintTableProps {
+    sideActions?: ActionButton[];
+}
 /* ----------------------------------
    COMPONENT
 ----------------------------------- */
-export default function ComplaintTable() {
+export default function ComplaintTable({ sideActions }: ComplaintTableProps) {
     const { data = [], isLoading, isError } = useGetComplaintsQuery();
     const [deleteComplaint] = useDeleteComplaintMutation();
 
@@ -142,7 +149,7 @@ export default function ComplaintTable() {
     );
 
     return (
-        <TableLayout actions={actions} filters={filters} filterColumnsPerRow={1}>
+        <TableLayout actions={actions} sideActions={sideActions} filters={filters} filterColumnsPerRow={1}>
             <DataTable
                 columns={columns}
                 data={paginatedData}
