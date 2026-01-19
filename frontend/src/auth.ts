@@ -1,12 +1,13 @@
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
 import { JWT } from "next-auth/jwt";
+import { SectorNode } from "./redux/types/sectorNode";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
-    maxAge: 3 * 60 * 60,  // 3 hours
+    maxAge: 3 * 60 * 60, // 3 hours
     updateAge: 25 * 60,
   },
   pages: {
@@ -23,6 +24,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           phone_number: user.phone_number,
           profile_image: user.profile_image,
           is_first_logged_in: user.is_first_logged_in,
+          sector: user.sector,
+          department: user.department,
           roles: user.roles,
           permissions: user.permissions,
           accessToken: user.accessToken,
@@ -45,6 +48,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           phone_number: token.phone_number,
           profile_image: token.profile_image,
           is_first_logged_in: token.is_first_logged_in,
+          sector: token.sector,
+          department: token.department,
           roles: token.roles,
           permissions: token.permissions,
         },
@@ -71,6 +76,8 @@ declare module "next-auth" {
         key: string;
       }>;
     }>;
+    sector?: SectorNode;
+    department?: SectorNode;
     permissions?: string[] | null;
   }
 
@@ -87,6 +94,8 @@ declare module "next-auth" {
       phone_number?: string | null;
       profile_image?: string | null;
       is_first_logged_in?: boolean;
+      sector?: SectorNode;
+      department?: SectorNode;
       roles?: Array<{
         role_id: string;
         name: string;
@@ -109,6 +118,8 @@ declare module "next-auth/jwt" {
     phone_number?: string | null;
     profile_image?: string | null;
     is_first_logged_in?: boolean;
+    sector?: SectorNode;
+    department?: SectorNode;
     roles?: Array<{
       role_id: string;
       name: string;

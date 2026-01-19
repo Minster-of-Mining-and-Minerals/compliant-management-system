@@ -1,4 +1,10 @@
-const { User, Role, RolePermission, Permission } = require("../../models");
+const {
+  User,
+  Role,
+  RolePermission,
+  Permission,
+  SectorNode,
+} = require("../../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -31,6 +37,16 @@ const login = async (req, res) => {
               ],
             },
           ],
+        },
+        {
+          model: SectorNode,
+          as: "sectorNode",
+          attributes: ["sector_node_id", "name", "level"],
+        },
+        {
+          model: SectorNode,
+          as: "department",
+          attributes: ["sector_node_id", "name", "level"],
         },
       ],
     });
@@ -65,13 +81,13 @@ const login = async (req, res) => {
         permissions: userRoles.flatMap((r) => r.permissions),
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
     );
 
     // Update last login
     await User.update(
       { last_login_at: new Date() },
-      { where: { user_id: user.user_id } }
+      { where: { user_id: user.user_id } },
     );
 
     return res.status(200).json({
@@ -86,6 +102,8 @@ const login = async (req, res) => {
           phone_number: user.phone_number,
           profile_image: user.profile_image,
           is_first_logged_in: user.is_first_logged_in,
+          sector: user.sectorNode || null,
+          department: user.department || null,
         },
         roles: userRoles,
       },

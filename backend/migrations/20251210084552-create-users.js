@@ -29,6 +29,16 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
+      department_id: {
+        type: Sequelize.UUID,
+        allowNull: true,
+        references: {
+          model: "sector_nodes",
+          key: "sector_node_id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
       full_name: {
         type: Sequelize.STRING(100),
         allowNull: false,

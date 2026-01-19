@@ -76,6 +76,7 @@ const createUser = async (req, res) => {
       email,
       user_type_id,
       sector_node_id,
+      department_id,
       role_ids,
       phone_number,
     } = req.body;
@@ -114,6 +115,17 @@ const createUser = async (req, res) => {
       }
     }
 
+    // ====== Validate department if provided ======
+    const department = await SectorNode.findByPk(department_id, {
+      transaction: t,
+    });
+    if (!department) {
+      await t.rollback();
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid department." });
+    }
+
     // ====== MULTIPLE ROLE VALIDATION ======
     if (role_ids && Array.isArray(role_ids) && role_ids.length > 0) {
       const roles = await Role.findAll({
@@ -145,12 +157,13 @@ const createUser = async (req, res) => {
         phone_number,
         user_type_id,
         sector_node_id,
+        department_id: department_id || null,
         is_first_logged_in: true,
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     // =======================================================
@@ -181,7 +194,7 @@ const createUser = async (req, res) => {
       Email: ${email}
       Temporary Password: ${password}
       Please change your password after first login.
-    `
+    `,
     );
 
     return res.status(201).json({
@@ -261,7 +274,7 @@ const updateUser = async (req, res) => {
         is_active: is_active ?? user.is_active,
         updated_at: new Date(),
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     // ====== Update roles if provided ======
@@ -438,7 +451,7 @@ const deleteUser = async (req, res) => {
     // Soft delete (deactivate)
     await user.update(
       { is_active: false, updated_at: new Date() },
-      { transaction: t }
+      { transaction: t },
     );
     await t.commit();
 
@@ -488,7 +501,7 @@ const toggleUserActiveStatus = async (req, res) => {
 
     await user.update(
       { is_active, updated_at: new Date() },
-      { transaction: t }
+      { transaction: t },
     );
     await t.commit();
 
@@ -539,7 +552,7 @@ const resetUserPassword = async (req, res) => {
         is_first_logged_in: false,
         updated_at: new Date(),
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
@@ -554,7 +567,7 @@ const resetUserPassword = async (req, res) => {
       Email: ${user.email}
       New Temporary Password: ${newPassword}
       Please change your password after logging in.
-      `
+      `,
     );
 
     return res.status(200).json({
