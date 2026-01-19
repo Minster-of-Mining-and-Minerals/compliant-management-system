@@ -88,12 +88,12 @@ export function CreateChildModal({
       <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] max-h-[85vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-primary">
+          <h2 className="text-lg font-semibold text-secondary">
             Create Child
           </h2>
           <button
             onClick={handleClose}
-            className="text-primary hover:text-gray-600 transition-colors duration-200"
+            className="text-secondary hover:text-gray-600 transition-colors duration-200"
             aria-label="Close modal"
           >
             <XIcon className="w-6 h-6 cursor-pointer" />
@@ -107,7 +107,7 @@ export function CreateChildModal({
             <div>
               <Label
                 htmlFor="sector-name"
-                className="block text-sm text-golden-dark font-medium mb-2"
+                className="block text-sm text-secondary font-medium mb-2"
               >
                 Sector Name <span className="text-red-500">*</span>
               </Label>
@@ -115,7 +115,7 @@ export function CreateChildModal({
                 id="sector-name"
                 placeholder="Enter sector name"
                 value={name}
-                className="w-full h-10 border border-golden-dark"
+                className="w-full h-10 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={isCreatingNode}
@@ -126,7 +126,7 @@ export function CreateChildModal({
             <div>
               <Label
                 htmlFor="sector-description"
-                className="block text-sm text-golden-dark font-medium mb-2"
+                className="block text-sm text-[#094C81] font-medium mb-2"
               >
                 Description
               </Label>
@@ -156,7 +156,7 @@ export function CreateChildModal({
             <Button
               type="submit"
               disabled={isCreatingNode || !name.trim()}
-              className="bg-golden-dark px-7 flex items-center justify-center hover:bg-golden-darkHover text-white"
+              className="bg-primary px-7 flex items-center justify-center hover:bg-primary/80 text-white"
             >
               {isCreatingNode ? "Creating..." : "Create"}
             </Button>

@@ -1,10 +1,8 @@
 import PublicHeader from "@/components/layout/public-header";
 import Image from "next/image";
 import Link from "next/link";
-import {useTranslations} from 'next-intl';
 
 export default function Home() {
-  const t = useTranslations('HomePage'); 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden font-sans">
       {/* Decorative Background Pattern */}
@@ -40,17 +38,18 @@ export default function Home() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-golden-dark opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-golden-dark"></span>
             </span>
-            {t('badge')}
+           Official Public Complaint & Feedback Platform
           </div>
+
           <h1 className="text-4xl sm:text-5xl md:text-4xl font-bold text-gray-900 leading-tight">
-            {t('heading.line1')}
+            Ensure Transparency and Accountability
             <span className="block text-primary mt-2">
-             {t('heading.line2')}
+             in the Mining Sector
             </span>
           </h1>
 
           <p className="text-lg text-gray-600 max-w-3xl mx-auto mt-6 leading-relaxed">
-           {t('description')}
+           A secure and transparent digital platform established by the Ministry of Mining to receive, track, and resolve public complaints and feedback related to mining activities. Empowering citizens, improving service delivery, and strengthening governance through accountability.
           </p>
 
           {/* CTA Buttons */}
@@ -61,7 +60,7 @@ export default function Home() {
                 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 
                 hover:bg-golden-darkHover transition-all duration-200 text-lg"
             >
-              {t('actions.complaint')}
+              Submit a Complaint
             </Link>
             <Link
               href="/feedback"
@@ -69,7 +68,7 @@ export default function Home() {
                 border border-primary/20 hover:border-primary/40 hover:bg-golden-metallic
                 transition-all duration-200 text-lg"
             >
-              {t('actions.feedback')}
+              Provide Feedback
             </Link>
           </div>
 

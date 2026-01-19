@@ -144,7 +144,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             {/* Sector Selection (only if not passed from parent) */}
             {!sector_node_id && user_type === "internal" && (
               <div className="w-full space-y-2">
-                <Label className="block text-sm text-golden-dark font-medium mb-2">
+                <Label className="block text-sm text-[#094C81] font-medium mb-2">
                   Sector <span className="text-red-500">*</span>
                 </Label>
 
@@ -152,7 +152,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   value={selectedSector}
                   onValueChange={setSelectedSector}
                 >
-                  <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-[#094C81] bg-white">
+                  <SelectTrigger className="w-full h-12 border border-gray-300 px-4 py-5 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none">
                     <SelectValue placeholder="Select Sector" />
                   </SelectTrigger>
 
@@ -171,29 +171,29 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             )}
 
             <div className="space-y-2">
-              <Label className="block text-sm text-golden-dark font-medium mb-2">
+              <Label className="block text-sm text-[#094C81] font-medium mb-2">
                 Full Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full h-12 border border-golden-dark "
+                className="w-full h-12 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
               />
             </div>
             <div className="space-y-2">
-              <Label className="block text-sm text-golden-dark font-medium mb-2">
+              <Label className="block text-sm text-[#094C81] font-medium mb-2">
                 Phone Number <span className="text-red-500">*</span>
               </Label>
               <Input
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="+251 9xxxxxxx"
-                className="w-full h-12 border border-golden-dark "
+                className="w-full h-12 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
               />
             </div>
             <div className="space-y-2">
-              <Label className="block text-sm text-golden-dark font-medium mb-2">
+              <Label className="block text-sm text-[#094C81] font-medium mb-2">
                 Email <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -201,21 +201,21 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="john@example.com"
-                className="w-full h-12 border border-golden-dark"
+                className="w-full h-12 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
               />
             </div>
             {/* ROLE */}
             {/* ROLE MULTI SELECT */}
 
             <div className="w-full space-y-2">
-              <Label className="text-sm font-medium text-golden-dark">
+              <Label className="text-sm font-medium text-[#094C81]">
                 Role <span className="text-red-500">*</span>
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full max-h-28 min-h-12 h-fit border border-golden-dark p-2 rounded-md mt-1 text-[#094C81] bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-golden-dark   transition-all duration-200"
+                    className="w-full max-h-28 min-h-12 h-fit border border-gray-300 p-2 rounded-md mt-1 text-[#094C81] bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#094C81] focus:ring-offset-2 transition-all duration-200"
                   >
                     <div className="flex flex-wrap items-center gap-2 w-full">
                       {selectedRoles.length === 0 && (

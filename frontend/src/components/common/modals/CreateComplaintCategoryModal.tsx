@@ -10,7 +10,6 @@ import {
     useCreateComplaintCategoryMutation,
 } from "@/redux/api/complaintCategoryApi";
 import { CreateComplaintCategoryPayload } from "@/redux/types/complaintCategory";
-import { TextArea } from "@/components/ui/textarea";
 
 interface CreateComplaintCategoryModalProps {
     isOpen: boolean;
@@ -65,7 +64,7 @@ export const CreateComplaintCategoryModal: React.FC<
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
             onClick={handleBackdropClick}
         >
-            <div className="bg-white p-6 rounded-2xl w-full max-w-[500px] shadow-2xl">
+            <div className="bg-white p-6 rounded-2xl w-full max-w-[600px] shadow-2xl">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-[#094C81]">
@@ -82,27 +81,26 @@ export const CreateComplaintCategoryModal: React.FC<
                 {/* Content */}
                 <div className="flex flex-col space-y-4">
                     <div className="space-y-2">
-                        <Label className="text-sm font-medium text-golden-dark">
+                        <Label className="text-sm font-medium text-[#094C81]">
                             Category Name <span className="text-red-500">*</span>
                         </Label>
                         <Input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="e.g. Service Delay"
-                            className="h-12 border border-golden-dark px-4 rounded-md focus:ring focus:ring-golden-dark"
+                            className="h-12 border border-gray-300 px-4 rounded-md focus:ring focus:ring-[#094C81]"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-sm font-medium text-golden-dark">
+                        <Label className="text-sm font-medium text-[#094C81]">
                             Description
                         </Label>
-                        <TextArea
-                            rows={3}
+                        <Input
                             value={description}
-                            onChange={(val) => setDescription(val)}
+                            onChange={(e) => setDescription(e.target.value)}
                             placeholder="Optional description"
-                            className="border border-golden-dark px-4 rounded-md focus:ring focus:ring-golden-dark"
+                            className="h-12 border border-gray-300 px-4 rounded-md focus:ring focus:ring-[#094C81]"
                         />
                     </div>
                 </div>

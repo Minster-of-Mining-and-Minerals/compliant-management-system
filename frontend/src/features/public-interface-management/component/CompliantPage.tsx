@@ -12,12 +12,8 @@ import {
 } from "@/components/ui/select";
 import { TextArea } from "@/components/ui/textarea";
 import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FileUploadField } from "@/components/ui/FileUploadField";
-import { useGetComplaintCategoriesQuery } from "@/redux/api/complaintCategoryApi";
-import { Cat } from "lucide-react";
-import { useTranslations } from "next-intl";
-
 interface ComplaintFormValues {
   attachment_id: File[];
 }
@@ -28,36 +24,19 @@ const ComplaintPage = () => {
   const [departmentId, setDepartmentId] = useState("");
   const [complaintDescription, setComplaintDescription] = useState("");
   const [isPersonalInfoOpen, setIsPersonalInfoOpen] = useState(true);
-  const [isTogglingPersonalInfo, setIsTogglingPersonalInfo] = useState(false); 
-  const [complaintCategoryId, setComplaintCategoryId] = useState("");
-const [complaintCategoryName, setComplaintCategoryName] = useState("");
-const t = useTranslations("ComplaintPage");
+  const [isTogglingPersonalInfo, setIsTogglingPersonalInfo] = useState(false);
 
   const { data = [], isLoading, isError, refetch } = useGetSectorNodesQuery();
   const root = data.filter((item) => item.parent_id === null);
-  const {
-    data: complaintCategories = [],
-    isLoading: isLoadingCategories,
-    isError: isErrorCategories,
-  } = useGetComplaintCategoriesQuery({ is_active: true });
 
   const sectors = root.flatMap((root) => root.children || []);
+
   const handleSectorChange = (value: string) => {
     setSectorId(value);
     setDepartmentId("");
     const selectedSector = data.find((item) => item.sector_node_id === value);
     setDepartments(selectedSector?.children || []);
   };
-
-  const handleComplaintCategoryChange = (value: string) => {
-  const selectedCategory = complaintCategories.find(
-    (cat) => cat.category_id === value
-  );
-
-  setComplaintCategoryId(value);
-  setComplaintCategoryName(selectedCategory?.name || "");
-};
-
 
   const handlePersonalInfoToggle = () => {
     setIsTogglingPersonalInfo(true);
@@ -67,16 +46,6 @@ const t = useTranslations("ComplaintPage");
     setIsTogglingPersonalInfo(false);
   };
 
-  useEffect(() => {
-  if (
-    complaintCategories.length > 0 &&
-    !complaintCategoryId
-  ) {
-    setComplaintCategoryId(complaintCategories[0].category_id);
-    setComplaintCategoryName(complaintCategories[0].name);
-  }
-}, [complaintCategories, complaintCategoryId]);
-    
   const [formValues, setFormValues] = useState<ComplaintFormValues>({
     attachment_id: [],
   });
@@ -91,9 +60,11 @@ const t = useTranslations("ComplaintPage");
   return (
     <main className="flex flex-col min-h-screen z-10 relative  mx-auto px-4 sm:px-6 lg:px-20 pt-32 pb-16">
       <div className="mb-8 border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Submit a Complaint</h1>
         <p className="mt-2 text-sm text-gray-600 max-w-2xl">
-          {t("subtitle")}
+          Please fill out the form below to submit your complaint. Provide
+          accurate and complete information to help us process your complaint
+          efficiently.
         </p>
       </div>
       <div className="grid grid-cols-3 gap-8">
@@ -102,17 +73,16 @@ const t = useTranslations("ComplaintPage");
             <div className="flex flex-col rounded-md w-full shadow-md px-10 pt-5 pb-10 ">
               <div className="flex justify-between">
                 <h1 className="block text-primary font-semibold text-lg ">
-                  {t("personalInfo.title")}
+                  Personal Information
                   <span className="ml-2 text-sm font-normal text-gray-500">
-                    {t("personalInfo.optional")}
+                    (Optional)
                   </span>
                 </h1>
 
                 <button
                   type="button"
-                  className={`p-0 transition-all duration-200 ${
-                    isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
-                  }`}
+                  className={`p-0 transition-all duration-200 ${isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
+                    }`}
                   onClick={handlePersonalInfoToggle}
                   disabled={isTogglingPersonalInfo}
                   title={
@@ -133,7 +103,7 @@ const t = useTranslations("ComplaintPage");
                 </button>
               </div>
               <div
-                className={`mt-4 p-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full
+                className={`mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full
     overflow-hidden transition-all duration-500 ease-in-out
     ${isPersonalInfoOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}
   `}
@@ -143,7 +113,7 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="fullName"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("personalInfo.fullName")}
+                    Full Name
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -151,7 +121,7 @@ const t = useTranslations("ComplaintPage");
                     id="fullName"
                     name="fullName"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder={t("personalInfo.fullNamePlaceholder")}
+                    placeholder="Enter your full name"
                     error={false}
                   />
                 </div>
@@ -160,7 +130,7 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="phoneNumber"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("personalInfo.phone")}
+                    Phone Number
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -168,7 +138,7 @@ const t = useTranslations("ComplaintPage");
                     id="phoneNumber"
                     name="phoneNumber"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder={t("personalInfo.phonePlaceholder")}
+                    placeholder="Enter your phone number"
                     error={false}
                   />
                 </div>
@@ -177,7 +147,7 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="email"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("personalInfo.email")}
+                    Email
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -185,7 +155,7 @@ const t = useTranslations("ComplaintPage");
                     id="email"
                     name="email"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder={t("personalInfo.emailPlaceholder")}
+                    placeholder="Enter your email address"
                     error={false}
                   />
                 </div>
@@ -194,7 +164,7 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="city"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("personalInfo.city")}
+                    City
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -202,7 +172,7 @@ const t = useTranslations("ComplaintPage");
                     id="city"
                     name="city"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder={t("personalInfo.cityPlaceholder")}
+                    placeholder="Enter your city"
                     error={false}
                   />
                 </div>
@@ -211,7 +181,7 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="subCity"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("personalInfo.subCity")}
+                    Subcity
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -219,7 +189,7 @@ const t = useTranslations("ComplaintPage");
                     id="subCity"
                     name="subCity"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder={t("personalInfo.subCityPlaceholder")}
+                    placeholder="Enter your subcity"
                     error={false}
                   />
                 </div>
@@ -228,7 +198,7 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="woreda"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("personalInfo.woreda")}
+                    Woreda
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -236,53 +206,24 @@ const t = useTranslations("ComplaintPage");
                     id="woreda"
                     name="woreda"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder={t("personalInfo.woredaPlaceholder")}
+                    placeholder="Enter your woreda"
                     error={false}
                   />
                 </div>
               </div>
             </div>
             <div className="flex flex-col rounded-md w-full shadow-md px-10 pt-5 pb-10 ">
-              <div className="flex justify-between items-center mb-4">
-                <h1 className="block text-primary font-semibold text-lg ">
-                  {t("details.title",{ category: complaintCategoryName })}
-                </h1>
-                <div className=" min-w-40">
-                  <label
-                    htmlFor="departmentReceivingComplaint"
-                    className="block text-sm  text-golden-dark"
-                  >
-                    {t("details.category")}
-                    <span className="text-red-500"> *</span>
-                  </label>
-                  <Select
-                    value={complaintCategoryId}
-                    onValueChange={handleComplaintCategoryChange}
-                  >
-                    <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder={t("details.categoryPlaceholder")} />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {complaintCategories?.map((category) => (
-                        <SelectItem
-                          key={category.category_id}
-                          value={category.category_id}
-                        >
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <h1 className="block text-primary font-semibold text-lg ">
+                Complaint Details
+              </h1>
               <div className="mt-4  gap-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
+
                 <div className="w-full">
                   <label
                     htmlFor="woreda"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("details.incidentDate")}
+                    Date of Incident
                     <span className="text-gray-500"> </span>
                   </label>
                   <Input
@@ -290,7 +231,8 @@ const t = useTranslations("ComplaintPage");
                     id="dateOfIncident"
                     name="dateOfIncident"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder={t("details.incidentDatePlaceholder")}
+                    placeholder="Enter your date of incident"
+
                   />
                 </div>
                 <div className="w-full">
@@ -298,14 +240,12 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="departmentReceivingComplaint"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("details.sector",
-                      { category: complaintCategoryName }
-                    )}
+                    Sector Receiving the Complaint
                     <span className="text-red-500"> *</span>
                   </label>
                   <Select value={sectorId} onValueChange={handleSectorChange}>
                     <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder={t("details.sectorPlaceholder", { category: complaintCategoryName })} />
+                      <SelectValue placeholder="Select Sector" />
                     </SelectTrigger>
 
                     <SelectContent>
@@ -325,9 +265,7 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="departmentReceivingComplaint"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("details.department",
-                      { category: complaintCategoryName }
-                    )}
+                    Department Receiving the Complaint
                     <span className="text-red-500"> *</span>
                   </label>
                   <Select
@@ -336,7 +274,7 @@ const t = useTranslations("ComplaintPage");
                     disabled={!sectorId}
                   >
                     <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder={t("details.departmentPlaceholder", { category: complaintCategoryName })} />
+                      <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
 
                     <SelectContent>
@@ -356,17 +294,15 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="nameOfPersonConcerned"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("details.personConcerned",
-                      { category: complaintCategoryName }
-                    )}
-                    <span className="text-gray-500"> ({t("details.optional")})</span>
+                    Name of the Person Concerned
+                    <span className="text-gray-500"> (Optional)</span>
                   </label>
                   <Input
                     type="text"
                     id="nameOfPersonConcerned"
                     name="nameOfPersonConcerned"
                     className="mt-1 w-full h-10   rounded-md text-sm border-golden-dark  focus:border-none"
-                    placeholder={t("details.personConcernedPlaceholder", { category: complaintCategoryName })}
+                    placeholder="Enter the name of the person concerned"
                     error={false}
                   />
                 </div>
@@ -375,13 +311,11 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="complaintDescription"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("details.description",
-                      { category: complaintCategoryName }
-                    )}
+                    Complaint Description
                     <span className="text-red-500"> *</span>
                   </label>
                   <TextArea
-                    placeholder={t("details.descriptionPlaceholder", { category: complaintCategoryName })}
+                    placeholder="Describe your complaint in detail"
                     rows={3}
                     id="complaintDescription"
                     className="mt-1 w-full rounded-md text-sm focus:border-none"
@@ -395,13 +329,11 @@ const t = useTranslations("ComplaintPage");
                     htmlFor="requestedAction"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("details.requestedAction",
-                      { category: complaintCategoryName }
-                    )}
-                    <span className="text-gray-500"> ({t("details.optional")})</span>
+                    Requested Action
+                    <span className="text-gray-500"> (Optional)</span>
                   </label>
                   <TextArea
-                    placeholder={t("details.requestedActionPlaceholder", { category: complaintCategoryName })}
+                    placeholder="Enter your requested action"
                     rows={3}
                     id="requestedAction"
                     className="mt-1 w-full  rounded-md text-sm border-golden-dark  focus:border-none"
@@ -410,46 +342,45 @@ const t = useTranslations("ComplaintPage");
                 </div>
                 <div className="w-full">
                   <label
-                    htmlFor="evidence"
+                    htmlFor="city"
                     className="block text-sm  text-golden-dark"
                   >
-                    {t("details.evidence",
-                      { category: complaintCategoryName }
-                    )}
+                    Evidence for the Complaint
                     <span className="text-gray-500"> (Optional)</span>
                   </label>
                   <FileUploadField
                     className=""
                     labelClass="text-sm  text-start w-fit font-medium text-[#094C81]"
                     id="attachment"
-                    label={t("details.evidencePlaceholder", { category: complaintCategoryName })}
+                    label="Attach File"
                     value={formValues.attachment_id || []}
                     onChange={(val) => handleChange("attachment_id", val)}
                   />
                 </div>
+
               </div>
             </div>
 
             <div className="flex justify-end gap-4 mt-6">
               <Button className="bg-golden-dark20 min-w-40 hover:bg-golden-dark30 h-12  text-base text-gray-600 py-2 rounded-md ">
-                {t("buttons.cancel",{ category: complaintCategoryName })}
+                Cancel
               </Button>
               <Button className=" bg-golden-dark min-w-52 hover:bg-golden-darkHover h-12  text-base text-white py-1 rounded-md shadow-md">
-                {t("buttons.submit",{ category: complaintCategoryName })}
+                Submit Complaint
               </Button>
             </div>
           </form>
         </div>
         <div className="col-span-3  md:col-span-1">
           <div className="sticky top-20  border border-gray-200 rounded-lg p-6 shadow-lg">
-            <h2 className="text-lg  text-gray-900 mb-4">{t("tips.title")}</h2>
+            <h2 className="text-lg  text-gray-900 mb-4">Complaint Tips</h2>
             <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
-              <li>{t("tips.items.0")}</li>
-              <li>{t("tips.items.1")}</li>
-              <li>{t("tips.items.2")}</li>
-              <li>{t("tips.items.3")}</li>
+              <li>Be clear and concise in your description.</li>
+              <li>Include relevant dates and details.</li>
+              <li>Attach any supporting documents if necessary.</li>
+              <li>Provide your contact information for follow-up.</li>
               <li>
-                {t("tips.items.4")}
+                Incomplete or unclear complaints may take longer to process.
               </li>
             </ul>
           </div>
