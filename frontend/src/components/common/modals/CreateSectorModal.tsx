@@ -177,12 +177,12 @@ export function CreateSectorModal({
             {/* parent_sector_node_id is provided then show the modal with width 500px else hasSelectedParent is true then show the modal with width 1000px else show the modal with width 700px */}
             <div className={`bg-white p-6 rounded-lg shadow-lg ${parent_sector_node_id ? "w-[400px]" : hasSelectedParent ? "w-[1000px]" : "min-w-[700px]"} max-h-[85vh] overflow-y-auto`}>
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold text-secondary">
+                    <h2 className="text-lg font-semibold text-primary">
                         Create Sector
                     </h2>
                     <button
                         onClick={handleClose}
-                        className="text-secondary hover:text-gray-600 transition-colors duration-200"
+                        className="text-primary hover:text-gray-600 transition-colors duration-200"
                     >
                         <XIcon className="w-6 h-6 cursor-pointer" />
                     </button>
@@ -203,7 +203,7 @@ export function CreateSectorModal({
                         {!parent_sector_node_id && (
                             <div className={`flex flex-col transition-all duration-500 ${isParentSelected ? 'w-1/2' : 'w-full'}`}>
                                 {/* Sector Selection */}
-                                <Label className="block text-sm text-secondary font-medium mb-2">
+                                <Label className="block text-sm text-golden-dark font-medium mb-2">
                                     Select Parent Sector {!isParentSelected && '(required)'}
                                 </Label>
 
@@ -219,15 +219,15 @@ export function CreateSectorModal({
                                                     onClick={goBack}
                                                     className="mb-2 flex items-center hover:bg-gray-100 rounded-md p-2 border-none outline-none shadow-none text-sm"
                                                 >
-                                                    <ArrowLeftIcon className="w-4 h-4 mr-2 text-secondary" />
-                                                    <span className="text-sm text-secondary font-medium">
+                                                    <ArrowLeftIcon className="w-4 h-4 mr-2 text-primary" />
+                                                    <span className="text-sm text-primary font-medium">
                                                         Back{" "}
                                                     </span>
                                                 </button>
                                             )}
                                             {/* Current Path Display */}
                                             {navigationStack.length > 0 && (
-                                                <div className="text-sm text-secondary font-medium mb-2">
+                                                <div className="text-sm text-primary font-medium mb-2">
                                                     Current: {getCurrentPath()}
                                                 </div>
                                             )}
@@ -238,12 +238,12 @@ export function CreateSectorModal({
                                                 <button
                                                     type="button"
                                                     className={`block border text-left w-full py-2 px-3 rounded-md mb-2 transition-colors ${selectedParentNode === null
-                                                        ? "bg-secondary/10 border border-secondary text-secondary"
+                                                        ? "bg-primary/10 border border-primary text-primary"
                                                         : "hover:bg-gray-100 border"
                                                         }`}
                                                     onClick={() => handleNodeSelect(null)}
                                                 >
-                                                    <div className="flex items-center text-sm text-secondary font-medium">
+                                                    <div className="flex items-center text-sm text-primary font-medium">
                                                         <span className="mr-2">
                                                             <GitForkIcon className="w-4 h-4" />
                                                         </span>
@@ -260,7 +260,7 @@ export function CreateSectorModal({
                                             {/* Sector Tree */}
                                             <div className="flex flex-col gap-2 space-y-1 max-h-60 overflow-y-auto">
                                                 {currentLevelNodes?.length === 0 ? (
-                                                    <p className="text-sm text-center py-4 text-secondary font-medium">
+                                                    <p className="text-sm text-center py-4 text-primary font-medium">
                                                         No sectors found at this level
                                                     </p>
                                                 ) : (
@@ -270,15 +270,15 @@ export function CreateSectorModal({
                                                             key={node.sector_node_id}
                                                             className={`flex border border-gray-300 rounded-md items-center
                                 hover:bg-green-50  pr-3
-                                ${selectedParentNode === node.sector_node_id ? "bg-green-100 border border-primary text-secondary " : ""}`}
+                                ${selectedParentNode === node.sector_node_id ? "bg-green-100 border border-primary text-primary " : ""}`}
                                                         >
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleNodeSelect(node.sector_node_id)}
-                                                                className={`block text-left w-full py-2 px-3 rounded-md mb-2 transition-colors ${selectedParentNode === node.sector_node_id ? "text-secondary" : ""
+                                                                className={`block text-left w-full py-2 px-3 rounded-md mb-2 transition-colors ${selectedParentNode === node.sector_node_id ? "text-primary" : ""
                                                                     }`}
                                                             >
-                                                                <div className="flex w-full items-center text-sm text-secondary font-medium">
+                                                                <div className="flex w-full items-center text-sm text-primary font-medium">
                                                                     <span className="mr-2 mt-0.5">
                                                                         <GitForkIcon className="w-4 h-4" />
                                                                     </span>
@@ -309,7 +309,7 @@ export function CreateSectorModal({
                                                                         className="bg-transparent border-none w-fit opacity-70 group-hover:opacity-100 transition-opacity"
                                                                         title={`Explore ${node.name} sector`}
                                                                     >
-                                                                        <ArrowRightIcon className="w-6 h-6 hover:text-secondary" />
+                                                                        <ArrowRightIcon className="w-6 h-6 hover:text-primary" />
                                                                     </button>
                                                                 )}
                                                             </div>
@@ -336,18 +336,18 @@ export function CreateSectorModal({
                             >
                                 {/* Node Name */}
                                 <div className="w-full">
-                                    <Label className="block text-sm text-secondary font-medium mb-2">
+                                    <Label className="block text-sm text-primary font-medium mb-2">
                                         Sector Name <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
                                         id="sector-name"
                                         placeholder="Enter sector name"
                                         value={name}
-                                        className="w-full h-10 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
+                                        className="w-full h-10 border border-golden-dark "
                                         onChange={(e) => setName(e.target.value)}
                                         required
                                     />
-                                    <Label className="block text-sm text-secondary font-medium mt-3 mb-2">
+                                    <Label className="block text-sm text-primary font-medium mt-3 mb-2">
                                         Sector Description
                                     </Label>
                                     <TextArea
@@ -368,14 +368,14 @@ export function CreateSectorModal({
                             <div className="flex gap-4 flex-col w-full">
                                 {/* Node Name */}
                                 <div className="flex-1 w-full ">
-                                    <Label className="block text-sm text-secondary font-medium mb-2">
+                                    <Label className="block text-sm text-primary font-medium mb-2">
                                         Sector Name <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
                                         id="sector-name"
                                         placeholder="Enter sector name"
                                         value={name}
-                                        className="w-full h-10 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-secondary focus:border-transparent transition-all duration-200 outline-none"
+                                        className="w-full h-10 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-primary focus:border-transparent transition-all duration-200 outline-none"
                                         onChange={(e) => setName(e.target.value)}
                                         required
                                     />
@@ -406,7 +406,7 @@ export function CreateSectorModal({
                         <Button
                             type="submit"
                             disabled={isCreatingNode || !name.trim()}
-                            className="bg-primary hover:bg-primary/80 text-white"
+                            className="bg-golden-dark hover:bg-golden-darkHover text-white"
                         >
                             {isCreatingNode ? "Creating..." : "Create "}
                         </Button>

@@ -73,7 +73,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({
           <foreignObject x={-10} y={-10} width={20} height={20}>
             <button
               onClick={toggleNode}
-              className="w-5 h-5 rounded-full bg-secondary hover:bg-secondary/80 text-white font-semibold flex items-center justify-center transition-colors duration-200 cursor-pointer text-sm"
+              className="w-5 h-5 rounded-full bg-golden-dark hover:bg-golden-dark text-white font-semibold flex items-center justify-center transition-colors duration-200 cursor-pointer text-sm"
               aria-label={isCollapsed ? "Expand node" : "Collapse node"}
             >
               {isCollapsed ? "+" : "−"}
@@ -87,7 +87,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({
         <div className="w-full h-full bg-white rounded-2xl border border-gray-200 shadow-lg hover:border-secondary hover:shadow-xl transition-all duration-200 cursor-pointer p-5 flex flex-col justify-between">
           {/* Header: Name and Status */}
           <div className="flex items-start justify-between mb-3">
-            <h3 className="text-secondary text-base font-semibold flex-1 pr-2 line-clamp-2">
+            <h3 className="text-golden-dark text-base font-semibold flex-1 pr-2 line-clamp-2">
               {nodeDatum.name.length > 28
                 ? `${nodeDatum.name.substring(0, 28)}...`
                 : nodeDatum.name}
@@ -111,19 +111,19 @@ const CustomNode: React.FC<CustomNodeProps> = ({
 
           {/* Description */}
           {nodeDatum.attributes.description && (
-            <p className="text-gray-600 w-full text-sm font-bold text-center mb-3 line-clamp-3">
+            <p className="text-golden-dark70 w-full text-sm font-bold text-center mb-3 line-clamp-3">
               {shortenText(nodeDatum.attributes.description, 25)}
             </p>
           )}
 
           {/* Action Buttons */}
           <div className="flex flex-row justify-center gap-3">
-            <button className="flex-1 bg-primary hover:bg-primary/80 text-white font-semibold py-2 rounded-lg transition-colors duration-200 text-xs">
+            <button className="flex-1 bg-golden-dark hover:bg-golden-dark text-white font-semibold py-2 rounded-lg transition-colors duration-200 text-xs">
               Details
             </button>
             <button
               onClick={handleAddChild}
-              className="flex-1 bg-primary hover:bg-primary/80 text-white font-semibold py-2 rounded-lg transition-colors duration-200 text-xs"
+              className="flex-1 bg-golden-dark hover:bg-golden-dark text-white font-semibold py-2 rounded-lg transition-colors duration-200 text-xs"
             >
               Add Child
             </button>

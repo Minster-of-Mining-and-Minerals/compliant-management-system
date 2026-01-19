@@ -5,27 +5,45 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { AlertTriangle, MessageSquare } from "lucide-react";
+import LocaleSwitcher from "@/components/common/LanguageSwitcher/LocaleSwitcher";
+import { useTranslations } from "next-intl";
 
 const PublicHeader = () => {
-  const pathname = usePathname();
+  const pathname = usePathname(); // e.g., "/en/complaint"
+  const t = useTranslations("PublicHeader");
+
+  // Helper to remove locale prefix from pathname
+  const normalizePathname = (path: string) => {
+    const segments = path.split("/").filter(Boolean); // remove empty
+    if (segments[0] === "en" || segments[0] === "am") {
+      segments.shift(); // remove locale
+    }
+    return "/" + segments.join("/");
+  };
+
+  const normalizedPath = normalizePathname(pathname);
 
   const tabs = [
     {
-      label: "Home",
+      label: t("tabs.home"),
       href: "/",
       icon: MessageSquare,
     },
     {
-      label: "Complaint",
+      label: t("tabs.complaint"),
       href: "/complaint",
       icon: AlertTriangle,
     },
     {
-      label: "Feedback",
+      label: t("tabs.feedback"),
       href: "/feedback",
       icon: MessageSquare,
     },
-
+    {
+      label: t("tabs.trackComplaint"),
+      href: "/track-complaint",
+      icon: AlertTriangle,
+    }
   ];
 
   return (
@@ -52,29 +70,28 @@ const PublicHeader = () => {
 
         {/* Right Section */}
         <div className="flex items-center gap-6">
+          {/* Locale Switcher */}
+          <LocaleSwitcher />
+
           {/* Tabs */}
           <nav className="flex items-center gap-4">
             {tabs.map((tab) => {
-              const isActive = pathname === tab.href;
+              const isActive = normalizedPath === tab.href;
               const Icon = tab.icon;
 
               return (
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`relative flex items-center gap-2   px- py-1 rounded-md text-sm font-semibold transition-all duration-200
+                  className={`relative flex items-center gap-2 px-3 py-1 rounded-md text-sm font-semibold transition-all duration-200
                     ${
                       isActive
-                        ? "text-golden-dark rounded-b-none border-b-0 "
+                        ? "text-golden-dark rounded-b-none border-b-0"
                         : "text-gray-500 hover:text-golden-dark"
                     }
                   `}
                 >
-                  {/* <Icon
-                    className={`h-4 w-4 transition-colors duration-200 ${
-                      isActive ? "text-golden-dark" : "text-gray-400"
-                    }`}
-                  /> */}
+                  {/* Tab label */}
                   <span>{tab.label}</span>
 
                   {/* Active underline */}
@@ -96,7 +113,7 @@ const PublicHeader = () => {
               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary 
               transition-all duration-200 shadow-sm"
           >
-            Login
+            {t("login")}
           </Link>
         </div>
       </div>
