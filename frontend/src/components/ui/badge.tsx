@@ -9,15 +9,17 @@ const badgeVariants = cva(
   {
     variants: {
       status: {
+        resolved: "bg-green-600 text-white border-transparent",
         active: "bg-green-600 text-white border-transparent",
         inactive: "bg-gray-400 text-white border-transparent",
-        pending: "bg-yellow-500 text-white border-transparent",
+        pending: "bg-blue-400 text-white border-transparent",
         approved: "bg-blue-600 text-white border-transparent",
         rejected: "bg-red-600 text-white border-transparent",
         suspended: "bg-orange-500 text-white border-transparent",
         outline: "border-transparent bg-background shadow-sm hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
         default: "bg-primary text-white border-transparent",
         secondary: "bg-secondary text-white border-transparent",
+        in_progress: "bg-yellow-500 text-white border-transparent",
       },
     },
     defaultVariants: {

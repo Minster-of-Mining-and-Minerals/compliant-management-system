@@ -10,6 +10,7 @@ import {
 import { ComplaintAssignment } from "@/redux/types/complaintAssignment";
 import { useGetUsersQuery } from "@/redux/api/userApi";
 import { User } from "@/redux/types/user";
+import { Button } from "@/components/ui/button";
 
 interface AssignmentPreviewProps {
     complaint_id: string;
@@ -122,13 +123,13 @@ export default function AssignmentPreview({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
             transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="absolute top-0 right-0 w-full lg:w-[360px] bg-white border-l border-[#D5E3EC] h-full flex flex-col shadow-xl"
+            className="absolute rounded-xl top-0 right-0 w-full lg:w-[360px] bg-white border-l border-[#D5E3EC] h-full flex flex-col shadow-xl"
         >
             {/* Header */}
-            <div className="p-6 border-b border-[#D5E3EC] bg-gradient-to-r from-[#1E516A] to-[#2C6B8A]">
+            <div className="p-6 border-b border-[#D5E3EC] bg-gradient-to-r from-golden-dark50 to-golden-dark80">
                 <h2 className="text-xl font-bold text-white">Assign Users</h2>
-                <p className="text-blue-100 text-sm mt-1">
-                    Select users to assign this issue
+                <p className="text-white text-sm mt-1">
+                    Select users to assign this complaint to
                 </p>
             </div>
 
@@ -137,10 +138,10 @@ export default function AssignmentPreview({
                 {/* Users List */}
                 <div className="mb-6">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-[#1E516A] text-lg">
+                        <h3 className="font-semibold text-golden-dark80 text-lg">
                             Available Users
                         </h3>
-                        <span className="text-sm text-gray-500 bg-blue-50 px-2 py-1 rounded">
+                        <span className="text-sm text-golden-dark80 bg-golden-light50 px-2 py-1 rounded">
                             {users.length} users
                         </span>
                     </div>
@@ -167,25 +168,25 @@ export default function AssignmentPreview({
                                         key={userAssignment.user_id}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className={`bg-white rounded-lg border-2 transition-all duration-200 ${isAssigned
-                                            ? "border-green-200 bg-green-50 shadow-md"
-                                            : "border-gray-200 shadow-md hover:shadow-lg"
+                                        className={`bg-golden-dark10 rounded-lg border transition-all duration-200 ${isAssigned
+                                            ? ""
+                                            : " "
                                             }`}
                                     >
-                                        <div className="p-2 w-full relative grid grid-cols-2">
+                                        <div className="p-2 w-full gap-1 relative grid grid-cols-2">
                                             {/* User Info */}
-                                            <div className="flex w-full justify-between items-start mb-3">
+                                            <div className="flex w-full  justify-between items-start mb-3">
                                                 <div className="flex-1 w-full ">
                                                     <div className="flex items-center w-full justify-between gap-2">
                                                         <h4 className="font-semibold   text-gray-800">
                                                             {userAssignment.full_name}
                                                         </h4>
                                                         {isAssigned ? (
-                                                            <span className="inline-block px-2 absolute right-3 top-3 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                                            <span className="inline-block px-2 absolute right-3 top-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
                                                                 Assigned
                                                             </span>
                                                         ) : (
-                                                            <span className="inline-block px-2 absolute right-3 top-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
+                                                            <span className="inline-block px-2 absolute right-3 top-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
                                                                 Not Assigned
                                                             </span>
                                                         )}
@@ -204,10 +205,10 @@ export default function AssignmentPreview({
                                             </div>
 
                                             {/* Action Buttons */}
-                                            <div className="flex justify-end items-end">
+                                            <div className="flex justify-end mt-8 items-end">
                                                 <div className="flex gap-2 border-t flex-col justify-center items-end h-fit border-gray-100">
                                                     {isAssigned ? (
-                                                        <button
+                                                        <Button
                                                             onClick={() => handleRemove(userAssignment)}
                                                             disabled={isRemoving}
                                                             className="flex-1   bg-red-100 text-red-700 py-2 px-3 rounded-md text-sm font-medium hover:bg-red-200 transition-colors duration-200 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -232,12 +233,12 @@ export default function AssignmentPreview({
                                                                     Remove
                                                                 </>
                                                             )}
-                                                        </button>
+                                                        </Button>
                                                     ) : (
-                                                        <button
+                                                        <Button
                                                             onClick={() => handleAssign(userAssignment)}
                                                             disabled={isAssigning}
-                                                            className="flex-1 bg-[#1E516A]   text-white py-2 px-3 rounded-md text-sm font-medium hover:bg-[#2C6B8A] transition-colors duration-200 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            className="flex-1     text-white py-2 px-3 rounded-md text-sm font-medium  transition-colors duration-200 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                                         >
                                                             {isAssigning ? (
                                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -259,7 +260,7 @@ export default function AssignmentPreview({
                                                                     Assign
                                                                 </>
                                                             )}
-                                                        </button>
+                                                        </Button>
                                                     )}
                                                 </div>
                                             </div>
@@ -275,12 +276,12 @@ export default function AssignmentPreview({
             {/* Footer Actions */}
             <div className="p-6 border-t border-[#D5E3EC] bg-white">
                 <div className="flex gap-3">
-                    <button
+                    <Button
                         onClick={onClose}
-                        className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors duration-200"
+                        className="flex-1 h-11 bg-golden-dark20 text-gray-700 py-3 rounded-lg font-semibold hover:bg-golden-dark30 transition-colors duration-200"
                     >
                         Cancel
-                    </button>
+                    </Button>
                 </div>
             </div>
         </motion.div>

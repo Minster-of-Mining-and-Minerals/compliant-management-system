@@ -273,17 +273,17 @@ export default function ComplaintDetailPage() {
 
   if (isLoading) return <div>Loading...</div>;
   if (isError || !complaint) return <div>Error loading complaint details</div>;
-
+  console.log("Complaint Data:", complaint);
   return (
     <>
-      <div className="min-h-screen  bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden font-sans  py-6 pb-24 flex flex-col items-start">
+      <div className="bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden font-sans  py-6 pb-24 flex flex-col items-start">
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-3xl" />
         </div>
         <div
-          className={`w-full  mx-auto shadow-md rounded-xl  border-dashed border-[#BFD7EA] p-6 relative overflow-hidden`}
+          className={`w-full min-h-[80vh] mx-auto shadow-md rounded-xl  border-dashed border-[#BFD7EA] p-6 relative overflow-hidden`}
         >
           <div
             className={`w-full transition-all duration-500 ease-in-out  ${
@@ -350,7 +350,7 @@ export default function ComplaintDetailPage() {
                     </p>
                   </div>
 
-                  {/* Priority */}
+                  {/* Ticket Number */}
                   <div>
                     <p className="font-semibold text-golden-dark mb-1">
                       Ticket Number
@@ -460,14 +460,14 @@ export default function ComplaintDetailPage() {
               </div>
 
               {/* Complaint Resolutions */}
-              {complaint?.resolutions && complaint.resolutions.length > 0 && (
+              {complaint.resolution && complaint.resolution.length>0 && (
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-8 bg-green-600 rounded-full"></div>
                       <div>
                         <h3 className="text-[#1E516A] font-bold text-lg">
-                          Resolutions ({complaint.resolutions.length})
+                          Resolutions ({complaint.resolution.length})
                         </h3>
                         <p className="text-sm text-gray-600">
                           All resolution attempts
@@ -480,12 +480,12 @@ export default function ComplaintDetailPage() {
                         onClick={toggleAllResolutions}
                       >
                         {expandedResolutions.length ===
-                        complaint.resolutions.length
+                        complaint.resolution.length
                           ? "Collapse All"
                           : "Expand All"}
                       </button>
                       <button
-                        onClick={() => toggleSection("resolutions")}
+                        onClick={() => toggleSection("resolution")}
                         className="p-2 hover:bg-white rounded-lg transition-colors"
                       >
                         {expandedSections.resolutions ? (
@@ -498,7 +498,7 @@ export default function ComplaintDetailPage() {
                   </div>
 
                   <AnimatePresence>
-                    {expandedSections.resolutions && (
+                    {expandedSections.resolution && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
@@ -506,7 +506,7 @@ export default function ComplaintDetailPage() {
                         transition={{ duration: 0.3 }}
                         className="space-y-4"
                       >
-                        {complaint.resolutions.map(
+                        {complaint.resolution.map(
                           (resolution: any, resolutionIndex: number) => {
                             const isExpanded = expandedResolutions.includes(
                               resolution.resolution_id,
@@ -595,7 +595,7 @@ export default function ComplaintDetailPage() {
                                       <div className="mt-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="bg-[#094C810D] border border-[#BFD7EA] rounded-md p-3 text-gray-700">
                                           <p className="font-semibold text-[#1E516A] text-sm mb-1">
-                                            Resolution Reason
+                                            Resolution Summary
                                           </p>
                                           {resolution.reason ||
                                             "No reason provided"}
