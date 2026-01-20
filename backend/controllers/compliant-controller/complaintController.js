@@ -291,6 +291,10 @@ const getComplaintById = async (req, res) => {
           as: "category",
           attributes: ["category_id", "name"],
         },
+        {
+          model: ComplaintHistory,
+          as: "history",
+        },
       ],
     });
 
