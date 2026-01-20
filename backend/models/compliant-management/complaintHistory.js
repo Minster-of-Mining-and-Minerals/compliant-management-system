@@ -40,6 +40,10 @@ module.exports = (sequelize, DataTypes) => {
         comment:
           "created | accepted | updated | assigned  | resolved | reopened | commented | assigned",
       },
+      status_at_time: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
       notes: {
         type: DataTypes.TEXT,
         allowNull: true,
@@ -55,7 +59,7 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "complaint_history",
       timestamps: false,
       underscored: true,
-    }
+    },
   );
 
   return ComplaintHistory;

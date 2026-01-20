@@ -8,12 +8,14 @@ const {
   getComplaintById,
   updateComplaint,
   deleteComplaint,
+  acceptComplaint,
 } = require("../../controllers/compliant-controller/complaintController");
 
 const {
   validateCreateComplaint,
   validateUpdateComplaint,
 } = require("../../validators/compliant-validators/complaintValidator");
+const { authenticateToken } = require("../../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -126,6 +128,7 @@ router.get("/:id", getComplaintById);
  */
 router.post("/", validateCreateComplaint, createComplaint);
 
+router.post("/accept", authenticateToken, acceptComplaint);
 /**
  * @swagger
  * /complaints/{id}:

@@ -4,6 +4,7 @@ const {
   Complaint,
   User,
   ResolutionAttachment,
+  ComplaintHistory,
   sequelize,
 } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
@@ -111,6 +112,22 @@ const resolveComplaint = async (req, res) => {
     );
     */
 
+    // ================================
+    // NEW — CREATE COMPLAINT HISTORY RECORD
+    // ================================
+    await ComplaintHistory.create(
+      {
+        history_id: uuidv4(),
+        complaint_id: complaint.complaint_id,
+        user_id,
+        action: "resolved",
+        status_at_time: "resolved", // new status
+        notes: "Complaint resolved by user and status changed to Resolved",
+        created_at: new Date(),
+      },
+      { transaction: t },
+    );
+
     await t.commit();
 
     // 9. Return full resolution with details
@@ -137,6 +154,19 @@ const resolveComplaint = async (req, res) => {
           model: ResolutionAttachment,
           as: "attachments",
           attributes: ["attachment_id", "file_id", "created_at"],
+        },
+        {
+          model: ComplaintHistory,
+          as: "history",
+          attributes: [
+            "history_id",
+            "complaint_id",
+            "user_id",
+            "action",
+            "status_at_time",
+            "notes",
+            "created_at",
+          ],
         },
       ],
     });
