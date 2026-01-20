@@ -63,13 +63,18 @@
     },
     "toast": {
       "success": {
-        "submitted": "Your complaint has been submitted successfully.",
+        "submitted": "Your complaint has been submitted successfully."
+      }
+      ,"error": {
+        "unexpected": "Server error occurred. Please try again.",  
         "errors": "There were some errors. Please check the form and try again."
       }
+
     },
     "buttons": {
       "cancel": "Cancel",
-      "submit": "Submit {category}"
+      "submit": "Submit {category}",
+      "submitting": "Submitting {category}..."
     },
 
     "tips": {
