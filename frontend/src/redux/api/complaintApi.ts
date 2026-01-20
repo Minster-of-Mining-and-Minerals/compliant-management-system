@@ -1,5 +1,6 @@
 import { baseApi } from "../baseApi";
 import {
+  AcceptCompliantDto,
   Complaint,
   CreateComplaintPayload,
   UpdateComplaintPayload,
@@ -77,6 +78,21 @@ export const complaintApi = baseApi.injectEndpoints({
       transformResponse: (response: any) => response,
       invalidatesTags: ["Complaint"],
     }),
+
+    acceptCompliant: builder.mutation<
+      { success: boolean; message: string },
+      AcceptCompliantDto
+    >({
+      query: (data) => ({
+        url: `/complaints/accept`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: (result, error, { complaint_id }) => [
+        { type: "Complaint", id: complaint_id },
+        "Complaint",
+      ],
+    }),
   }),
 });
 
@@ -86,4 +102,5 @@ export const {
   useCreateComplaintMutation,
   useUpdateComplaintMutation,
   useDeleteComplaintMutation,
+  useAcceptCompliantMutation,
 } = complaintApi;

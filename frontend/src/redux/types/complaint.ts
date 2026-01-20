@@ -49,3 +49,7 @@ export interface UpdateComplaintPayload {
   incident_date?: string;
   status?: "pending" | "in_progress" | "resolved" | "rejected";
 }
+
+export interface AcceptCompliantDto {
+  complaint_id: string;
+}

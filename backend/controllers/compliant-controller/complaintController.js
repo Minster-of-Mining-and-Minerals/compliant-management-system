@@ -4,6 +4,7 @@ const {
   SectorNode,
   ComplaintCategory,
   ComplaintAttachment,
+  ComplaintHistory,
   sequelize,
   UserType,
 } = require("../../models");
@@ -117,9 +118,7 @@ const createComplaint = async (req, res) => {
     }
 
     // ====== Generate unique ticket code ======
-    const ticketing_code = `TCK-${Date.now()}-${Math.floor(
-      Math.random() * 1000,
-    )}`;
+    const ticketing_code = await generateTicket();
 
     // ====== Create complaint ======
     const complaint = await Complaint.create(
@@ -172,6 +171,22 @@ const createComplaint = async (req, res) => {
           `,
       );
     }
+
+    // ================================
+    // NEW — CREATE COMPLAINT HISTORY RECORD
+    // ================================
+    await ComplaintHistory.create(
+      {
+        history_id: uuidv4(),
+        complaint_id: complaint.complaint_id,
+        user_id: compliant_user_id || null,
+        action: "created",
+        status_at_time: "pending", // new status
+        notes: "Complaint created by user and status changed to Pending",
+        created_at: new Date(),
+      },
+      { transaction: t },
+    );
 
     await t.commit();
 
@@ -276,6 +291,10 @@ const getComplaintById = async (req, res) => {
           as: "category",
           attributes: ["category_id", "name"],
         },
+        {
+          model: ComplaintHistory,
+          as: "history",
+        },
       ],
     });
 
@@ -339,6 +358,52 @@ const updateComplaint = async (req, res) => {
   }
 };
 
+// =========== Accept complaint ===========
+const acceptComplaint = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { complaint_id } = req.body;
+    const user_id = req.user?.user_id;
+
+    const complaint = await Complaint.findByPk(complaint_id, {
+      transaction: t,
+    });
+    if (!complaint)
+      return res.status(404).json({ message: "Complaint not found" });
+
+    // Update complaint status to 'in_progress'
+    complaint.status = "in_progress"; // <--- status update
+    await complaint.save({ transaction: t });
+
+    // ================================
+    // NEW — CREATE COMPLAINT HISTORY RECORD
+    // ================================
+    await ComplaintHistory.create(
+      {
+        history_id: uuidv4(),
+        complaint_id,
+        user_id,
+        action: "accepted",
+        status_at_time: "in_progress", // new status
+        notes:
+          "Complaint accepted by handler and status changed to In Progress",
+        created_at: new Date(),
+      },
+      { transaction: t },
+    );
+
+    await t.commit();
+    return res.json({
+      success: true,
+      message: "Complaint status updated to In Progress.",
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error("ACCEPT ERROR:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 // =========== Delete complaint (soft delete) ===========
 const deleteComplaint = async (req, res) => {
   const t = await sequelize.transaction();
@@ -378,5 +443,43 @@ module.exports = {
   getComplaints,
   getComplaintById,
   updateComplaint,
+  acceptComplaint,
   deleteComplaint,
+};
+
+// Helper function to generate ticket number - FIXED VERSION
+const generateTicket = async () => {
+  const crypto = require("crypto");
+  const year = new Date().getFullYear().toString().slice(-2);
+
+  // Use a while loop with a safety limit to prevent infinite loops
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  while (attempts < maxAttempts) {
+    const randomCode = crypto.randomBytes(3).toString("hex").toUpperCase();
+    const ticket = `TICK-${year}-${randomCode}`;
+
+    // Check if ticket exists in database
+    try {
+      const existing = await Issue.findOne({
+        where: { ticket_number: ticket },
+      });
+
+      if (!existing) {
+        return ticket; // Return the unique ticket
+      }
+    } catch (error) {
+      // If there's an error checking, generate a new one
+      console.warn("Error checking ticket uniqueness:", error.message);
+    }
+
+    attempts++;
+  }
+
+  // If we can't find a unique ticket after max attempts,
+  // generate one with a timestamp to ensure uniqueness
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const randomCode = crypto.randomBytes(2).toString("hex").toUpperCase();
+  return `TICK-${year}-${timestamp}-${randomCode}`;
 };

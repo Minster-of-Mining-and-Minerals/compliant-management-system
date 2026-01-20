@@ -2,7 +2,7 @@ import ComplaintDetailPage from '@/features/complaint-management/component/Compl
 
 const ComplaintDetail = () => {
   return (
-   <ComplaintDetailPage />
+    <ComplaintDetailPage />
   )
 }
 
