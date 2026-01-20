@@ -118,7 +118,7 @@ const createComplaint = async (req, res) => {
     }
 
     // ====== Generate unique ticket code ======
-    const ticketing_code = generateTicket();
+    const ticketing_code = await generateTicket();
 
     // ====== Create complaint ======
     const complaint = await Complaint.create(
@@ -179,7 +179,7 @@ const createComplaint = async (req, res) => {
       {
         history_id: uuidv4(),
         complaint_id: complaint.complaint_id,
-        user_id,
+        user_id: compliant_user_id || null,
         action: "created",
         status_at_time: "pending", // new status
         notes: "Complaint created by user and status changed to Pending",
