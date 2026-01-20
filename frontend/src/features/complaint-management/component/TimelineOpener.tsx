@@ -30,7 +30,7 @@ export default function TimelineOpener({ onOpen }: TimelineOpenerProps) {
                     ease: "easeInOut",
                 }}
             >
-                <ArrowRightLeft size={22} className="text-blue-600" />
+                <ArrowRightLeft size={22} className="text-golden-dark" />
             </motion.div>
         </div>
     );

@@ -3,8 +3,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { FileUploadField } from "@/components/common/FileUploadField";
+import { FileUploadField } from "@/components/ui/FileUploadField";
 import { useResolveComplaintMutation } from "@/redux/api/complaintResolutionApi";
+import { TextArea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 interface ResolutionPreviewProps {
     complaint_id: string;
@@ -47,19 +49,22 @@ export default function ResolutionPreview({
             transition={{ duration: 0.35, ease: "easeInOut" }}
             className="absolute top-0 right-0 w-full lg:w-[360px] bg-white border-l border-[#D5E3EC] h-full rounded-r-lg flex flex-col gap-4 shadow-lg"
         >
-            <div className="p-6 border-b border-[#D5E3EC] bg-gradient-to-r from-[#1E516A] to-[#2C6B8A]">
-                <h2 className="text-xl font-bold text-white">Resolve Request</h2>
+            <div className="p-6 border-b border-[#D5E3EC] bg-gradient-to-r from-golden-dark50 to-golden-dark80">
+                <h2 className="text-xl font-bold text-white">Resolve Complaint</h2>
                 <p className="text-white text-sm mt-1">Upload files related to the resolution</p>
             </div>
             <div className="flex flex-col px-4 gap-3">
 
-                <h4 className="font-semibold text-[#1E516A] mt-4">Summary</h4>
-                <textarea
-                    className="w-full border border-[#BFD7EA] rounded-lg p-3 text-sm h-32 focus:outline-none focus:ring-2 focus:ring-[#1E516A]"
+                <h4 className="font-semibold text-golden-dark mt-4">Summary</h4>
+                <TextArea
+                    className="w-fullrounded-lg p-3 text-sm  "
                     placeholder="Explain how this issue was resolved"
                     value={reason}
-                    onChange={(e) => setReason(e.target.value)}
+                    onChange={(val) => setReason(val)}
                 />
+                <label htmlFor="">
+                    <span className="font-semibold text-golden-dark">Attachments</span>
+                </label>
                 <FileUploadField
                     className="flex flex-col gap-1 font-bold"
                     id="resolution_attachments"
@@ -68,25 +73,25 @@ export default function ResolutionPreview({
                     onChange={setAttachmentIds}
                     accept="image/*,.pdf,.doc,.docx"
                     multiple={true}
-                    labelClass="text-sm  text-[#1E516A] "
+                    labelClass="text-sm  text-golden-dark "
                 />
 
 
                 <div className="w-full flex justify-end gap-3 mt-3">
-                    <button
+                    <Button
                         onClick={onClose}
                         disabled={isLoading}
-                        className="px-5 py-2 rounded-md bg-gray-200 border text-gray-700 font-semibold disabled:opacity-50"
+                        className="px-5 py-2 rounded-md bg-golden-dark20 border text-primary hover:bg-golden-dark30"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-5 py-2 rounded-md bg-[#1E516A] text-white font-semibold disabled:opacity-50"
+                        className="px-5 py-2 rounded-md bg-golden-dark text-white font-semibold disabled:opacity-50"
                     >
                         {isLoading ? "Submitting..." : "Confirm"}
-                    </button>
+                    </Button>
 
                 </div>
             </div>

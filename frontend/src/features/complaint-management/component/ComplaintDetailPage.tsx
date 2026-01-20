@@ -22,7 +22,6 @@ import {
 // import FileViewer from "../../components/common/FileView";
 import { getFileType, getFileUrl } from "@/utils/fileUrl";
 
-
 import {
   canAssign,
   canConfirm,
@@ -41,7 +40,10 @@ import FileViewer from "@/components/common/FileView";
 import { formatStatus } from "@/utils/statusFormatter";
 import ResolutionPreview from "./ResolutionPreview";
 import AssignmentPreview from "./AssignmentPreview";
-import { useAcceptCompliantMutation, useGetComplaintByIdQuery } from "@/redux/api/complaintApi";
+import {
+  useAcceptCompliantMutation,
+  useGetComplaintByIdQuery,
+} from "@/redux/api/complaintApi";
 
 export default function ComplaintDetailPage() {
   const { data: session, status } = useSession();
@@ -50,12 +52,13 @@ export default function ComplaintDetailPage() {
   const { data: complaint, isLoading, isError } = useGetComplaintByIdQuery(id!);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [modalImageIndex, setModalImageIndex] = useState<number | null>(null);
-  const [acceptCompliant, { isLoading: isAccepting }] = useAcceptCompliantMutation();
+  const [acceptCompliant, { isLoading: isAccepting }] =
+    useAcceptCompliantMutation();
   const [escalateComplaint, setEscalateComplaint] = useState(false);
   const [assignComplaint, setAssignComplaint] = useState(false);
   const [resolveComplaint, setResolveComplaint] = useState(false);
   const [markComplaint, setMarkComplaint] = useState(false);
-  const [openTimeline, setOpenTimeline] = useState(false);
+  const [openTimeline, setOpenTimeline] = useState(true);
   const [project_id, setProjectId] = useState("");
   const [internal_node_id, setInternalNodeId] = useState("");
   const [fileViewerState, setFileViewerState] = useState<{
@@ -83,18 +86,20 @@ export default function ComplaintDetailPage() {
   }, [userId, complaint?.status, complaint]);
 
   useEffect(() => {
-    setResolveComplaint(canInternallyResolve(userId, complaint?.status, complaint));
+    setResolveComplaint(
+      canInternallyResolve(userId, complaint?.status, complaint),
+    );
   }, [userId, complaint?.status, complaint]);
 
   useEffect(() => {
-    setMarkComplaint(canInternallyMarkInProgress(userId, complaint?.status, complaint));
+    setMarkComplaint(
+      canInternallyMarkInProgress(userId, complaint?.status, complaint),
+    );
   }, [userId, complaint?.status, complaint]);
 
   useEffect(() => {
     setProjectId(complaint?.project_id);
   }, [complaint?.project_id, complaint]);
-
-
 
   // Map complaint attachments to files array with proper URLs and file info
   const complaintFiles =
@@ -144,7 +149,7 @@ export default function ComplaintDetailPage() {
   const prevImage = () => {
     if (modalImageIndex !== null) {
       setModalImageIndex(
-        (modalImageIndex - 1 + complaintFiles.length) % complaintFiles.length
+        (modalImageIndex - 1 + complaintFiles.length) % complaintFiles.length,
       );
     }
   };
@@ -188,7 +193,7 @@ export default function ComplaintDetailPage() {
     setExpandedEscalations((prev) =>
       prev.includes(escalationId)
         ? prev.filter((id) => id !== escalationId)
-        : [...prev, escalationId]
+        : [...prev, escalationId],
     );
   };
 
@@ -196,11 +201,9 @@ export default function ComplaintDetailPage() {
     setExpandedResolutions((prev) =>
       prev.includes(resolutionId)
         ? prev.filter((id) => id !== resolutionId)
-        : [...prev, resolutionId]
+        : [...prev, resolutionId],
     );
   };
-
-
 
   const toggleAllResolutions = () => {
     if (!complaint?.resolutions) return;
@@ -208,7 +211,7 @@ export default function ComplaintDetailPage() {
       setExpandedResolutions([]);
     } else {
       setExpandedResolutions(
-        complaint.resolutions.map((res: any) => res.resolution_id)
+        complaint.resolutions.map((res: any) => res.resolution_id),
       );
     }
   };
@@ -269,31 +272,28 @@ export default function ComplaintDetailPage() {
   ];
 
   if (isLoading) return <div>Loading...</div>;
-  if (isError || !complaint)
-    return <div>Error loading complaint details</div>;
+  if (isError || !complaint) return <div>Error loading complaint details</div>;
 
   return (
     <>
-      <DetailHeader breadcrumbs={[
-        { title: "Complaint List", link: "/complaints" },
-        { title: "Complaint Detail", link: "" },
-      ]} />
-      <PageMeta
-        title={"Complaint Detail"}
-        description={"Review complaint details and take appropriate action"}
-      />
-      <div className="min-h-screen bg-[#F9FBFC] py-6 pb-24 flex flex-col items-start">
+      <div className="min-h-screen  bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden font-sans  py-6 pb-24 flex flex-col items-start">
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-3xl" />
+        </div>
         <div
-          className={`w-full  mx-auto bg-white shadow-md rounded-xl  border-dashed border-[#BFD7EA] p-6 relative overflow-hidden`}
+          className={`w-full  mx-auto shadow-md rounded-xl  border-dashed border-[#BFD7EA] p-6 relative overflow-hidden`}
         >
           <div
-            className={`w-full transition-all duration-500 ease-in-out  ${selectedAction || openTimeline ? "lg:pr-[360px]" : ""
-              } `}
+            className={`w-full transition-all duration-500 ease-in-out  ${
+              selectedAction || openTimeline ? "lg:pr-[360px]" : ""
+            } `}
           >
             <div className="flex flex-col w-full">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-[#1E516A] text-xl font-bold mb-1">
+                  <h2 className="text-golden-dark text-xl font-bold mb-1">
                     Complaint Detail
                   </h2>
                   <p className="text-gray-600">
@@ -302,14 +302,15 @@ export default function ComplaintDetailPage() {
                 </div>
                 <div className="flex items-center gap-20">
                   <span
-                    className={`text-base px-2 py-1 rounded-md ${complaint.status === "resolved"
-                      ? "bg-green-100 text-green-900"
-                      : complaint.status === "in_progress"
-                        ? "bg-blue-100 text-blue-900"
-                        : complaint.status === "closed"
-                          ? "bg-red-100 text-red-900"
-                          : "bg-gray-100 text-gray-900"
-                      }`}
+                    className={`text-base px-2 py-1 rounded-md ${
+                      complaint.status === "resolved"
+                        ? "bg-green-100 text-green-900"
+                        : complaint.status === "pending"
+                          ? "bg-blue-100 text-blue-900"
+                          : complaint.status === "closed"
+                            ? "bg-red-100 text-red-900"
+                            : "bg-gray-100 text-gray-900"
+                    }`}
                   >
                     {formatStatus(complaint.status)}
                   </span>
@@ -319,55 +320,43 @@ export default function ComplaintDetailPage() {
                 </div>
               </div>
 
-              <div className="border border-[#BFD7EA] rounded-xl p-6 mb-6 bg-white shadow-sm">
+              <div className="border border-[#BFD7EA] rounded-xl p-6 mb-6  shadow-sm">
                 {/* Top Info Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 text-base lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 text-base lg:grid-cols-4 gap-6">
                   <div>
-                    <p className="font-semibold text-[#1E516A]   mb-1">
-                      System
+                    <p className="font-semibold text-golden-dark   mb-1">
+                      Assigned Sector
                     </p>
-                    <p className="text-gray-800 text-sm">
-                      {complaint.project?.name || "N/A"}
+                    <p className="text-gray-700 text-sm">
+                      {complaint.assignedSector?.name}
                     </p>
                   </div>
 
                   <div>
-                    <p className="font-semibold text-[#1E516A]  mb-1">
+                    <p className="font-semibold text-golden-dark  mb-1">
                       Category
                     </p>
-                    <p className="text-gray-800 text-sm">
-                      {complaint.category?.name || "N/A"}
+                    <p className="text-gray-700 text-sm">
+                      {complaint.category?.name}
                     </p>
                   </div>
 
                   <div>
-                    <p className="font-semibold text-[#1E516A]  mb-1">
-                      Reported By
+                    <p className="font-semibold text-golden-dark  mb-1">
+                      Reported Time
                     </p>
-                    <p className="text-gray-800 text-sm">
-                      {complaint.reporter?.full_name || "N/A"}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="font-semibold text-[#1E516A]  mb-1">
-                      Reported On
-                    </p>
-                    <p className="text-gray-800 text-sm">
+                    <p className="text-gray-700 text-sm">
                       {formatDate(complaint.created_at)}
                     </p>
                   </div>
 
                   {/* Priority */}
                   <div>
-                    <p className="font-semibold text-[#1E516A]  mb-1">
-                      Priority Level
+                    <p className="font-semibold text-golden-dark mb-1">
+                      Ticket Number
                     </p>
-                    <span
-                      className="font-semibold px-2 py-1 rounded-md text-sm"
-                      style={{ color: complaint.priority?.color_value || "#000" }}
-                    >
-                      {complaint.priority?.name || "N/A"}
+                    <span className="text-gray-700   rounded-md text-sm">
+                      {complaint.ticketing_code}
                     </span>
                   </div>
                 </div>
@@ -375,20 +364,20 @@ export default function ComplaintDetailPage() {
                 {/* Description + Action Taken */}
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-4">
-                    <p className="font-semibold text-[#1E516A] text-sm mb-2">
+                    <p className="font-semibold text-golden-dark text-sm mb-2">
                       Description
                     </p>
-                    <p className="text-gray-700 text-wrap whitespace-pre-line">
+                    <p className="text-gray-500 text-wrap whitespace-pre-line">
                       {complaint.description || "No description provided"}
                     </p>
                   </div>
 
                   <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-4">
-                    <p className="font-semibold text-[#1E516A] text-sm mb-2">
-                      Action Taken
+                    <p className="font-semibold text-golden-dark text-sm mb-2">
+                      Requested Action
                     </p>
-                    <p className="text-gray-700 text-wrap whitespace-pre-line">
-                      {complaint.action_taken || "No action taken yet"}
+                    <p className="text-gray-500 text-wrap whitespace-pre-line">
+                      {complaint.request || "No requested action provided"}
                     </p>
                   </div>
                 </div>
@@ -411,9 +400,64 @@ export default function ComplaintDetailPage() {
                     </div>
                   </div>
                 )}
+
+                <div className="mt-5 p-4 border border-[#DCE7F1] rounded-lg bg-slate-50">
+                  <h4 className="font-semibold text-golden-dark mb-3">
+                    Complainer Information
+                  </h4>
+                  {complaint.is_anonymous && (
+                    <p className="text-gray-600 mb-3 italic">
+                      This complaint was submitted anonymously.
+                    </p>
+                  )}
+                  {!complaint.is_anonymous && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 text-sm">
+                      {/* Full Name */}
+                      <div>
+                        <p className="font-medium text-golden-dark mb-1">
+                          Full Name
+                        </p>
+                        <p className="text-gray-700">
+                          {complaint.user?.full_name || "Anonymous User"}
+                        </p>
+                      </div>
+                      {/* Phone Number */}
+                      <div>
+                        <p className="font-medium text-golden-dark mb-1">
+                          Phone Number
+                        </p>
+                        <p className="text-gray-700">
+                          {complaint.user?.phone_number || "Not provided"}
+                        </p>
+                      </div>
+
+                      {/* Email */}
+                      <div>
+                        <p className="font-medium text-golden-dark mb-1">
+                          Email
+                        </p>
+                        <p className="text-gray-700">
+                          {complaint.user?.email || "Not provided"}
+                        </p>
+                      </div>
+
+
+                      {/* City */}
+                      <div>
+                        <p className="font-medium text-golden-dark mb-1">
+                          Address
+                        </p>
+                        <p className="text-gray-700">
+                          {complaint.location?.city || "N/A"}, {" "}
+                          {complaint.location?.subcity || "N/A"}, {" "}
+                          {complaint.location?.woreda || "N/A"}
+                        </p>
+                      </div>
+
+                    </div>
+                  )}
+                </div>
               </div>
-
-
 
               {/* Complaint Resolutions */}
               {complaint?.resolutions && complaint.resolutions.length > 0 && (
@@ -435,7 +479,8 @@ export default function ComplaintDetailPage() {
                         className="border border-green-700 text-green-700 text-xs px-3 py-1 rounded-md hover:bg-green-50"
                         onClick={toggleAllResolutions}
                       >
-                        {expandedResolutions.length === complaint.resolutions.length
+                        {expandedResolutions.length ===
+                        complaint.resolutions.length
                           ? "Collapse All"
                           : "Expand All"}
                       </button>
@@ -464,21 +509,21 @@ export default function ComplaintDetailPage() {
                         {complaint.resolutions.map(
                           (resolution: any, resolutionIndex: number) => {
                             const isExpanded = expandedResolutions.includes(
-                              resolution.resolution_id
+                              resolution.resolution_id,
                             );
                             const resolutionFiles =
                               resolution.attachments?.map(
                                 (attachment: any) => ({
                                   url: getFileUrl(
-                                    attachment.attachment.file_path
+                                    attachment.attachment.file_path,
                                   ),
                                   name: attachment.attachment.file_name,
                                   path: attachment.attachment.file_path,
                                   type: getFileType(
-                                    attachment.attachment.file_name
+                                    attachment.attachment.file_name,
                                   ),
                                   uploadedAt: attachment.attachment.created_at,
-                                })
+                                }),
                               ) || [];
 
                             return (
@@ -588,11 +633,11 @@ export default function ComplaintDetailPage() {
                                                   onOpen={() =>
                                                     openFileViewer(
                                                       resolutionFiles,
-                                                      idx
+                                                      idx,
                                                     )
                                                   }
                                                 />
-                                              )
+                                              ),
                                             )}
                                           </div>
                                         </div>
@@ -602,7 +647,7 @@ export default function ComplaintDetailPage() {
                                 </AnimatePresence>
                               </div>
                             );
-                          }
+                          },
                         )}
                       </motion.div>
                     )}
@@ -625,43 +670,47 @@ export default function ComplaintDetailPage() {
                           action.onClick();
                         }}
                         disabled={!action.enabled}
-                        className={`flex-1 text-left border rounded-lg p-4 transition-all relative ${selectedAction === action.key
-                          ? `border-[${action.border}] bg-[${action.bg}]`
-                          : action.enabled
-                            ? "border-[#D5E3EC] bg-white hover:bg-gray-50 cursor-pointer"
-                            : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
-                          }`}
+                        className={`flex-1 text-left border rounded-lg p-4 transition-all relative ${
+                          selectedAction === action.key
+                            ? `border-[${action.border}] bg-[${action.bg}]`
+                            : action.enabled
+                              ? "border-[#D5E3EC] bg-white hover:bg-gray-50 cursor-pointer"
+                              : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                        }`}
                       >
                         {!action.enabled && (
                           <div className="absolute top-2 right-2">
-                            <Lock className="w-4 h-4 text-gray-400" />
+                            <Lock className="w-4 h-4 text-golden-dark" />
                           </div>
                         )}
                         <div className="flex items-center gap-2 mb-1">
                           <div
-                            className={`w-5 h-5 rounded-full flex items-center justify-center ${selectedAction === action.key
-                              ? "bg-[#0C4A6E]" // Primary background
-                              : action.enabled
-                                ? "border-2 border-gray-300"
-                                : "border-2 border-gray-200 bg-gray-100"
-                              }`}
+                            className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                              selectedAction === action.key
+                                ? "bg-golden-dark" // Primary background
+                                : action.enabled
+                                  ? "border-2 border-gray-300"
+                                  : "border-2 border-gray-200 bg-gray-100"
+                            }`}
                           >
                             {selectedAction === action.key && (
-                              <Check className="w-3 h-3 text-white" />
+                              <Check className="w-3 h-3 bg-golden text-white" />
                             )}
                           </div>
                           <p
-                            className={`font-semibold ${action.enabled
-                              ? "text-[#1E516A]"
-                              : "text-gray-500"
-                              }`}
+                            className={`font-semibold ${
+                              action.enabled
+                                ? "text-golden-dark"
+                                : "text-gray-500"
+                            }`}
                           >
                             {action.label}
                           </p>
                         </div>
                         <p
-                          className={`text-sm ${action.enabled ? "text-gray-600" : "text-gray-400"
-                            }`}
+                          className={`text-sm ${
+                            action.enabled ? "text-gray-600" : "text-gray-400"
+                          }`}
                         >
                           {action.desc}
                         </p>
@@ -670,7 +719,6 @@ export default function ComplaintDetailPage() {
                   </div>
                 </>
               ) : null}
-
             </div>
           </div>
 
@@ -707,11 +755,11 @@ export default function ComplaintDetailPage() {
                             !prev
                               ? prev
                               : {
-                                ...prev,
-                                index:
-                                  (prev.index - 1 + prev.files.length) %
-                                  prev.files.length,
-                              }
+                                  ...prev,
+                                  index:
+                                    (prev.index - 1 + prev.files.length) %
+                                    prev.files.length,
+                                },
                           )
                         }
                       >
@@ -729,9 +777,9 @@ export default function ComplaintDetailPage() {
                             !prev
                               ? prev
                               : {
-                                ...prev,
-                                index: (prev.index + 1) % prev.files.length,
-                              }
+                                  ...prev,
+                                  index: (prev.index + 1) % prev.files.length,
+                                },
                           )
                         }
                       >

@@ -64,9 +64,9 @@ export default function CompliantHistoryLog({ logs, onClose }: LogsPreviewProps)
             transition={{ duration: 0.35, ease: "easeInOut" }}
             className="absolute top-0 right-0 w-full lg:w-[360px] bg-white border-l border-[#D5E3EC] h-full flex flex-col gap-3 shadow-lg overflow-y-auto"
         >
-            <div className="p-6 relative border-b border-[#D5E3EC] bg-gradient-to-r from-[#1E516A] to-[#2C6B8A]">
-                <h2 className="text-xl font-bold text-white">Support Request Timeline</h2>
-                <p className="text-white text-sm mt-1">View the timeline of the support request</p>
+            <div className="p-6 relative border-b border-[#D5E3EC] bg-gradient-to-r from-golden-dark50 to-golden-dark80">
+                <h2 className="text-xl font-bold text-white">Complaint Timeline</h2>
+                <p className="text-white text-sm mt-1">View the timeline of the complaint</p>
                 <div className="absolute top-5 right-5">
                     {onClose && (
                         <button
@@ -82,7 +82,7 @@ export default function CompliantHistoryLog({ logs, onClose }: LogsPreviewProps)
 
             <div className="relative px-4 my-5 mb-8">
                 {/* Vertical timeline line */}
-                <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-gradient-to-b from-blue-200 via-purple-200 to-green-200"></div>
+                <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-gradient-to-b from-golden-dark50   to-golden-dark50"></div>
 
                 <div className="space-y-4">
                     {logs.map((log, index) => (
@@ -90,7 +90,7 @@ export default function CompliantHistoryLog({ logs, onClose }: LogsPreviewProps)
                             {/* Timeline number */}
                             <div className="relative w-6 h-6 ">
                                 <div
-                                    className={`w-6 h-6 bg-blue-500 text-white absolute text-xs top-0 -left-2 rounded-full border-2 border-white flex items-center justify-center z-10 font-semibold `}
+                                    className={`w-6 h-6 bg-golden-dark text-white absolute text-xs top-0 -left-2 rounded-full border-2 border-white flex items-center justify-center z-10 font-semibold `}
                                 >
                                     {index + 1}
                                 </div>
@@ -105,7 +105,7 @@ export default function CompliantHistoryLog({ logs, onClose }: LogsPreviewProps)
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="font-medium text-gray-700">
                                         {log.performed_by?.full_name || "System"}
-                                    </span>
+                                    </span> 
                                     <span
                                         className={`px-1 py-0.5 rounded-full text-[10px] font-semibold border ${getStatusColor(
                                             log.status_at_time

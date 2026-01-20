@@ -17,6 +17,7 @@ import { Feedback } from "@/redux/types/feedback";
 import { Star } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 /* ----------------------------------
    TABLE COLUMNS
@@ -142,7 +143,7 @@ export default function FeedbackTable() {
         sector_node_id: "",
         search: "",
     });
-
+    const router = useRouter();
     // RTK Queries
     const { data: feedbacksData, isLoading, isError, refetch } = useGetFeedbacksQuery({
         min_rating: filters.min_rating || undefined,
@@ -255,11 +256,9 @@ export default function FeedbackTable() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleView(row.original)}
+                            onClick={() => router.push(`/feedbacks/${row.original.feedback_id}`)}
                         >
-                            <Link href={`/feedbacks/${row.original.feedback_id}`}> 
-                                 <Eye className="h-4 w-4" />
-                            </Link>
+                            <Eye className="h-4 w-4" />
                         </Button>
                          
                         {/* <Button
