@@ -17,6 +17,7 @@ const {
   validateComplaintIdParam,
   validateUserIdParam,
 } = require("../../validators/compliant-validators/complaintResolutionValidator");
+const { authenticateToken } = require("../../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -72,7 +73,7 @@ const {
  *       409:
  *         description: Complaint is already resolved or resolution exists
  */
-router.post("/", validateResolveComplaint, resolveComplaint);
+router.post("/", authenticateToken, validateResolveComplaint, resolveComplaint);
 
 /**
  * @swagger
@@ -100,7 +101,12 @@ router.post("/", validateResolveComplaint, resolveComplaint);
  *       404:
  *         description: Resolution not found
  */
-router.get("/:resolution_id", validateResolutionIdParam, getResolutionById);
+router.get(
+  "/:resolution_id",
+  authenticateToken,
+  validateResolutionIdParam,
+  getResolutionById,
+);
 
 /**
  * @swagger
@@ -137,7 +143,12 @@ router.get("/:resolution_id", validateResolutionIdParam, getResolutionById);
  *       404:
  *         description: Resolution not found
  */
-router.delete("/:resolution_id", validateResolutionIdParam, deleteResolution);
+router.delete(
+  "/:resolution_id",
+  authenticateToken,
+  validateResolutionIdParam,
+  deleteResolution,
+);
 
 /**
  * @swagger
@@ -177,6 +188,7 @@ router.delete("/:resolution_id", validateResolutionIdParam, deleteResolution);
  */
 router.get(
   "/complaint/:complaint_id",
+  authenticateToken,
   validateComplaintIdParam,
   getResolutionsByComplaintId,
 );
@@ -209,6 +221,7 @@ router.get(
  */
 router.get(
   "/complaint/:complaint_id/latest",
+  authenticateToken,
   validateComplaintIdParam,
   getLatestResolutionByComplaintId,
 );
@@ -247,6 +260,11 @@ router.get(
  *                   type: integer
  *                   description: Number of resolutions
  */
-router.get("/user/:user_id", validateUserIdParam, getResolutionsByUserId);
+router.get(
+  "/user/:user_id",
+  authenticateToken,
+  validateUserIdParam,
+  getResolutionsByUserId,
+);
 
 module.exports = router;
