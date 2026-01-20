@@ -6,7 +6,7 @@ const baseQuery = fetchBaseQuery({
   prepareHeaders: async (headers) => {
     const session = await getSession();
     if (session?.accessToken) {
-      headers.set('authorization', `Bearer ${session.accessToken}`);
+      headers.set("authorization", `Bearer ${session.accessToken}`);
     }
     headers.set("content-type", "application/json");
     headers.set("accept", "application/json");
@@ -28,6 +28,7 @@ export const baseApi = createApi({
     "ComplaintResolution",
     "Attachment",
     "Feedback",
+    "Dashboard",
   ],
   endpoints: () => ({}),
 });

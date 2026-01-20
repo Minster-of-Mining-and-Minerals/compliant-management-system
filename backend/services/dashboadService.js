@@ -1,462 +1,148 @@
-// services/dashboardService.js - Enhanced version
+// services/dashboardService.js
 const {
-  User,
-  Institute,
-  Project,
-  Issue,
-  IssuePriority,
-  HierarchyNode,
+  SectorNode,
+  Complaint,
+  ComplaintCategory,
+  Sequelize,
 } = require("../models");
-const { Sequelize } = require("sequelize");
 
-const getInternalUserDashboardWithStats = async () => {
+const getSectorComplaintDashboard = async () => {
   try {
-    // Get all active institutes with their projects and issue counts
-    /*  add the below for only returning active ones 
-        AND p.is_active = true
-        AND ip.is_active = true
-    */
-    const institutes = await Institute.findAll({
-      where: { is_active: true },
+    /**
+     * STEP 1: Root sectors
+     */
+    const rootSectors = await SectorNode.findAll({
+      where: {
+        parent_id: null,
+        is_active: true,
+      },
+      attributes: ["sector_node_id"],
+    });
+
+    const rootSectorIds = rootSectors.map((s) => s.sector_node_id);
+
+    /**
+     * STEP 2: Child sectors + complaints
+     */
+    const sectors = await SectorNode.findAll({
+      where: {
+        parent_id: rootSectorIds,
+        is_active: true,
+      },
       attributes: [
-        "institute_id",
+        "sector_node_id",
         "name",
-        "is_active",
+        "description",
         "created_at",
         [
           Sequelize.literal(`(
             SELECT COUNT(*)
-            FROM institute_projects AS ip
-            INNER JOIN projects AS p ON p.project_id = ip.project_id
-            WHERE ip.institute_id = "Institute"."institute_id"
+            FROM complaints c
+            WHERE c.sector_node_id = "SectorNode"."sector_node_id"
           )`),
-          "total_projects",
+          "total_complaints",
         ],
       ],
       include: [
         {
-          model: Project,
-          as: "projects",
-          //   through: {
-          //     attributes: ["is_active"],
-          //     where: { is_active: true },
-          //   },
-          //   where: { is_active: true },
+          model: Complaint,
+          as: "complaints", // ✅ correct alias
           required: false,
           attributes: [
-            "project_id",
-            "name",
-            // "is_active",
-            [
-              Sequelize.literal(`(
-                SELECT COUNT(*)
-                FROM issues AS i
-                WHERE i.project_id = "projects"."project_id"
-              )`),
-              "total_issues",
-            ],
+            "complaint_id",
+            "ticketing_code",
+            "status",
+            "created_at",
+            "category_id",
           ],
           include: [
             {
-              model: Issue,
-              as: "issues",
-              attributes: [
-                "issue_id",
-                "ticket_number",
-                "status",
-                "created_at",
-                "priority_id",
-              ],
-              //   limit: 10, // Limit issues per project for performance
-              include: [
-                {
-                  model: IssuePriority,
-                  as: "priority",
-                  attributes: ["name", "description", "color_value"],
-                },
-              ],
-              order: [["created_at", "DESC"]],
-              required: false,
+              model: ComplaintCategory,
+              as: "category",
+              attributes: ["category_id", "name", "description"],
             },
           ],
+          order: [["created_at", "DESC"]],
         },
       ],
-      order: [
-        ["name", "ASC"],
-        [{ model: Project, as: "projects" }, "name", "ASC"],
-      ],
+      order: [["name", "ASC"]],
     });
 
-    // Calculate overall statistics
-    let totalInstitutes = 0;
-    let totalProjects = 0;
-    let totalIssues = 0;
+    /**
+     * STEP 3: Transform
+     */
+    let totalSectors = 0;
+    let totalCategories = 0;
+    let totalComplaints = 0;
 
-    const transformedData = institutes.map((institute) => {
-      totalInstitutes++;
+    const transformedSectors = sectors.map((sector) => {
+      totalSectors++;
 
-      const projects = institute.projects
-        ? institute.projects.map((project) => {
-            totalProjects++;
+      const categoryMap = {};
 
-            const issues = project.issues
-              ? project.issues.map((issue) => {
-                  totalIssues++;
+      (sector.complaints || []).forEach((complaint) => {
+        totalComplaints++;
 
-                  const priority = issue.priority
-                    ? {
-                        name: issue.priority.name,
-                        description: issue.priority.description,
-                        color_value: issue.priority.color_value,
-                      }
-                    : null;
+        const category = complaint.category;
+        if (!category) return;
 
-                  return {
-                    issue_id: issue.issue_id,
-                    ticket_number: issue.ticket_number,
-                    status: issue.status,
-                    created_at: issue.created_at,
-                    priority_id: issue.priority_id,
-                    priority: priority,
-                  };
-                })
-              : [];
+        if (!categoryMap[category.category_id]) {
+          totalCategories++;
 
-            return {
-              project_id: project.project_id,
-              name: project.name,
-              //   is_active: project.is_active,
-              total_issues: project.dataValues.total_issues || 0,
-              issues: issues,
-            };
-          })
-        : [];
-
-      return {
-        institute_id: institute.institute_id,
-        name: institute.name,
-        created_at: institute.created_at,
-        // is_active: institute.is_active,
-        total_projects: institute.dataValues.total_projects || 0,
-        projects: projects,
-      };
-    });
-
-    return {
-      success: true,
-      data: {
-        summary: {
-          total_institutes: totalInstitutes,
-          total_projects: totalProjects,
-          total_issues: totalIssues,
-        },
-        institutes: transformedData,
-      },
-    };
-  } catch (error) {
-    console.error("Dashboard service error:", error);
-    return {
-      success: false,
-      error: error.message,
-    };
-  }
-};
-
-// const getExternalUserDashboardWithStatsics = async (userId) => {
-//   try {
-//     // Get user
-//     const user = await User.findByPk(userId);
-//     if (!user || !user.institute_id) {
-//       throw new Error("User or institute not found");
-//     }
-
-//     // Get user's institute
-//     const institute = await Institute.findByPk(user.institute_id, {
-//       where: { is_active: true },
-//       attributes: [
-//         "institute_id",
-//         "name",
-//         "is_active",
-//         "created_at",
-//         [
-//           Sequelize.literal(`(
-//             SELECT COUNT(*)
-//             FROM institute_projects AS ip
-//             INNER JOIN projects AS p ON p.project_id = ip.project_id
-//             WHERE ip.institute_id = "Institute"."institute_id"
-//           )`),
-//           "total_projects",
-//         ],
-//       ],
-//       include: [
-//         {
-//           model: Project,
-//           as: "projects",
-//           required: false,
-//           attributes: [
-//             "project_id",
-//             "name",
-//             [
-//               Sequelize.literal(`(
-//                 SELECT COUNT(*)
-//                 FROM issues AS i
-//                 WHERE i.project_id = "projects"."project_id"
-//               )`),
-//               "total_issues",
-//             ],
-//           ],
-//           include: [
-//             {
-//               model: Issue,
-//               as: "issues",
-//               required: false,
-//               attributes: [
-//                 "issue_id",
-//                 "ticket_number",
-//                 "status",
-//                 "created_at",
-//                 "priority_id",
-//               ],
-//               include: [
-//                 {
-//                   model: IssuePriority,
-//                   as: "priority",
-//                   attributes: ["name", "description", "color_value"],
-//                 },
-//               ],
-//               order: [["created_at", "DESC"]],
-//             },
-//           ],
-//         },
-//       ],
-//       order: [[{ model: Project, as: "projects" }, "name", "ASC"]],
-//     });
-
-//     if (!institute) {
-//       throw new Error("Institute not found or inactive");
-//     }
-
-//     // Totals
-//     let totalProjects = 0;
-//     let totalIssues = 0;
-
-//     const projects = institute.projects
-//       ? institute.projects.map((project) => {
-//           totalProjects++;
-
-//           const issues = project.issues
-//             ? project.issues.map((issue) => {
-//                 totalIssues++;
-
-//                 return {
-//                   issue_id: issue.issue_id,
-//                   ticket_number: issue.ticket_number,
-//                   status: issue.status,
-//                   created_at: issue.created_at,
-//                   priority_id: issue.priority_id,
-//                   priority: issue.priority
-//                     ? {
-//                         name: issue.priority.name,
-//                         description: issue.priority.description,
-//                         color_value: issue.priority.color_value,
-//                       }
-//                     : null,
-//                 };
-//               })
-//             : [];
-
-//           return {
-//             project_id: project.project_id,
-//             name: project.name,
-//             total_issues: project.dataValues.total_issues || 0,
-//             issues,
-//           };
-//         })
-//       : [];
-
-//     return {
-//       success: true,
-//       data: {
-//         summary: {
-//           total_institutes: 1,
-//           total_projects: totalProjects,
-//           total_issues: totalIssues,
-//         },
-//         institute: {
-//           institute_id: institute.institute_id,
-//           name: institute.name,
-//           created_at: institute.created_at,
-//           total_projects: institute.dataValues.total_projects || 0,
-//           projects,
-//         },
-//       },
-//     };
-//   } catch (error) {
-//     console.error("Dashboard service error:", error);
-//     return {
-//       success: false,
-//       error: error.message,
-//     };
-//   }
-// };
-
-const getExternalUserDashboardWithStats = async (userId) => {
-  try {
-    // 1️⃣ Get user
-    const user = await User.findByPk(userId);
-    // console.log("External user: ", user);
-    if (!user || !user.institute_id) {
-      throw new Error("User or institute not found");
-    }
-
-    // 2️⃣ Get institute + projects + issues
-    const institute = await Institute.findByPk(user.institute_id, {
-      where: { is_active: true },
-      attributes: [
-        "institute_id",
-        "name",
-        "created_at",
-        [
-          Sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM institute_projects ip
-            INNER JOIN projects p ON p.project_id = ip.project_id
-            WHERE ip.institute_id = "Institute"."institute_id"
-          )`),
-          "total_projects",
-        ],
-      ],
-      include: [
-        {
-          model: Project,
-          as: "projects",
-          required: false,
-          attributes: ["project_id", "name"],
-          include: [
-            {
-              model: Issue,
-              as: "issues",
-              required: false,
-              attributes: [
-                "issue_id",
-                "ticket_number",
-                "status",
-                "created_at",
-                "priority_id",
-                "hierarchy_node_id",
-              ],
-              include: [
-                {
-                  model: HierarchyNode,
-                  as: "hierarchyNode",
-                  attributes: [
-                    "hierarchy_node_id",
-                    "name",
-                    "parent_id",
-                    "level",
-                  ],
-                },
-                {
-                  model: IssuePriority,
-                  as: "priority",
-                  attributes: ["name", "description", "color_value"],
-                },
-              ],
-              order: [["created_at", "DESC"]],
-            },
-          ],
-        },
-      ],
-      order: [[{ model: Project, as: "projects" }, "name", "ASC"]],
-    });
-
-    if (!institute) {
-      throw new Error("Institute not found or inactive");
-    }
-
-    // 3️⃣ Totals
-    let totalProjects = 0;
-    let totalIssues = 0;
-
-    // 4️⃣ Transform → project → hierarchy → issue
-    const projects = (institute.projects || []).map((project) => {
-      totalProjects++;
-
-      const hierarchyMap = {};
-
-      (project.issues || []).forEach((issue) => {
-        totalIssues++;
-
-        const node = issue.hierarchyNode;
-        const nodeId = node?.hierarchy_node_id || "unassigned";
-
-        if (!hierarchyMap[nodeId]) {
-          hierarchyMap[nodeId] = {
-            hierarchy_node_id: node?.hierarchy_node_id || null,
-            name: node?.name || "Unassigned",
-            parent_id: node?.parent_id || null,
-            level: node?.level || 0,
-            issues: [],
+          categoryMap[category.category_id] = {
+            category_id: category.category_id,
+            name: category.name,
+            description: category.description,
+            total_complaints: 0,
+            complaints: [],
           };
         }
 
-        hierarchyMap[nodeId].issues.push({
-          issue_id: issue.issue_id,
-          ticket_number: issue.ticket_number,
-          status: issue.status,
-          created_at: issue.created_at,
-          priority_id: issue.priority_id,
-          priority: issue.priority
-            ? {
-                name: issue.priority.name,
-                description: issue.priority.description,
-                color_value: issue.priority.color_value,
-              }
-            : null,
+        categoryMap[category.category_id].total_complaints++;
+
+        categoryMap[category.category_id].complaints.push({
+          complaint_id: complaint.complaint_id,
+          ticketing_code: complaint.ticketing_code,
+          status: complaint.status,
+          created_at: complaint.created_at,
         });
       });
 
-      const hierarchies = Object.values(hierarchyMap).map((node) => ({
-        ...node,
-        total_issues: node.issues.length,
-      }));
-
       return {
-        project_id: project.project_id,
-        name: project.name,
-        total_issues: project.issues?.length || 0,
-        hierarchies,
+        sector_node_id: sector.sector_node_id,
+        name: sector.name,
+        description: sector.description,
+        created_at: sector.created_at,
+        total_complaints: Number(sector.dataValues.total_complaints || 0),
+        complaint_categories: Object.values(categoryMap),
       };
     });
 
-    // 5️⃣ Response
+    /**
+     * STEP 4: Final response
+     */
     return {
       success: true,
+      message: "Dashboard statistics fetched successfully.",
       data: {
         summary: {
-          total_institutes: 1,
-          total_projects: totalProjects,
-          total_issues: totalIssues,
+          total_sectors: totalSectors,
+          total_categories: totalCategories,
+          total_complaints: totalComplaints,
         },
-        institute: {
-          institute_id: institute.institute_id,
-          name: institute.name,
-          created_at: institute.created_at,
-          total_projects: institute.dataValues.total_projects || 0,
-          projects,
-        },
+        sectors: transformedSectors,
       },
     };
   } catch (error) {
-    console.error("Dashboard service error:", error);
+    console.error("Sector complaint dashboard error:", error);
     return {
       success: false,
+      message: "Failed to fetch dashboard data",
       error: error.message,
     };
   }
 };
 
 module.exports = {
-  getInternalUserDashboardWithStats,
-  getExternalUserDashboardWithStats,
+  getSectorComplaintDashboard,
 };
