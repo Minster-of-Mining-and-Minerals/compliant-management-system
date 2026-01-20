@@ -62,7 +62,7 @@ export default function CompliantHistoryLog({ logs, onClose }: LogsPreviewProps)
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
             transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="absolute top-0 right-0 w-full lg:w-[360px] bg-white border-l border-[#D5E3EC] h-full flex flex-col gap-3 shadow-lg overflow-y-auto"
+            className="absolute rounded-xl top-0 right-0 w-full lg:w-[360px] bg-white border-l border-[#D5E3EC] h-full flex flex-col gap-3 shadow-lg overflow-y-auto"
         >
             <div className="p-6 relative border-b border-[#D5E3EC] bg-gradient-to-r from-golden-dark50 to-golden-dark80">
                 <h2 className="text-xl font-bold text-white">Complaint Timeline</h2>
@@ -104,7 +104,7 @@ export default function CompliantHistoryLog({ logs, onClose }: LogsPreviewProps)
                             >
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="font-medium text-gray-700">
-                                        {log.performed_by?.full_name || "System"}
+                                        {log.user?.full_name || "System"}
                                     </span> 
                                     <span
                                         className={`px-1 py-0.5 rounded-full text-[10px] font-semibold border ${getStatusColor(
@@ -136,12 +136,7 @@ export default function CompliantHistoryLog({ logs, onClose }: LogsPreviewProps)
                                 {/* Timestamp */}
                                 <div className="flex items-center gap-1 text-[10px] text-gray-500 mt-1">
                                     <Clock className="w-3 h-3" />
-                                    {new Date(log.created_at).toLocaleString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })}
+                                    {new Date(log.created_at).toLocaleString()}
                                 </div>
                             </div>
                         </div>

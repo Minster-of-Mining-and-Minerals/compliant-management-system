@@ -101,7 +101,7 @@ const columns: ColumnDef<Complaint>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
       return (
-        <Badge className="text-white" status={status}>
+        <Badge className="white" status={status}>
           {formatStatus(status)}
         </Badge>
       );
