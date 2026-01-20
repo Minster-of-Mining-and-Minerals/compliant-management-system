@@ -4,7 +4,10 @@ const {
   SectorNode,
   ComplaintCategory,
   ComplaintAttachment,
+  ComplaintResolution,
+  ResolutionAttachment,
   ComplaintHistory,
+  Attachment,
   sequelize,
   UserType,
 } = require("../../models");
@@ -12,6 +15,7 @@ const { v4: uuidv4, validate: isUuid } = require("uuid");
 const bcrypt = require("bcrypt");
 const { generateRandomPassword } = require("../../utils/password");
 const { sendEmail } = require("../../utils/sendEmail");
+const compliantResolution = require("../../models/compliant-management/compliantResolution");
 
 // =========== Create Complaint ===========
 const createComplaint = async (req, res) => {
@@ -278,7 +282,7 @@ const getComplaintById = async (req, res) => {
         {
           model: User,
           as: "user",
-          attributes: ["user_id", "full_name", "email"],
+          attributes: ["user_id", "full_name", "email", "phone_number"],
         },
         { model: User, as: "assignedTo", attributes: ["user_id", "full_name"] },
         {
@@ -292,8 +296,48 @@ const getComplaintById = async (req, res) => {
           attributes: ["category_id", "name"],
         },
         {
+          model: ComplaintAttachment,
+          as: "attachments",
+          attributes: ["attachment_id", "created_at"],
+          include: [
+            {
+              model: Attachment,
+              as: "attachment",
+            },
+          ],
+        },
+        {
           model: ComplaintHistory,
           as: "history",
+          include: [
+            {
+              model: User,
+              as: "user",
+              attributes: ["user_id", "full_name", "email", "phone_number"],
+            },
+          ],
+        },
+        {
+          model: ComplaintResolution,
+          as: "resolution",
+          include: [
+            {
+              model: User,
+              as: "resolver",
+              attributes: ["user_id", "full_name", "email", "phone_number"],
+            },
+            {
+              model: ResolutionAttachment,
+              as: "attachments",
+              attributes: ["attachment_id", "created_at"],
+              include: [
+                {
+                  model: Attachment,
+                  as: "attachment",
+                },
+              ],
+            },
+          ],
         },
       ],
     });

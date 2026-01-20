@@ -15,6 +15,7 @@ const {
   validateComplaintIdParam,
   validateUserIdParam,
 } = require("../../validators/compliant-validators/complaintAssignmentValidator");
+const { authenticateToken } = require("../../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -66,7 +67,7 @@ const {
  *       409:
  *         description: User is already assigned to this complaint
  */
-router.post("/", validateAssignComplaint, assignComplaint);
+router.post("/", validateAssignComplaint, authenticateToken, assignComplaint);
 
 /**
  * @swagger
@@ -102,6 +103,7 @@ router.post("/", validateAssignComplaint, assignComplaint);
  */
 router.delete(
   "/:assignment_id",
+  authenticateToken,
   validateRemoveAssignment,
   removeComplaintAssignment,
 );
@@ -136,6 +138,7 @@ router.delete(
  */
 router.get(
   "/complaint/:complaint_id",
+  authenticateToken,
   validateComplaintIdParam,
   getAssignmentsByComplaintId,
 );
@@ -168,6 +171,7 @@ router.get(
  */
 router.get(
   "/complaint/:complaint_id/latest",
+  authenticateToken,
   validateComplaintIdParam,
   getLatestAssignmentByComplaintId,
 );
@@ -198,6 +202,11 @@ router.get(
  *               items:
  *                 $ref: '#/components/schemas/ComplaintAssignment'
  */
-router.get("/user/:user_id", validateUserIdParam, getAssignmentsByUserId);
+router.get(
+  "/user/:user_id",
+  authenticateToken,
+  validateUserIdParam,
+  getAssignmentsByUserId,
+);
 
 module.exports = router;

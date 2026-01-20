@@ -3,35 +3,20 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
     useAssignComplaintMutation,
+    useGetAssignmentsByComplaintIdQuery,
     useGetLatestAssignmentByComplaintIdQuery,
     useRemoveComplaintAssignmentMutation
 } from "@/redux/api/complaintAssignmentApi";
 import { ComplaintAssignment } from "@/redux/types/complaintAssignment";
 import { useGetUsersQuery } from "@/redux/api/userApi";
+import { User } from "@/redux/types/user";
 
 interface AssignmentPreviewProps {
     complaint_id: string;
     onClose?: () => void;
 }
 
-interface UserAssignment {
-    internal_project_user_role_id: string;
-    user_id: string;
-    user: {
-        user_id: string;
-        full_name: string;
-        email: string;
-    };
-    role: {
-        role_id: string;
-        name: string;
-    };
-    internalNode: {
-        internal_node_id: string;
-        name: string;
-        level: number;
-    };
-}
+
 
 export default function AssignmentPreview({
     complaint_id,
@@ -50,7 +35,7 @@ export default function AssignmentPreview({
         isLoading: isLoadingAssignments,
         isError: assignmentsError,
         refetch // Add refetch to manually refresh after mutations
-    } = useGetLatestAssignmentByComplaintIdQuery(complaint_id, {
+    } = useGetAssignmentsByComplaintIdQuery(complaint_id, {
         refetchOnMountOrArgChange: true,
     });
 
@@ -59,24 +44,33 @@ export default function AssignmentPreview({
     const [removeAssignment, { isLoading: isRemoving }] = useRemoveComplaintAssignmentMutation();
 
     // Extract data from responses - adjust based on your actual API response structure
-    const users: UserAssignment[] = usersResponse?.data || usersResponse || [];
-    const latestAssignment: ComplaintAssignment | undefined = assignmentResponse?.data || assignmentResponse;
+    const users: User[] = usersResponse?.data || usersResponse || [];
+    const assignments: ComplaintAssignment[] | [] = assignmentResponse || assignmentResponse?.data || [];
 
     // Function to check if a user is assigned
     const isUserAssigned = (userId: string): boolean => {
-        return latestAssignment?.assignee_id === userId;
+        return assignments?.some(
+            (assignment) => assignment.assignee_id === userId
+        );
     };
 
-    const handleAssign = async (user: UserAssignment) => {
+    const assignmentIdByUserId = (userId: string): string | undefined => {
+        return assignments?.find(
+            (assignment) => assignment.assignee_id === userId
+        )?.assignment_id;
+    };
+
+
+    const handleAssign = async (user: User) => {
         try {
             // Call the assign complaint mutation
             await assignComplaint({
                 complaint_id,
                 assignee_id: user.user_id,
-                remarks: `Assigned to ${user.user.full_name} from ${user.internalNode.name}`,
+                // remarks: `Assigned to ${user.full_name} from ${user?.sectorNode?.name}`,
             }).unwrap();
 
-            toast.success(`Successfully assigned to ${user.user.full_name}`);
+            toast.success(`Successfully assigned to ${user.full_name}`);
 
             // Refetch the latest assignment to update the UI
             refetch();
@@ -85,27 +79,26 @@ export default function AssignmentPreview({
             toast.error(
                 error?.data?.message ||
                 error?.message ||
-                `Failed to assign to ${user.user.full_name}`
+                `Failed to assign to ${user.full_name}`
             );
         }
     };
 
-    const handleRemove = async (user: UserAssignment) => {
+    const handleRemove = async (user: User) => {
+        const assignment_id = assignmentIdByUserId(user.user_id);
         // Need assignment_id to remove
-        if (!latestAssignment?.assignment_id) {
+        if (!assignment_id) {
             toast.error("No assignment found to remove");
             return;
         }
 
+
         try {
             await removeAssignment({
-                assignment_id: latestAssignment.assignment_id,
-                data: {
-                    reason: `Removed assignment for ${user.user.full_name}`,
-                },
+                assignment_id: assignment_id,
             }).unwrap();
 
-            toast.success(`Successfully removed ${user.user.full_name}`);
+            toast.success(`Successfully removed ${user.full_name}`);
 
             // Refetch the latest assignment to update the UI
             refetch();
@@ -114,7 +107,7 @@ export default function AssignmentPreview({
             toast.error(
                 error?.data?.message ||
                 error?.message ||
-                `Failed to remove ${user.user.full_name}`
+                `Failed to remove ${user.full_name}`
             );
         }
     };
@@ -171,7 +164,7 @@ export default function AssignmentPreview({
 
                                 return (
                                     <motion.div
-                                        key={userAssignment.internal_project_user_role_id}
+                                        key={userAssignment.user_id}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className={`bg-white rounded-lg border-2 transition-all duration-200 ${isAssigned
@@ -185,7 +178,7 @@ export default function AssignmentPreview({
                                                 <div className="flex-1 w-full ">
                                                     <div className="flex items-center w-full justify-between gap-2">
                                                         <h4 className="font-semibold   text-gray-800">
-                                                            {userAssignment.user.full_name}
+                                                            {userAssignment.full_name}
                                                         </h4>
                                                         {isAssigned ? (
                                                             <span className="inline-block px-2 absolute right-3 top-3 py-1 text-xs bg-green-100 text-green-800 rounded-full">
@@ -198,14 +191,14 @@ export default function AssignmentPreview({
                                                         )}
                                                     </div>
                                                     <p className="text-sm text-gray-600 mt-1">
-                                                        {userAssignment.user.email}
+                                                        {userAssignment.email}
                                                     </p>
-                                                    <div className="flex items-center gap-2 mt-2">
+                                                    {/* <div className="flex items-center gap-2 mt-2">
                                                         <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
                                                             {userAssignment.role.name}
                                                         </span>
 
-                                                    </div>
+                                                    </div> */}
 
                                                 </div>
                                             </div>
@@ -277,33 +270,6 @@ export default function AssignmentPreview({
                         </div>
                     )}
                 </div>
-
-                {/* Current Assignment Section (optional) */}
-                {latestAssignment && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <h4 className="font-semibold text-blue-800 mb-2">Current Assignment</h4>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-600">Assigned to:</span>
-                                <span className="font-medium text-gray-800">
-                                    {latestAssignment.assignee?.full_name || 'Unknown'}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-600">Assigned at:</span>
-                                <span className="text-sm text-gray-600">
-                                    {new Date(latestAssignment.assigned_at).toLocaleDateString()}
-                                </span>
-                            </div>
-                            {latestAssignment.remarks && (
-                                <div className="mt-2">
-                                    <span className="text-sm text-gray-600">Remarks:</span>
-                                    <p className="text-sm text-gray-700 mt-1">{latestAssignment.remarks}</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Footer Actions */}

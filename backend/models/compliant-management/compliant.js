@@ -46,6 +46,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "complaint_id",
         as: "history",
       });
+
+      // Complaint can have many changes
+      Complaint.hasMany(models.ComplaintResolution, {
+        foreignKey: "complaint_id",
+        as: "resolution",
+      });
     }
   }
 
