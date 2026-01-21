@@ -395,7 +395,7 @@ export default function VariantStatasCard() {
               <div className="relative">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium text-secondary">
+                    <CardTitle className="text-sm font-medium text-primary">
                       {item.title}
                     </CardTitle>
                   </div>
