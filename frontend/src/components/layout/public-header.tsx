@@ -84,10 +84,9 @@ const PublicHeader = () => {
                   key={tab.href}
                   href={tab.href}
                   className={`relative flex items-center gap-2 px-3 py-1 rounded-md text-sm font-semibold transition-all duration-200
-                    ${
-                      isActive
-                        ? "text-golden-dark rounded-b-none border-b-0"
-                        : "text-gray-500 hover:text-golden-dark"
+                    ${isActive
+                      ? "text-golden-dark rounded-b-none border-b-0"
+                      : "text-gray-500 hover:text-golden-dark"
                     }
                   `}
                 >
