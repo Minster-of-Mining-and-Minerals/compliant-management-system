@@ -3,46 +3,50 @@ import { auth } from "@/auth";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 
-// 1️⃣ Create next-intl middleware instance
 const intlMiddleware = createMiddleware(routing);
 
-// Public routes (no auth required)
 const publicRoutes = ["/", "/login", "/feedback", "/complaint"];
-
-// Auth routes (redirect if already logged in)
 const authRoutes = ["/login"];
 
-// 2️⃣ SINGLE default export
 export default async function middleware(req: NextRequest) {
-  // Run next-intl first
-  const intlResponse = intlMiddleware(req);
-  if (intlResponse) return intlResponse;
-
-  // Run auth logic
-  const session = await auth();
   const { pathname } = req.nextUrl;
 
-  const isPublicRoute = publicRoutes.includes(pathname);
-  const isAuthRoute = authRoutes.includes(pathname);
+  // 👇 run intl but DO NOT return yet
+  const intlResponse = intlMiddleware(req);
 
-  // Logged-in user visiting login → redirect
+  // Get locale from pathname
+  const locale = routing.locales.find((l) =>
+    pathname.startsWith(`/${l}`)
+  ) ?? routing.defaultLocale;
+
+  const pathnameWithoutLocale = pathname.replace(
+    new RegExp(`^/${locale}`),
+    ""
+  ) || "/";
+
+  const session = await auth();
+
+
+  const isPublicRoute = publicRoutes.includes(pathnameWithoutLocale);
+  const isAuthRoute = authRoutes.includes(pathnameWithoutLocale);
+
+  // 🔐 Auth redirect
   if (isAuthRoute && session) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(
+      new URL(`/${locale}/dashboard`, req.url)
+    );
   }
 
-  // Not logged in & protected route → redirect to login
   if (!isPublicRoute && !session) {
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    const loginUrl = new URL(`/${locale}/login`, req.url);
+    loginUrl.searchParams.set("callbackUrl", pathnameWithoutLocale);
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  // ✅ return intl response if it exists
+  return intlResponse ?? NextResponse.next();
 }
 
-// 3️⃣ Config stays the same
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api|.*\\..*$).*)",
-  ],
+  matcher: ["/((?!_next|api|favicon.ico|.*\\..*).*)"],
 };

@@ -44,6 +44,7 @@ import {
   useAcceptCompliantMutation,
   useGetComplaintByIdQuery,
 } from "@/redux/api/complaintApi";
+import { useBreadcrumbTitleEffect } from "@/hooks/useBreadcrumbTitleEffect";
 type PreviewFile = {
   name: string;
   url: string;
@@ -74,7 +75,7 @@ export default function ComplaintDetailPage() {
 
   // Collapsible sections state
   const [expandedResolutions, setExpandedResolutions] = useState<string[]>([]);
-   
+
   const userId = session?.user?.id || "";
 
   useEffect(() => {
@@ -100,6 +101,10 @@ export default function ComplaintDetailPage() {
   useEffect(() => {
     setProjectId(complaint?.project_id);
   }, [complaint?.project_id, complaint]);
+  useBreadcrumbTitleEffect(
+    complaint?.ticketing_code,
+    complaint?.complaint_id
+  );
 
   // Map complaint attachments to files array with proper URLs and file info
   const complaintFiles =
@@ -166,7 +171,7 @@ export default function ComplaintDetailPage() {
     setSelectedAction(value);
   };
 
-    
+
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -238,9 +243,8 @@ export default function ComplaintDetailPage() {
           className={`w-full min-h-[80vh] mx-auto shadow-md rounded-xl  border-dashed border-[#BFD7EA] p-6 relative overflow-hidden`}
         >
           <div
-            className={`w-full transition-all duration-500 ease-in-out  ${
-              selectedAction || openTimeline ? "lg:pr-[360px]" : ""
-            } `}
+            className={`w-full transition-all duration-500 ease-in-out  ${selectedAction || openTimeline ? "lg:pr-[360px]" : ""
+              } `}
           >
             <div className="flex flex-col w-full">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
@@ -254,15 +258,14 @@ export default function ComplaintDetailPage() {
                 </div>
                 <div className="flex items-center gap-20">
                   <span
-                    className={`text-base px-2 py-1 rounded-md ${
-                      complaint.status === "resolved"
-                        ? "bg-green-100 text-green-900"
-                        : complaint.status === "pending"
-                          ? "bg-blue-100 text-blue-900"
-                          : complaint.status === "closed"
-                            ? "bg-red-100 text-red-900"
-                            : "bg-gray-100 text-gray-900"
-                    }`}
+                    className={`text-base px-2 py-1 rounded-md ${complaint.status === "resolved"
+                      ? "bg-green-100 text-green-900"
+                      : complaint.status === "pending"
+                        ? "bg-blue-100 text-blue-900"
+                        : complaint.status === "closed"
+                          ? "bg-red-100 text-red-900"
+                          : "bg-gray-100 text-gray-900"
+                      }`}
                   >
                     {formatStatus(complaint.status)}
                   </span>
@@ -411,96 +414,96 @@ export default function ComplaintDetailPage() {
 
               {/* Complaint Resolutions */}
               {complaint.resolution && complaint.resolution.length > 0 && (
-  <div className="mb-6">
-    <div className="flex items-center justify-between mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-      <div className="flex items-center gap-3">
-        <div>
-          <h3 className="text-[#1E516A] font-bold text-lg">
-            Resolutions 
-          </h3>
-          <p className="text-sm text-gray-600">
-            All resolution attempts
-          </p>
-        </div>
-      </div>
-    </div>
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h3 className="text-[#1E516A] font-bold text-lg">
+                          Resolutions
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          All resolution attempts
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-    <div className="space-y-4">
-      {complaint.resolution.map(
-        (resolution: any, resolutionIndex: number) => {
-          const resolutionFiles =
-            resolution.attachments?.map((attachment: any) => ({
-              url: getFileUrl(attachment.attachment.file_path),
-              name: attachment.attachment.file_name,
-              type: getFileType(attachment.attachment.file_name),
-              uploadedAt: attachment.attachment.created_at,
-            })) || [];
+                  <div className="space-y-4">
+                    {complaint.resolution.map(
+                      (resolution: any, resolutionIndex: number) => {
+                        const resolutionFiles =
+                          resolution.attachments?.map((attachment: any) => ({
+                            url: getFileUrl(attachment.attachment.file_path),
+                            name: attachment.attachment.file_name,
+                            type: getFileType(attachment.attachment.file_name),
+                            uploadedAt: attachment.attachment.created_at,
+                          })) || [];
 
-          return (
-            <div
-              key={resolution.resolution_id}
-              className="border border-[#BFD7EA] rounded-xl p-5 bg-white shadow-sm"
-            >
-               <div className="flex items-start justify-between mb-4">
-                <p className="text-sm text-gray-600 mt-1">
-                    Resolved on {formatDate(resolution.resolved_at)}
-                  </p><span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  {formatStatus(resolution.status) || "Resolved"}
-                  
-                </span>
-              </div>
+                        return (
+                          <div
+                            key={resolution.resolution_id}
+                            className="border border-[#BFD7EA] rounded-xl p-5 bg-white shadow-sm"
+                          >
+                            <div className="flex items-start justify-between mb-4">
+                              <p className="text-sm text-gray-600 mt-1">
+                                Resolved on {formatDate(resolution.resolved_at)}
+                              </p><span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {formatStatus(resolution.status) || "Resolved"}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-4">
-                  <p className="font-semibold text-[#1E516A] text-sm mb-1">
-                    Resolution Summary
-                  </p>
-                  <p className="text-gray-600 text-sm">
-                    {resolution.reason || "No reason provided"}
-                    
-                  </p>
-                </div>
+                              </span>
+                            </div>
 
-                <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-4">
-                  <p className="font-semibold text-[#1E516A] text-sm mb-1">
-                    Resolver Contact
-                  </p>
-                  <p className="text-gray-700 text-sm">
-                    {resolution.resolver?.full_name || "N/A"}
-                  </p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    {resolution.resolver?.phone_number || "No phone number"}
-                  </p>
-                </div>
-              </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-4">
+                                <p className="font-semibold text-[#1E516A] text-sm mb-1">
+                                  Resolution Summary
+                                </p>
+                                <p className="text-gray-600 text-sm">
+                                  {resolution.reason || "No reason provided"}
 
-              {/* Attachments (same style as complaint attachments) */}
-              {resolutionFiles.length > 0 && (
-                <div>
-                  <h5 className="font-semibold text-[#1E516A] mb-3">
-                    Attachments ({resolutionFiles.length})
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {resolutionFiles.map((file: any, idx: number) => (
-                      <FileCard
-                        key={idx}
-                        file={file}
-                        onOpen={() =>
-                          openFileViewer(resolutionFiles, idx)
-                        }
-                      />
-                    ))}
+                                </p>
+                              </div>
+
+                              <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-4">
+                                <p className="font-semibold text-[#1E516A] text-sm mb-1">
+                                  Resolver Contact
+                                </p>
+                                <p className="text-gray-700 text-sm">
+                                  {resolution.resolver?.full_name || "N/A"}
+                                </p>
+                                <p className="text-gray-500 text-xs mt-1">
+                                  {resolution.resolver?.phone_number || "No phone number"}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Attachments (same style as complaint attachments) */}
+                            {resolutionFiles.length > 0 && (
+                              <div>
+                                <h5 className="font-semibold text-[#1E516A] mb-3">
+                                  Attachments ({resolutionFiles.length})
+                                </h5>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {resolutionFiles.map((file: any, idx: number) => (
+                                    <FileCard
+                                      key={idx}
+                                      file={file}
+                                      onOpen={() =>
+                                        openFileViewer(resolutionFiles, idx)
+                                      }
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                          </div>
+                        );
+                      },
+                    )}
                   </div>
                 </div>
               )}
-              
-            </div>
-          );
-        },
-      )}
-    </div>
-  </div>
-)}
 
 
               {complaint?.status !== "resolved" ? (
@@ -518,13 +521,12 @@ export default function ComplaintDetailPage() {
                           action.onClick();
                         }}
                         disabled={!action.enabled}
-                        className={`flex-1 text-left border rounded-lg p-4 transition-all relative ${
-                          selectedAction === action.key
-                            ? `border-[${action.border}] bg-[${action.bg}]`
-                            : action.enabled
-                              ? "border-[#D5E3EC] bg-white hover:bg-gray-50 cursor-pointer"
-                              : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
-                        }`}
+                        className={`flex-1 text-left border rounded-lg p-4 transition-all relative ${selectedAction === action.key
+                          ? `border-[${action.border}] bg-[${action.bg}]`
+                          : action.enabled
+                            ? "border-[#D5E3EC] bg-white hover:bg-gray-50 cursor-pointer"
+                            : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                          }`}
                       >
                         {!action.enabled && (
                           <div className="absolute top-2 right-2">
@@ -533,32 +535,29 @@ export default function ComplaintDetailPage() {
                         )}
                         <div className="flex items-center gap-2 mb-1">
                           <div
-                            className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                              selectedAction === action.key
-                                ? "bg-golden-dark" // Primary background
-                                : action.enabled
-                                  ? "border-2 border-gray-300"
-                                  : "border-2 border-gray-200 bg-gray-100"
-                            }`}
+                            className={`w-5 h-5 rounded-full flex items-center justify-center ${selectedAction === action.key
+                              ? "bg-golden-dark" // Primary background
+                              : action.enabled
+                                ? "border-2 border-gray-300"
+                                : "border-2 border-gray-200 bg-gray-100"
+                              }`}
                           >
                             {selectedAction === action.key && (
                               <Check className="w-3 h-3 bg-golden text-white" />
                             )}
                           </div>
                           <p
-                            className={`font-semibold ${
-                              action.enabled
-                                ? "text-golden-dark"
-                                : "text-gray-500"
-                            }`}
+                            className={`font-semibold ${action.enabled
+                              ? "text-golden-dark"
+                              : "text-gray-500"
+                              }`}
                           >
                             {action.label}
                           </p>
                         </div>
                         <p
-                          className={`text-sm ${
-                            action.enabled ? "text-gray-600" : "text-gray-400"
-                          }`}
+                          className={`text-sm ${action.enabled ? "text-gray-600" : "text-gray-400"
+                            }`}
                         >
                           {action.desc}
                         </p>
@@ -603,11 +602,11 @@ export default function ComplaintDetailPage() {
                           !prev
                             ? prev
                             : {
-                                ...prev,
-                                index:
-                                  (prev.index - 1 + prev.files.length) %
-                                  prev.files.length,
-                              },
+                              ...prev,
+                              index:
+                                (prev.index - 1 + prev.files.length) %
+                                prev.files.length,
+                            },
                         )
                       }
                       className="flex items-center gap-1 px-3 py-1 border rounded-md"
@@ -626,9 +625,9 @@ export default function ComplaintDetailPage() {
                           !prev
                             ? prev
                             : {
-                                ...prev,
-                                index: (prev.index + 1) % prev.files.length,
-                              },
+                              ...prev,
+                              index: (prev.index + 1) % prev.files.length,
+                            },
                         )
                       }
                       className="flex items-center gap-1 px-3 py-1 border rounded-md"
@@ -666,3 +665,4 @@ export default function ComplaintDetailPage() {
     </>
   );
 }
+
