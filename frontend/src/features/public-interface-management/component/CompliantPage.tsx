@@ -122,7 +122,7 @@ const ComplaintPage = () => {
       return;
     }
 
-    if (!sectorId || !departmentId) {
+    if (!sectorId) {
       toast.error(t("validation.sectorDepartmentRequired"));
       return;
     }
@@ -147,10 +147,10 @@ const ComplaintPage = () => {
       const location =
         city.trim() || subCity.trim() || woreda.trim()
           ? {
-              city: city.trim(),
-              subcity: subCity.trim(),
-              woreda: woreda.trim(),
-            }
+            city: city.trim(),
+            subcity: subCity.trim(),
+            woreda: woreda.trim(),
+          }
           : null;
 
       // Prepare attachment_ids as string (comma-separated filenames or IDs)
@@ -225,9 +225,8 @@ const ComplaintPage = () => {
 
                 <button
                   type="button"
-                  className={`p-0 transition-all duration-200 ${
-                    isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
-                  }`}
+                  className={`p-0 transition-all duration-200 ${isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
+                    }`}
                   onClick={handlePersonalInfoToggle}
                   disabled={isTogglingPersonalInfo}
                   title={
@@ -465,7 +464,7 @@ const ComplaintPage = () => {
                     {t("details.department", {
                       category: complaintCategoryName,
                     })}
-                    <span className="text-red-500"> *</span>
+                    {/* <span className="text-red-500"> *</span> */}
                   </label>
                   <Select
                     value={departmentId}
@@ -604,7 +603,6 @@ const ComplaintPage = () => {
                   isSubmitting ||
                   !complaintCategoryId ||
                   !sectorId ||
-                  !departmentId ||
                   !complaintDescription.trim()
                 }
                 className="bg-golden-dark min-w-52 hover:bg-golden-darkHover h-12 text-base text-white py-1 rounded-md shadow-md disabled:opacity-70"
