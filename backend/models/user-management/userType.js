@@ -11,10 +11,10 @@ module.exports = (sequelize, DataTypes) => {
       });
 
       // A UserType can have many Complaint
-      this.hasMany(models.User, {
-        foreignKey: "complaint_type_id",
-        as: "complaints",
-      });
+      // this.hasMany(models.User, {
+      //   foreignKey: "complaint_type_id",
+      //   as: "complaints",
+      // });
     }
   }
 

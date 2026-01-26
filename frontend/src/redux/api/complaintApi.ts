@@ -16,6 +16,7 @@ export const complaintApi = baseApi.injectEndpoints({
       {
         status?: string;
         sector_node_id?: string;
+        compliant_type_id?: string;
         category_id?: string;
         search?: string;
       } | void

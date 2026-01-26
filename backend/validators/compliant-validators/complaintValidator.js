@@ -4,6 +4,16 @@ const { validate: isUuid } = require("uuid");
 
 // =================== Create Complaint Schema ===================
 const createComplaintSchema = Joi.object({
+  complaint_type_id: Joi.string()
+    .optional()
+    .custom((value, helpers) => {
+      if (!isUuid(value)) return helpers.error("any.invalid");
+      return value;
+    })
+    .messages({
+      "any.invalid": "Complaint Type must be a valid UUID.",
+    }),
+
   full_name: Joi.string().min(3).max(255).optional().allow(null, ""),
 
   email: Joi.string().email().optional().allow(null, "").messages({

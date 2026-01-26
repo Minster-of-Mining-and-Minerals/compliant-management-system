@@ -13,8 +13,8 @@ module.exports = (sequelize, DataTypes) => {
 
       // Complaint belongs to userType
       Complaint.belongsTo(models.UserType, {
-        foreignKey: "user_type_id",
-        as: "comoolaintType",
+        foreignKey: "compliant_type_id",
+        as: "compliantType",
       });
 
       // Complaint belongs to ComplaintCategory
@@ -72,6 +72,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(50),
         allowNull: false,
         unique: true,
+      },
+      compliant_type_id: {
+        type: DataTypes.UUID,
+        allowNull: false, // Allow anonymous complaints
+        references: {
+          model: "user_types",
+          key: "user_type_id",
+        },
       },
       compliant_user_id: {
         type: DataTypes.UUID,
