@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, Edit, Trash } from "lucide-react";
+import { Eye, Edit, Trash, Plus } from "lucide-react";
 import Link from "next/link";
 import { DataTable } from "@/features/template/component/tableList/DataTable";
 import { TableLayout } from "@/features/template/component/tableList/TableLayout";
@@ -16,22 +16,33 @@ import {
 } from "@/redux/api/complaintApi";
 import { Complaint } from "@/redux/types/complaint";
 import { formatStatus } from "@/utils/statusFormatter";
+import { useGetUserTypesQuery } from "@/redux/api/userApi";
 
 
 
 export interface ComplaintTableProps {
   sideActions?: ActionButton[];
+  userType?: string;
 }
 /* ----------------------------------
    COMPONENT
 ----------------------------------- */
-export default function ComplaintTable({ sideActions }: ComplaintTableProps) {
-  const { data = [], isLoading, isError } = useGetComplaintsQuery();
+export default function ComplaintTable({ sideActions, userType = "internal" }: ComplaintTableProps) {
+  const {
+    data: userTypes = [],
+  } = useGetUserTypesQuery();
+  const userTypeId = userTypes?.find(
+    (type: any) => type.name === userType
+  )?.user_type_id;
+  const { data = [], isLoading, isError } = useGetComplaintsQuery({
+    compliant_type_id: userTypeId
+  });
   const [deleteComplaint] = useDeleteComplaintMutation();
   const router = useRouter();
   /* Pagination */
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [isModalOpen, setModalOpen] = useState(false);
 
   const handlePagination = (index: number, size: number) => {
     setPageIndex(index);
@@ -60,83 +71,90 @@ export default function ComplaintTable({ sideActions }: ComplaintTableProps) {
   /* ----------------------------------
    TABLE COLUMNS
 ----------------------------------- */
-const columns: ColumnDef<Complaint>[] = [
-  {
-    accessorKey: "ticketing_code",
-    header: "Ticket Code",
-    cell: ({ row }) => (
-      <span className="font-medium text-primary">
-        {row.getValue("ticketing_code")}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "complainer",
-    header: "Complainer",
-    cell: ({ row }) => (
-      <span className="text-sm">
-        {row.original.user?.full_name ?? "Anonymous"}
-      </span>
-    ),
-  },
-  {
-    id: "category",
-    header: "Category",
-    cell: ({ row }) => (
-      <span className="text-sm">{row.original.category?.name ?? "—"}</span>
-    ),
-  },
-  {
-    id: "sector",
-    header: "Sector",
-    cell: ({ row }) => (
-      <span className="text-sm">
-        {row.original.assignedSector?.name ?? "—"}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as string;
-      return (
-        <Badge className="white" status={status}>
-          {formatStatus(status)}
-        </Badge>
-      );
+  const columns: ColumnDef<Complaint>[] = [
+    {
+      accessorKey: "ticketing_code",
+      header: "Ticket Code",
+      cell: ({ row }) => (
+        <span className="font-medium text-primary">
+          {row.getValue("ticketing_code")}
+        </span>
+      ),
     },
-  },
-  {
-    accessorKey: "created_at",
-    header: "Created",
-    cell: ({ row }) =>
-      new Date(row.getValue("created_at")).toLocaleDateString(),
-  },
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      const complaintId = row.original.complaint_id;
-      return (
-        <div className="flex items-center gap-1">
-          <Button onClick={() => router.push(`/compliants/${complaintId}`)} variant="ghost" size="icon">
-            <Eye className="h-4 w-4" />
-          </Button>
-          {/* <Button variant="ghost" size="icon">
+    {
+      accessorKey: "complainer",
+      header: "Complainer",
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {row.original.user?.full_name ?? "Anonymous"}
+        </span>
+      ),
+    },
+    {
+      id: "category",
+      header: "Category",
+      cell: ({ row }) => (
+        <span className="text-sm">{row.original.category?.name ?? "—"}</span>
+      ),
+    },
+    {
+      id: "sector",
+      header: "Sector",
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {row.original.assignedSector?.name ?? "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return (
+          <Badge className="white" status={status}>
+            {formatStatus(status)}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created",
+      cell: ({ row }) =>
+        new Date(row.getValue("created_at")).toLocaleDateString(),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const complaintId = row.original.complaint_id;
+        return (
+          <div className="flex items-center gap-1">
+            <Button onClick={() => router.push(`/compliants/${complaintId}`)} variant="ghost" size="icon">
+              <Eye className="h-4 w-4" />
+            </Button>
+            {/* <Button variant="ghost" size="icon">
             <Edit className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon">
             <Trash className="h-4 w-4" />
           </Button> */}
-        </div>
-      );
+          </div>
+        );
+      },
     },
-  },
-];
+  ];
 
   /* Actions (top buttons) */
-  const actions: ActionButton[] = [];
+  const actions: ActionButton[] = userType == "internal" ? [
+    {
+      label: "Create Complaints",
+      icon: <Plus className="h-4 w-4" />,
+      variant: "default",
+      onClick: () => setModalOpen(true),
+    },
+  ] : [];
 
   /* Client-side filtering */
   const filteredData = data.filter((item) => {
