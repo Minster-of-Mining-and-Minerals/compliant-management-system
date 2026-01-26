@@ -11,6 +11,12 @@ module.exports = (sequelize, DataTypes) => {
         as: "user",
       });
 
+      // Complaint belongs to userType
+      Complaint.belongsTo(models.UserType, {
+        foreignKey: "user_type_id",
+        as: "comoolaintType",
+      });
+
       // Complaint belongs to ComplaintCategory
       Complaint.belongsTo(models.ComplaintCategory, {
         foreignKey: "category_id",

@@ -9,6 +9,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "user_type_id",
         as: "users",
       });
+
+      // A UserType can have many Complaint
+      this.hasMany(models.User, {
+        foreignKey: "complaint_type_id",
+        as: "complaints",
+      });
     }
   }
 
@@ -37,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
-    }
+    },
   );
 
   return UserType;
