@@ -16,6 +16,17 @@ module.exports = {
         unique: true,
       },
 
+      compliant_type_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+          model: "user_types",
+          key: "user_type_id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
+
       compliant_user_id: {
         type: Sequelize.UUID,
         allowNull: true,
@@ -108,7 +119,7 @@ module.exports = {
           "in_progress",
           "resolved",
           "rejected",
-          "closed"
+          "closed",
         ),
         allowNull: false,
         defaultValue: "pending",
@@ -155,7 +166,7 @@ module.exports = {
     // Clean up ENUM in Postgres
     if (queryInterface.sequelize.getDialect() === "postgres") {
       await queryInterface.sequelize.query(
-        'DROP TYPE IF EXISTS "enum_complaints_status";'
+        'DROP TYPE IF EXISTS "enum_complaints_status";',
       );
     }
   },

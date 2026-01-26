@@ -11,14 +11,14 @@ function Compliants() {
 
   const sideActions: ActionButton[] = [
     {
-      label: "Complaints",
+      label: "Internal Complaints",
       icon: <Users className="h-4 w-4" />,
       variant: activeTab === "complaints" ? "default" : "outline",
       size: "default",
       onClick: () => setActiveTab("complaints"),
     },
     {
-      label: "Complainers",
+      label: "External Complaints",
       icon: <Users className="h-4 w-4" />,
       variant: activeTab === "complainants" ? "default" : "outline",
       size: "default",
@@ -29,11 +29,11 @@ function Compliants() {
   return (
     <>
       {activeTab === "complaints" && (
-        <ComplaintTable sideActions={sideActions} />
+        <ComplaintTable sideActions={sideActions} userType="internal" />
       )}
       {
         activeTab === "complainants" && (
-          <ExternalUserTable sideActions={sideActions} />
+          <ComplaintTable sideActions={sideActions} userType="external" />
         )
       }
     </>

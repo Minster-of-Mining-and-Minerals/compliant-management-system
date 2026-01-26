@@ -22,6 +22,7 @@ const createComplaint = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const {
+      complaint_type_id,
       full_name,
       email,
       phone_number,
@@ -39,6 +40,41 @@ const createComplaint = async (req, res) => {
       attachment_ids,
     } = req.body;
 
+    // ====== Validate Complaint Type ======
+    let type_id = complaint_type_id;
+    if (complaint_type_id) {
+      const complaint_type = await UserType.findByPk(complaint_type_id, {
+        transaction: t,
+      });
+      if (!complaint_type) {
+        await t.rollback();
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid complaint type." });
+      }
+    } else {
+      // Find the default 'external' type if no ID is provided
+      const externalType = await UserType.findOne({
+        where: { name: "external" },
+        transaction: t,
+      });
+
+      // Handle case where external type doesn't exist
+      if (!externalType) {
+        await t.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Default complaint type not found.",
+        });
+      }
+
+      // Assign the found ID for further use
+      type_id = externalType.user_type_id;
+
+      // console.log("externalType: ", externalType);
+    }
+
+    // console.log("type_id: ", type_id);
     // ====== Validate category ======
     const category = await ComplaintCategory.findByPk(category_id, {
       transaction: t,
@@ -130,6 +166,7 @@ const createComplaint = async (req, res) => {
         complaint_id: uuidv4(),
         ticketing_code,
         compliant_user_id,
+        compliant_type_id: type_id,
         category_id,
         sector_node_id: sector_node_id || null,
         department_id: department_id || null,
@@ -213,12 +250,14 @@ const createComplaint = async (req, res) => {
 // =========== Get all complaints ===========
 const getComplaints = async (req, res) => {
   try {
-    const { status, sector_node_id, category_id, search } = req.query;
+    const { status, sector_node_id, category_id, compliant_type_id, search } =
+      req.query;
 
     const whereClause = {};
 
     if (status) whereClause.status = status;
     if (sector_node_id) whereClause.sector_node_id = sector_node_id;
+    if (compliant_type_id) whereClause.compliant_type_id = compliant_type_id;
     if (category_id) whereClause.category_id = category_id;
 
     if (search) {
@@ -231,6 +270,11 @@ const getComplaints = async (req, res) => {
     const complaints = await Complaint.findAll({
       where: whereClause,
       include: [
+        {
+          model: UserType,
+          as: "compliantType",
+          attributes: ["name"],
+        },
         {
           model: User,
           as: "user",
