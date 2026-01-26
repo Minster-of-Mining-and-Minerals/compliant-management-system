@@ -550,7 +550,7 @@ const generateTicket = async () => {
 
     // Check if ticket exists in database
     try {
-      const existing = await Issue.findOne({
+      const existing = await Complaint.findOne({
         where: { ticket_number: ticket },
       });
 
