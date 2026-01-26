@@ -4,6 +4,7 @@ const {
   Complaint,
   User,
   ResolutionAttachment,
+  ComplaintHistory,
   sequelize,
 } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
@@ -12,13 +13,14 @@ const { v4: uuidv4, validate: isUuid } = require("uuid");
 // ------------------------------------------------------
 //  RESOLVE COMPLAINT
 // ------------------------------------------------------
+
 const resolveComplaint = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const { complaint_id, reason, attachment_ids = [] } = req.body;
     const resolved_by = req.user.user_id;
 
-    // 2. Validate complaint exists and is not already resolved
+    // 1. Validate complaint exists
     const complaint = await Complaint.findByPk(complaint_id, {
       transaction: t,
     });
@@ -26,7 +28,7 @@ const resolveComplaint = async (req, res) => {
       return res.status(404).json({ message: "Complaint not found." });
     }
 
-    // Check if complaint is already resolved
+    // 2. Check if complaint is already resolved
     if (complaint.status === "resolved") {
       return res.status(409).json({
         message: "Complaint is already resolved.",
@@ -34,15 +36,13 @@ const resolveComplaint = async (req, res) => {
       });
     }
 
-    // 3. Validate resolver (user)
-    const resolver = await User.findByPk(resolved_by, {
-      transaction: t,
-    });
+    // 3. Validate resolver user
+    const resolver = await User.findByPk(resolved_by, { transaction: t });
     if (!resolver) {
       return res.status(404).json({ message: "Resolver user not found." });
     }
 
-    // 4. Check if resolution already exists for this complaint
+    // 4. Check existing resolution
     const existingResolution = await ComplaintResolution.findOne({
       where: { complaint_id },
       transaction: t,
@@ -55,10 +55,9 @@ const resolveComplaint = async (req, res) => {
       });
     }
 
-    const resolution_id = uuidv4();
-
     // 5. Create resolution
-    const resolution = await ComplaintResolution.create(
+    const resolution_id = uuidv4();
+    await ComplaintResolution.create(
       {
         resolution_id,
         complaint_id,
@@ -71,73 +70,50 @@ const resolveComplaint = async (req, res) => {
       { transaction: t },
     );
 
-    // 6. Update complaint status to resolved
+    // 6. Update complaint status
     await complaint.update(
+      { status: "resolved", updated_at: new Date() },
+      { transaction: t },
+    );
+
+    // 7. Attach attachments
+    for (const attachment_id of attachment_ids) {
+      await ResolutionAttachment.create(
+        {
+          resolution_attachment_id: uuidv4(),
+          resolution_id,
+          attachment_id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+        { transaction: t },
+      );
+    }
+
+    // 8. Create complaint history
+    await ComplaintHistory.create(
       {
-        status: "resolved",
-        updated_at: new Date(),
+        history_id: uuidv4(),
+        complaint_id,
+        user_id: resolved_by,
+        action: "resolved",
+        status_at_time: "resolved",
+        notes: "Complaint resolved by user and status changed to Resolved",
+        created_at: new Date(),
       },
       { transaction: t },
     );
 
-    // 7. Handle attachments if provided
-    if (attachment_ids.length > 0) {
-      // Link attachments to resolution
-      // Assuming you have a ResolutionAttachment model
-      for (const attachment_id of attachment_ids) {
-        await ResolutionAttachment.create(
-          {
-            attachment_id: uuidv4(),
-            resolution_id,
-            file_id: attachment_id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          },
-          { transaction: t },
-        );
-      }
-    }
-
-    // 8. Optional notification
-    /*
-    await NotificationService.notifyUsersOnComplaintResolution(
-      {
-        complaint_id,
-        resolved_by,
-        resolution_id,
-        reason,
-      },
-      t
-    );
-    */
-
+    // ✅ Commit once all writes succeed
     await t.commit();
 
-    // 9. Return full resolution with details
+    // 9. Return resolution with details
     const resolutionWithDetails = await ComplaintResolution.findOne({
       where: { resolution_id },
       include: [
-        {
-          model: Complaint,
-          as: "complaint",
-          attributes: [
-            "complaint_id",
-            "title",
-            "description",
-            "status",
-            "created_at",
-          ],
-        },
-        {
-          model: User,
-          as: "resolver",
-          attributes: ["user_id", "full_name", "email", "role"],
-        },
-        {
-          model: ResolutionAttachment,
-          as: "attachments",
-          attributes: ["attachment_id", "file_id", "created_at"],
-        },
+        { model: Complaint, as: "complaint" },
+        { model: User, as: "resolver" },
+        { model: ResolutionAttachment, as: "attachments" },
       ],
     });
 
@@ -147,7 +123,10 @@ const resolveComplaint = async (req, res) => {
       data: resolutionWithDetails,
     });
   } catch (error) {
-    await t.rollback();
+    // Rollback only if transaction is still active
+    if (!t.finished) {
+      await t.rollback();
+    }
     console.error("RESOLVE COMPLAINT ERROR:", error);
     return res.status(500).json({
       success: false,

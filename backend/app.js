@@ -34,6 +34,9 @@ const feedbackRoute = require("./routers/feedback-routes/feedbackRoutes");
 // ================== Attachment Routes ==========================
 const attachmentRoute = require("./routers/attachment-routes/attachmentRoute");
 
+// ================== Dashboard Routes ==========================
+const dashboardRoute = require("./routers/dashboard-routes/dashboardRoutes");
+
 const app = express();
 const appServer = http.createServer(app);
 
@@ -134,6 +137,9 @@ app.use("/api/feedbacks", feedbackRoute);
 
 // ================== Api Attachment Routes =====================
 app.use("/api/attachments", attachmentRoute);
+
+// ================== Api Dashboard Routes =====================
+app.use("/api/dashboard", dashboardRoute);
 
 // ================== Root Endpoint ==================
 app.get("/", (req, res) => {

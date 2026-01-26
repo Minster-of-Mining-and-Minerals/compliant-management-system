@@ -20,6 +20,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "sector_node_id",
         as: "users",
       });
+
+      // SectorNode model
+      SectorNode.hasMany(models.Complaint, {
+        foreignKey: "sector_node_id",
+        as: "complaints",
+      });
     }
   }
 
@@ -72,7 +78,7 @@ module.exports = (sequelize, DataTypes) => {
           fields: ["parent_id"],
         },
       ],
-    }
+    },
   );
 
   return SectorNode;

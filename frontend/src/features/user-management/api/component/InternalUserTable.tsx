@@ -17,6 +17,7 @@ import {
 import { User } from "@/redux/types/user";
 import { formatStatus } from "@/utils/statusFormatter";
 import { CreateUserModal } from "@/components/common/modals/CreateUserModal";
+import Link from "next/link";
 
 const columns: ColumnDef<User>[] = [
     {
@@ -73,9 +74,11 @@ const columns: ColumnDef<User>[] = [
         header: "Actions",
         cell: ({ row }) => (
             <div className="flex items-center">
-                <Button variant="ghost" size="icon">
-                    <Eye className="h-4 w-4" />
-                </Button>
+                <Link href={`/users/list/${row.original.user_id}`}>
+                    <Button variant="ghost" size="icon">
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                </Link>
                 <Button variant="ghost" size="icon">
                     <Edit className="h-4 w-4" />
                 </Button>

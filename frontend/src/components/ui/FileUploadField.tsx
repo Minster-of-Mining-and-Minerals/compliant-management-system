@@ -158,7 +158,7 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
         ) : (
           <div className="flex flex-col items-center justify-center space-y-2">
             <Upload className="w-6 h-6 text-gray-500" />
-            <p className="text-sm text-gray-600">Click or drag to upload</p>
+            <p className="text-sm font-normal text-gray-600">Click or drag to upload</p>
           </div>
         )}
       </div>

@@ -1,5 +1,4 @@
 {
-  
   "HomePage": {
     "badge": "ይፋዊ የህዝብ ቅሬታና አስተያየት መድረክ",
     "heading": {
@@ -62,7 +61,12 @@
       "evidencePlaceholder": "የሚያግዙ ሰነዶች ወይም ማስረጃዎችን ያስገቡ",
       "optional": "አማራጭ"
     },
-
+    "toast": {
+      "success": {
+        "submitted": "ቅሬታዎ በተሳካ ሁኔታ ተልኳል።",
+        "errors": "አንዳንድ ስህተቶች ነበሩ። እባክዎ ቅጹን ያረጋግጡ እና ደግመው ይሞክሩ።"
+      }
+    },
     "buttons": {
       "cancel": "ሰርዝ",
       "submit": "{category} አስገባ"
@@ -92,6 +96,15 @@
       "feedbackPlaceholder": "አስተያየትዎን በዝርዝር ይግለጹ",
       "rating": "ደረጃ",
       "selectRating": "ደረጃ ይምረጡ"
+    },
+    "toast": {
+      "success": {
+        "submitted": "አስተያየትዎ በተሳካ ሁኔታ ተልኳል።"
+      },
+      "error": {
+        "unexpected": "ያልታወቀ ስህተት አጋጥሟል። እባክዎ ከዚያ በኋላ ደግመው ይሞክሩ።",
+        "errors": "አንዳንድ ስህተቶች ነበሩ። እባክዎ ቅጹን ያረጋግጡ እና ደግመው ይሞክሩ።"
+      }
     },
     "actions": {
       "submit": "አስተያየት ያቅርቡ",

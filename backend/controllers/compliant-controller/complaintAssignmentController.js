@@ -122,9 +122,12 @@ const assignComplaint = async (req, res) => {
 // ------------------------------------------------------
 //  REMOVE ASSIGNMENT
 // ------------------------------------------------------
+
 const removeComplaintAssignment = async (req, res) => {
-  const t = await sequelize.transaction();
+  let t;
   try {
+    t = await sequelize.transaction();
+
     const { assignment_id } = req.params;
     const removed_by = req.user.user_id;
 
@@ -138,61 +141,41 @@ const removeComplaintAssignment = async (req, res) => {
       transaction: t,
     });
 
-    if (!assignment)
+    if (!assignment) {
+      await t.rollback();
       return res.status(404).json({ message: "Assignment not found." });
+    }
 
-    const complaint = assignment.complaint;
-
-    // 1. Delete assignment
     await ComplaintAssignment.destroy({
       where: { assignment_id },
       transaction: t,
     });
 
-    // 2. Update complaint status
-    await complaint.update(
+    await assignment.complaint.update(
       {
         assigned_to_user_id: null,
         status: "in_progress",
-        updated_at: new Date(),
       },
       { transaction: t },
     );
 
-    // 3. Optional notification
-    /*
-    await NotificationService.notifyUsersOnAssignmentChange(
-      {
-        complaint_id: complaint.complaint_id,
-        assignee_id: assignment.assignee_id,
-        assigned_by: assignment.assigner_id,
-        action_type: "UNASSIGNED",
-        reason,
-        assignment_id,
-      },
-      t
-    );
-    */
-
     await t.commit();
 
     return res.status(200).json({
+      success: true,
       message: "Assignment removed successfully",
-      removed_assignment: {
+      data: {
         assignment_id,
-        complaint_id: complaint.complaint_id,
-        assignee_name: assignment.assignee.full_name,
-        assigner_name: assignment.assigner.full_name,
+        complaint_id: assignment.complaint.complaint_id,
+        assignee_name: assignment.assignee?.full_name ?? "Unknown",
+        assigner_name: assignment.assigner?.full_name ?? "Unknown",
         removed_by,
-        reason,
       },
     });
   } catch (error) {
-    await t.rollback();
-    console.error("REMOVE COMPLAINT ASSIGNMENT ERROR:", error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    if (t && !t.finished) await t.rollback();
+    console.error("REMOVE ERROR:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -212,7 +195,19 @@ const getAssignmentsByComplaintId = async (req, res) => {
       order: [["assigned_at", "DESC"]],
     });
 
-    return res.status(200).json(assignments);
+    if (!assignments) {
+      return res.status(404).json({
+        success: false,
+        message: "Assignments not found.",
+        data: null,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Assignments fetched successfully",
+      data: assignments,
+    });
   } catch (error) {
     console.error("FETCH COMPLAINT ASSIGNMENTS ERROR:", error);
     return res
@@ -234,13 +229,21 @@ const getLatestAssignmentByComplaintId = async (req, res) => {
         { model: User, as: "assignee" },
         { model: User, as: "assigner" },
       ],
-      order: [["assigned_at", "DESC"]],
+      order: [["created_at", "DESC"]],
     });
 
     if (!assignment)
-      return res.status(404).json({ message: "No assignment found." });
+      return res.status(404).json({
+        success: false,
+        data: null,
+        message: "No assignment found.",
+      });
 
-    return res.status(200).json(assignment);
+    return res.status(200).json({
+      success: true,
+      data: assignment,
+      message: "Assignment found.",
+    });
   } catch (error) {
     console.error("FETCH LATEST COMPLAINT ASSIGNMENT ERROR:", error);
     return res

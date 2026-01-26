@@ -55,11 +55,12 @@ const ComplaintPage = () => {
   const root = data.filter((item) => item.parent_id === null);
   const sectors = root.flatMap((root) => root.children || []);
 
-  const {
-    data: complaintCategories = []
-  } = useGetComplaintCategoriesQuery({ is_active: true });
+  const { data: complaintCategories = [] } = useGetComplaintCategoriesQuery({
+    is_active: true,
+  });
 
-  const [createComplaint, { isLoading: isSubmitting }] = useCreateComplaintMutation();
+  const [createComplaint, { isLoading: isSubmitting }] =
+    useCreateComplaintMutation();
 
   const handleSectorChange = (value: string) => {
     setSectorId(value);
@@ -70,7 +71,7 @@ const ComplaintPage = () => {
 
   const handleComplaintCategoryChange = (value: string) => {
     const selectedCategory = complaintCategories.find(
-      (cat) => cat.category_id === value
+      (cat) => cat.category_id === value,
     );
     setComplaintCategoryId(value);
     setComplaintCategoryName(selectedCategory?.name || "");
@@ -96,6 +97,21 @@ const ComplaintPage = () => {
     }));
   };
 
+  const ResetForm = () => {
+    setSectorId("");
+    setDepartmentId("");
+    setComplaintDescription("");
+    setFullName("");
+    setEmail("");
+    setPhoneNumber("");
+    setCity("");
+    setSubCity("");
+    setWoreda("");
+    setIncidentDate("");
+    setNameOfPersonConcerned("");
+    setRequestedAction("");
+    setFormValues({ attachment_id: [] });
+  };
   // ----------------- SUBMIT HANDLER -----------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,21 +134,31 @@ const ComplaintPage = () => {
 
     try {
       // Determine if anonymous based on personal info toggle and filled fields
-      const hasPersonalInfo = fullName.trim() || email.trim() || phoneNumber.trim() || city.trim() || subCity.trim() || woreda.trim();
+      const hasPersonalInfo =
+        fullName.trim() ||
+        email.trim() ||
+        phoneNumber.trim() ||
+        city.trim() ||
+        subCity.trim() ||
+        woreda.trim();
       const isAnonymous = !isPersonalInfoOpen || !hasPersonalInfo;
 
       // Create location object if any location fields are filled
-      const location = (city.trim() || subCity.trim() || woreda.trim()) ? {
-        city: city.trim(),
-        subcity: subCity.trim(),
-        woreda: woreda.trim()
-      } : null;
+      const location =
+        city.trim() || subCity.trim() || woreda.trim()
+          ? {
+              city: city.trim(),
+              subcity: subCity.trim(),
+              woreda: woreda.trim(),
+            }
+          : null;
 
       // Prepare attachment_ids as string (comma-separated filenames or IDs)
       // Note: You'll need to handle file upload to server first to get attachment IDs
-      const attachment_ids = formValues.attachment_id.length > 0
-        ? formValues.attachment_id
-        : undefined;
+      const attachment_ids =
+        formValues.attachment_id.length > 0
+          ? formValues.attachment_id
+          : undefined;
 
       const payload = {
         // Personal info (only include if not anonymous)
@@ -162,35 +188,20 @@ const ComplaintPage = () => {
       };
 
       const result = await createComplaint(payload).unwrap();
+      console.log(t("toast.success.submitted"));
+      toast.success(t("toast.success.submitted"));
 
-      if (result?.success) {
-        toast.success(result.message || t("success.submitted"));
-
-        // Reset all form fields
-        setSectorId("");
-        setDepartmentId("");
-        setComplaintDescription("");
-        setFullName("");
-        setEmail("");
-        setPhoneNumber("");
-        setCity("");
-        setSubCity("");
-        setWoreda("");
-        setIncidentDate("");
-        setNameOfPersonConcerned("");
-        setRequestedAction("");
-        setFormValues({ attachment_id: [] });
-
-        // Reset category to default
-        if (complaintCategories.length > 0) {
-          setComplaintCategoryId(complaintCategories[0].category_id);
-          setComplaintCategoryName(complaintCategories[0].name);
-        }
-      } else {
-        toast.error(result?.message || t("error.submitFailed"));
+      // Reset all form fields
+      ResetForm();
+      // Reset category to default
+      if (complaintCategories.length > 0) {
+        setComplaintCategoryId(complaintCategories[0].category_id);
+        setComplaintCategoryName(complaintCategories[0].name);
       }
     } catch (err: any) {
-      toast.error(err?.data?.message || err?.message || t("error.unexpected"));
+      toast.error(
+        err?.data?.message || err?.message || t("toast.error.unexpected"),
+      );
     }
   };
 
@@ -198,9 +209,7 @@ const ComplaintPage = () => {
     <main className="flex flex-col min-h-screen z-10 relative mx-auto px-4 sm:px-6 lg:px-20 pt-32 pb-16">
       <div className="mb-8 border-gray-200 pb-4">
         <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <p className="mt-2 text-sm text-gray-600 max-w-2xl">
-          {t("subtitle")}
-        </p>
+        <p className="mt-2 text-sm text-gray-600 max-w-2xl">{t("subtitle")}</p>
       </div>
       <div className="grid grid-cols-3 gap-8">
         <div className="col-span-3 md:col-span-2">
@@ -216,8 +225,9 @@ const ComplaintPage = () => {
 
                 <button
                   type="button"
-                  className={`p-0 transition-all duration-200 ${isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
-                    }`}
+                  className={`p-0 transition-all duration-200 ${
+                    isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
+                  }`}
                   onClick={handlePersonalInfoToggle}
                   disabled={isTogglingPersonalInfo}
                   title={
@@ -378,7 +388,9 @@ const ComplaintPage = () => {
                     disabled={isSubmitting}
                   >
                     <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder={t("details.categoryPlaceholder")} />
+                      <SelectValue
+                        placeholder={t("details.categoryPlaceholder")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {complaintCategories?.map((category) => (
@@ -421,9 +433,17 @@ const ComplaintPage = () => {
                     {t("details.sector", { category: complaintCategoryName })}
                     <span className="text-red-500"> *</span>
                   </label>
-                  <Select value={sectorId} onValueChange={handleSectorChange} disabled={isSubmitting}>
+                  <Select
+                    value={sectorId}
+                    onValueChange={handleSectorChange}
+                    disabled={isSubmitting}
+                  >
                     <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder={t("details.sectorPlaceholder", { category: complaintCategoryName })} />
+                      <SelectValue
+                        placeholder={t("details.sectorPlaceholder", {
+                          category: complaintCategoryName,
+                        })}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {sectors.map((sector) => (
@@ -442,7 +462,9 @@ const ComplaintPage = () => {
                     htmlFor="departmentReceivingComplaint"
                     className="block text-sm text-golden-dark"
                   >
-                    {t("details.department", { category: complaintCategoryName })}
+                    {t("details.department", {
+                      category: complaintCategoryName,
+                    })}
                     <span className="text-red-500"> *</span>
                   </label>
                   <Select
@@ -451,7 +473,11 @@ const ComplaintPage = () => {
                     disabled={!sectorId || isSubmitting}
                   >
                     <SelectTrigger className="w-full h-12 mt-1">
-                      <SelectValue placeholder={t("details.departmentPlaceholder", { category: complaintCategoryName })} />
+                      <SelectValue
+                        placeholder={t("details.departmentPlaceholder", {
+                          category: complaintCategoryName,
+                        })}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {departments.map((dept) => (
@@ -470,15 +496,22 @@ const ComplaintPage = () => {
                     htmlFor="nameOfPersonConcerned"
                     className="block text-sm text-golden-dark"
                   >
-                    {t("details.personConcerned", { category: complaintCategoryName })}
-                    <span className="text-gray-500"> ({t("details.optional")})</span>
+                    {t("details.personConcerned", {
+                      category: complaintCategoryName,
+                    })}
+                    <span className="text-gray-500">
+                      {" "}
+                      ({t("details.optional")})
+                    </span>
                   </label>
                   <Input
                     type="text"
                     id="nameOfPersonConcerned"
                     name="nameOfPersonConcerned"
                     className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                    placeholder={t("details.personConcernedPlaceholder", { category: complaintCategoryName })}
+                    placeholder={t("details.personConcernedPlaceholder", {
+                      category: complaintCategoryName,
+                    })}
                     value={nameOfPersonConcerned}
                     onChange={(e) => setNameOfPersonConcerned(e.target.value)}
                     disabled={isSubmitting}
@@ -489,11 +522,15 @@ const ComplaintPage = () => {
                     htmlFor="complaintDescription"
                     className="block text-sm text-golden-dark"
                   >
-                    {t("details.description", { category: complaintCategoryName })}
+                    {t("details.description", {
+                      category: complaintCategoryName,
+                    })}
                     <span className="text-red-500"> *</span>
                   </label>
                   <TextArea
-                    placeholder={t("details.descriptionPlaceholder", { category: complaintCategoryName })}
+                    placeholder={t("details.descriptionPlaceholder", {
+                      category: complaintCategoryName,
+                    })}
                     rows={3}
                     id="complaintDescription"
                     className="mt-1 w-full rounded-md text-sm focus:border-none"
@@ -507,11 +544,18 @@ const ComplaintPage = () => {
                     htmlFor="requestedAction"
                     className="block text-sm text-golden-dark"
                   >
-                    {t("details.requestedAction", { category: complaintCategoryName })}
-                    <span className="text-gray-500"> ({t("details.optional")})</span>
+                    {t("details.requestedAction", {
+                      category: complaintCategoryName,
+                    })}
+                    <span className="text-gray-500">
+                      {" "}
+                      ({t("details.optional")})
+                    </span>
                   </label>
                   <TextArea
-                    placeholder={t("details.requestedActionPlaceholder", { category: complaintCategoryName })}
+                    placeholder={t("details.requestedActionPlaceholder", {
+                      category: complaintCategoryName,
+                    })}
                     rows={3}
                     id="requestedAction"
                     className="mt-1 w-full rounded-md text-sm border-golden-dark focus:border-none"
@@ -532,7 +576,9 @@ const ComplaintPage = () => {
                     className=""
                     labelClass="text-sm text-start w-fit font-medium text-[#094C81]"
                     id="attachment"
-                    label={t("details.evidencePlaceholder", { category: complaintCategoryName })}
+                    label={t("details.evidencePlaceholder", {
+                      category: complaintCategoryName,
+                    })}
                     value={formValues.attachment_id || []}
                     onChange={(val) => handleChange("attachment_id", val)}
                     disabled={isSubmitting}
@@ -543,6 +589,9 @@ const ComplaintPage = () => {
 
             <div className="flex justify-end gap-4 mt-6">
               <Button
+                onClick={() => {
+                  ResetForm();
+                }}
                 type="button"
                 className="bg-golden-dark20 min-w-40 hover:bg-golden-dark30 h-12 text-base text-gray-600 py-2 rounded-md disabled:opacity-70"
                 disabled={isSubmitting}
@@ -551,10 +600,18 @@ const ComplaintPage = () => {
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || !complaintCategoryId || !sectorId || !departmentId || !complaintDescription.trim()}
+                disabled={
+                  isSubmitting ||
+                  !complaintCategoryId ||
+                  !sectorId ||
+                  !departmentId ||
+                  !complaintDescription.trim()
+                }
                 className="bg-golden-dark min-w-52 hover:bg-golden-darkHover h-12 text-base text-white py-1 rounded-md shadow-md disabled:opacity-70"
               >
-                {isSubmitting ? t("buttons.submitting") : t("buttons.submit", { category: complaintCategoryName })}
+                {isSubmitting
+                  ? t("buttons.submitting", { category: complaintCategoryName })
+                  : t("buttons.submit", { category: complaintCategoryName })}
               </Button>
             </div>
           </form>

@@ -10,267 +10,623 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "../../chart";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../../select";
+import { Card } from "../../card";
+import { exportToCSV } from "../../../../utils/dashboardHelper";
+import { useGetDashboardStatsQuery } from "@/redux/api/dashboardApi";
+import { Button } from "../../button";
 
-export const description = "An interactive area chart";
+// Helper functions
+export const normalizeStatus = (status: string) => {
+  if (status === "resolved" || status === "closed") return "resolved";
+  if (status === "rejected") return "rejected";
+  return "pending"; // pending, under_review, assigned, in_progress
+};
 
-const chartData = [
-  { date: "2024-04-01", desktop: 222, mobile: 150 },
-  { date: "2024-04-02", desktop: 97, mobile: 180 },
-  { date: "2024-04-03", desktop: 167, mobile: 120 },
-  { date: "2024-04-04", desktop: 242, mobile: 260 },
-  { date: "2024-04-05", desktop: 373, mobile: 290 },
-  { date: "2024-04-06", desktop: 301, mobile: 340 },
-  { date: "2024-04-07", desktop: 245, mobile: 180 },
-  { date: "2024-04-08", desktop: 409, mobile: 320 },
-  { date: "2024-04-09", desktop: 59, mobile: 110 },
-  { date: "2024-04-10", desktop: 261, mobile: 190 },
-  { date: "2024-04-11", desktop: 327, mobile: 350 },
-  { date: "2024-04-12", desktop: 292, mobile: 210 },
-  { date: "2024-04-13", desktop: 342, mobile: 380 },
-  { date: "2024-04-14", desktop: 137, mobile: 220 },
-  { date: "2024-04-15", desktop: 120, mobile: 170 },
-  { date: "2024-04-16", desktop: 138, mobile: 190 },
-  { date: "2024-04-17", desktop: 446, mobile: 360 },
-  { date: "2024-04-18", desktop: 364, mobile: 410 },
-  { date: "2024-04-19", desktop: 243, mobile: 180 },
-  { date: "2024-04-20", desktop: 89, mobile: 150 },
-  { date: "2024-04-21", desktop: 137, mobile: 200 },
-  { date: "2024-04-22", desktop: 224, mobile: 170 },
-  { date: "2024-04-23", desktop: 138, mobile: 230 },
-  { date: "2024-04-24", desktop: 387, mobile: 290 },
-  { date: "2024-04-25", desktop: 215, mobile: 250 },
-  { date: "2024-04-26", desktop: 75, mobile: 130 },
-  { date: "2024-04-27", desktop: 383, mobile: 420 },
-  { date: "2024-04-28", desktop: 122, mobile: 180 },
-  { date: "2024-04-29", desktop: 315, mobile: 240 },
-  { date: "2024-04-30", desktop: 454, mobile: 380 },
-  { date: "2024-05-01", desktop: 165, mobile: 220 },
-  { date: "2024-05-02", desktop: 293, mobile: 310 },
-  { date: "2024-05-03", desktop: 247, mobile: 190 },
-  { date: "2024-05-04", desktop: 385, mobile: 420 },
-  { date: "2024-05-05", desktop: 481, mobile: 390 },
-  { date: "2024-05-06", desktop: 498, mobile: 520 },
-  { date: "2024-05-07", desktop: 388, mobile: 300 },
-  { date: "2024-05-08", desktop: 149, mobile: 210 },
-  { date: "2024-05-09", desktop: 227, mobile: 180 },
-  { date: "2024-05-10", desktop: 293, mobile: 330 },
-  { date: "2024-05-11", desktop: 335, mobile: 270 },
-  { date: "2024-05-12", desktop: 197, mobile: 240 },
-  { date: "2024-05-13", desktop: 197, mobile: 160 },
-  { date: "2024-05-14", desktop: 448, mobile: 490 },
-  { date: "2024-05-15", desktop: 473, mobile: 380 },
-  { date: "2024-05-16", desktop: 338, mobile: 400 },
-  { date: "2024-05-17", desktop: 499, mobile: 420 },
-  { date: "2024-05-18", desktop: 315, mobile: 350 },
-  { date: "2024-05-19", desktop: 235, mobile: 180 },
-  { date: "2024-05-20", desktop: 177, mobile: 230 },
-  { date: "2024-05-21", desktop: 82, mobile: 140 },
-  { date: "2024-05-22", desktop: 81, mobile: 120 },
-  { date: "2024-05-23", desktop: 252, mobile: 290 },
-  { date: "2024-05-24", desktop: 294, mobile: 220 },
-  { date: "2024-05-25", desktop: 201, mobile: 250 },
-  { date: "2024-05-26", desktop: 213, mobile: 170 },
-  { date: "2024-05-27", desktop: 420, mobile: 460 },
-  { date: "2024-05-28", desktop: 233, mobile: 190 },
-  { date: "2024-05-29", desktop: 78, mobile: 130 },
-  { date: "2024-05-30", desktop: 340, mobile: 280 },
-  { date: "2024-05-31", desktop: 178, mobile: 230 },
-  { date: "2024-06-01", desktop: 178, mobile: 200 },
-  { date: "2024-06-02", desktop: 470, mobile: 410 },
-  { date: "2024-06-03", desktop: 103, mobile: 160 },
-  { date: "2024-06-04", desktop: 439, mobile: 380 },
-  { date: "2024-06-05", desktop: 88, mobile: 140 },
-  { date: "2024-06-06", desktop: 294, mobile: 250 },
-  { date: "2024-06-07", desktop: 323, mobile: 370 },
-  { date: "2024-06-08", desktop: 385, mobile: 320 },
-  { date: "2024-06-09", desktop: 438, mobile: 480 },
-  { date: "2024-06-10", desktop: 155, mobile: 200 },
-  { date: "2024-06-11", desktop: 92, mobile: 150 },
-  { date: "2024-06-12", desktop: 492, mobile: 420 },
-  { date: "2024-06-13", desktop: 81, mobile: 130 },
-  { date: "2024-06-14", desktop: 426, mobile: 380 },
-  { date: "2024-06-15", desktop: 307, mobile: 350 },
-  { date: "2024-06-16", desktop: 371, mobile: 310 },
-  { date: "2024-06-17", desktop: 475, mobile: 520 },
-  { date: "2024-06-18", desktop: 107, mobile: 170 },
-  { date: "2024-06-19", desktop: 341, mobile: 290 },
-  { date: "2024-06-20", desktop: 408, mobile: 450 },
-  { date: "2024-06-21", desktop: 169, mobile: 210 },
-  { date: "2024-06-22", desktop: 317, mobile: 270 },
-  { date: "2024-06-23", desktop: 480, mobile: 530 },
-  { date: "2024-06-24", desktop: 132, mobile: 180 },
-  { date: "2024-06-25", desktop: 141, mobile: 190 },
-  { date: "2024-06-26", desktop: 434, mobile: 380 },
-  { date: "2024-06-27", desktop: 448, mobile: 490 },
-  { date: "2024-06-28", desktop: 149, mobile: 200 },
-  { date: "2024-06-29", desktop: 103, mobile: 160 },
-  { date: "2024-06-30", desktop: 446, mobile: 400 },
-];
+// Helper to format date for grouping with timezone correction
+const getDayKey = (dateString: string) => {
+  const date = new Date(dateString);
+  // Use local date to avoid timezone issues
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().split('T')[0]; // YYYY-MM-DD
+};
 
+const getMonthKey = (dateString: string) => {
+  const date = new Date(dateString);
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const getWeekKey = (dateString: string) => {
+  const date = new Date(dateString);
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  const year = localDate.getFullYear();
+
+  // Get week number
+  const firstDayOfYear = new Date(year, 0, 1);
+  const pastDaysOfYear = (localDate.getTime() - firstDayOfYear.getTime()) / 86400000;
+  const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+
+  return `${year}-W${String(weekNumber).padStart(2, '0')}`;
+};
+
+// Helper to determine optimal grouping based on date range
+const determineOptimalGrouping = (dates: string[]): "day" | "week" | "month" => {
+  if (dates.length === 0) return "month";
+
+  const dateObjects = dates.map(d => new Date(d)).sort((a, b) => a.getTime() - b.getTime());
+  const oldest = dateObjects[0];
+  const newest = dateObjects[dateObjects.length - 1];
+
+  const diffDays = (newest.getTime() - oldest.getTime()) / (1000 * 60 * 60 * 24);
+
+  if (diffDays <= 30) return "day";
+  if (diffDays <= 90) return "week";
+  return "month";
+};
+
+// Helper to fill missing dates in the dataset
+const fillMissingDates = (
+  data: { date: string; pending: number; resolved: number; rejected: number }[],
+  grouping: "day" | "week" | "month"
+): { date: string; pending: number; resolved: number; rejected: number }[] => {
+  if (data.length === 0) return [];
+
+  const result = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const filledData = [];
+
+  const startDate = new Date(result[0].date);
+  const endDate = new Date(result[result.length - 1].date);
+
+  let current = new Date(startDate);
+
+  while (current <= endDate) {
+    const dateStr = current.toISOString().split('T')[0];
+    const monthStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+
+    let key: string;
+    switch (grouping) {
+      case "day":
+        key = getDayKey(dateStr);
+        break;
+      case "week":
+        key = getWeekKey(dateStr);
+        // Move to next week
+        current.setDate(current.getDate() + 7);
+        break;
+      case "month":
+        key = monthStr;
+        // Move to next month
+        current.setMonth(current.getMonth() + 1);
+        break;
+    }
+
+    // Find existing data for this period
+    const existing = result.find(item => {
+      if (grouping === "day") return getDayKey(item.date) === key;
+      if (grouping === "week") return getWeekKey(item.date) === key;
+      return getMonthKey(item.date) === key;
+    });
+
+    if (existing) {
+      filledData.push(existing);
+    } else {
+      // Fill with zeros for missing periods
+      filledData.push({
+        date: grouping === "month" ? `${key}-01` : dateStr,
+        pending: 0,
+        resolved: 0,
+        rejected: 0
+      });
+    }
+
+    // Increment for day grouping
+    if (grouping === "day") {
+      current.setDate(current.getDate() + 1);
+    }
+  }
+
+  return filledData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+};
+
+/* =========================
+   CHART CONFIG
+   ========================= */
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
+  pending: {
+    label: "Pending",
+    color: "hsl(var(--chart-7))",
   },
-  desktop: {
-    label: "Desktop",
+  resolved: {
+    label: "Resolved",
     color: "hsl(var(--chart-1))",
   },
-  mobile: {
-    label: "Mobile",
+  rejected: {
+    label: "Rejected",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
 
+/* =========================
+   COMPONENT
+   ========================= */
 export function ChartAreaInteractive() {
-  const [timeRange, setTimeRange] = React.useState("90d");
+  const { data: dashboardData, isLoading, isError } = useGetDashboardStatsQuery();
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date);
-    const referenceDate = new Date("2024-06-30");
-    let daysToSubtract = 90;
-    if (timeRange === "30d") {
-      daysToSubtract = 30;
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7;
+  const [selectedSectorId, setSelectedSectorId] = React.useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null);
+  const [groupBy, setGroupBy] = React.useState<"day" | "week" | "month">("month");
+
+  // Set default sector when data loads
+  React.useEffect(() => {
+    if (dashboardData?.data?.sectors?.length > 0) {
+      const firstSector = dashboardData.data.sectors[0];
+      if (!selectedSectorId && firstSector) {
+        setSelectedSectorId(firstSector.sector_node_id);
+      }
     }
-    const startDate = new Date(referenceDate);
-    startDate.setDate(startDate.getDate() - daysToSubtract);
-    return date >= startDate;
-  });
+  }, [dashboardData, selectedSectorId]);
+
+  // Get categories for the selected sector
+  const sectorCategories = React.useMemo(() => {
+    if (!dashboardData || !selectedSectorId) return [];
+
+    const sector = dashboardData.data.sectors.find(
+      (s: any) => s.sector_node_id === selectedSectorId
+    );
+
+    return sector?.complaint_categories || [];
+  }, [dashboardData, selectedSectorId]);
+
+  // Transform data for chart
+  const chartData = React.useMemo(() => {
+    if (!dashboardData || !selectedSectorId) return [];
+
+    // Get selected sector
+    const selectedSector = dashboardData.data.sectors.find(
+      (sector: any) => sector.sector_node_id === selectedSectorId
+    );
+
+    if (!selectedSector) return [];
+
+    // Collect all complaints based on filters
+    let allComplaints: any[] = [];
+    const allDates: string[] = [];
+
+    if (selectedCategoryId) {
+      // Get complaints from specific category
+      const selectedCategory = selectedSector.complaint_categories.find(
+        (cat: any) => cat.category_id === selectedCategoryId
+      );
+      if (selectedCategory) {
+        const complaints = selectedCategory.complaints || [];
+        complaints.forEach((complaint: any) => {
+          allComplaints.push({
+            ...complaint,
+            normalizedStatus: normalizeStatus(complaint.status),
+            category_name: selectedCategory.name
+          });
+          allDates.push(complaint.created_at);
+        });
+      }
+    } else {
+      // Get all complaints from all categories in the sector
+      selectedSector.complaint_categories.forEach((category: any) => {
+        const complaints = category.complaints || [];
+        complaints.forEach((complaint: any) => {
+          allComplaints.push({
+            ...complaint,
+            normalizedStatus: normalizeStatus(complaint.status),
+            category_name: category.name
+          });
+          allDates.push(complaint.created_at);
+        });
+      });
+    }
+
+    // Determine optimal grouping based on date range
+    let optimalGrouping = determineOptimalGrouping(allDates);
+
+    // Override with user selection if they've changed it
+    const effectiveGrouping = groupBy || optimalGrouping;
+
+    // Group complaints by date
+    const groupedData: Record<string, { pending: number; resolved: number; rejected: number; date: string }> = {};
+
+    allComplaints.forEach((complaint) => {
+      let key: string;
+      let displayDate: string;
+
+      switch (effectiveGrouping) {
+        case "day":
+          key = getDayKey(complaint.created_at);
+          displayDate = getDayKey(complaint.created_at);
+          break;
+        case "week":
+          key = getWeekKey(complaint.created_at);
+          // Use Monday of the week as display date
+          const date = new Date(complaint.created_at);
+          const day = date.getDay();
+          const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+          const monday = new Date(date.setDate(diff));
+          displayDate = getDayKey(monday.toISOString());
+          break;
+        default: // month
+          key = getMonthKey(complaint.created_at);
+          displayDate = `${key}-01`;
+          break;
+      }
+
+      if (!groupedData[key]) {
+        groupedData[key] = {
+          pending: 0,
+          resolved: 0,
+          rejected: 0,
+          date: displayDate
+        };
+      }
+
+      if (complaint.normalizedStatus === "pending") {
+        groupedData[key].pending++;
+      } else if (complaint.normalizedStatus === "resolved") {
+        groupedData[key].resolved++;
+      } else if (complaint.normalizedStatus === "rejected") {
+        groupedData[key].rejected++;
+      }
+    });
+
+    // Convert to array and sort by date
+    let result = Object.values(groupedData)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Fill missing dates to ensure smooth chart
+    result = fillMissingDates(result, effectiveGrouping);
+
+    return result;
+  }, [dashboardData, selectedSectorId, selectedCategoryId, groupBy]);
+
+  // Auto-adjust grouping based on data span
+  React.useEffect(() => {
+    if (chartData.length > 0 && !groupBy) {
+      const dates = chartData.map(item => item.date);
+      const optimalGrouping = determineOptimalGrouping(dates);
+      setGroupBy(optimalGrouping);
+    }
+  }, [chartData, groupBy]);
+
+  const formatXAxisTick = (value: string) => {
+    const date = new Date(value);
+
+    switch (groupBy) {
+      case "day":
+        return `${date.getDate()} ${date.toLocaleDateString('en-US', { month: 'short' })}`;
+      case "week":
+        const weekEnd = new Date(date);
+        weekEnd.setDate(date.getDate() + 6);
+        const startDay = date.getDate();
+        const endDay = weekEnd.getDate();
+        const month = date.toLocaleDateString('en-US', { month: 'short' });
+        return `${startDay}-${endDay} ${month}`;
+      default: // month
+        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+  };
+
+  const formatTooltipLabel = (value: string) => {
+    const date = new Date(value);
+
+    switch (groupBy) {
+      case "day":
+        return date.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      case "week":
+        const weekEnd = new Date(date);
+        weekEnd.setDate(date.getDate() + 6);
+        return `Week of ${date.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric'
+        })} - ${weekEnd.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        })}`;
+      default: // month
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+  };
+
+  const exportData = React.useMemo(() => {
+    if (!dashboardData || !selectedSectorId || chartData.length === 0) {
+      return [];
+    }
+
+    const sector = dashboardData.data.sectors.find(
+      (s: any) => s.sector_node_id === selectedSectorId
+    );
+
+    if (!sector) return [];
+
+    const categoryNames = selectedCategoryId
+      ? sectorCategories.find((cat: any) => cat.category_id === selectedCategoryId)?.name
+      : "All Categories";
+
+    return chartData.map((item) => ({
+      Sector: sector.name,
+      Category: categoryNames,
+      Period: item.date,
+      Pending: item.pending,
+      Resolved: item.resolved,
+      Rejected: item.rejected,
+    }));
+  }, [dashboardData, selectedSectorId, selectedCategoryId, chartData, sectorCategories]);
+
+  if (isLoading) {
+    return (
+      <Card className="hover:shadow-lg transition-all duration-300 w-full h-full flex flex-col p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+            <p className="text-sm text-muted-foreground">Loading chart data...</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="hover:shadow-lg transition-all duration-300 w-full h-full flex flex-col p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-sm text-red-500 mb-2">Error loading chart data</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-sm text-primary hover:underline"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!dashboardData?.data?.sectors?.length) {
+    return (
+      <Card className="hover:shadow-lg transition-all duration-300 w-full h-full flex flex-col p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">No data available</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <div className="w-full h-full flex flex-col p-4">
-      <div className="flex items-center gap-2 border-b pb-4 mb-4 sm:flex-row">
+    <Card className="hover:shadow-lg transition-all duration-300 w-full h-full flex flex-col p-6">
+      {/* Header */}
+      <div className="flex flex-col justify-start items-start 3xl:flex-row gap-4 pb-4 mb-4">
         <div className="grid flex-1 gap-1">
-          <h3 className="text-lg font-semibold">Area Chart - Interactive</h3>
+          <h3 className="text-lg font-semibold">
+            Complaints Trend Analysis
+          </h3>
           <p className="text-sm text-muted-foreground">
-            Showing total visitors for the last 3 months
+            Pending, resolved, and rejected complaints by sector and category
           </p>
         </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger
-            className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
-            aria-label="Select a value"
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() =>
+              exportToCSV(
+                exportData,
+                `complaints_trend_${selectedSectorId}_${groupBy}.csv`
+              )
+            }
+            disabled={!exportData.length}
+            className="rounded-lg border px-4 py-2 text-sm font-medium
+             hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <SelectValue placeholder="Last 3 months" />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="90d" className="rounded-lg">
-              Last 3 months
-            </SelectItem>
-            <SelectItem value="30d" className="rounded-lg">
-              Last 30 days
-            </SelectItem>
-            <SelectItem value="7d" className="rounded-lg">
-              Last 7 days
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex-1 flex items-center justify-center min-h-0">
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
-          <AreaChart data={filteredData}>
-            <defs>
-              <linearGradient
-                id="area-chart-01-fillDesktop"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={0.8}
-                />
-                {/*  */}
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient
-                id="area-chart-01-fillMobile"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                });
+            Export CSV
+          </Button>
+
+          {/* Sector Filter */}
+          <Select value={selectedSectorId} onValueChange={(value) => {
+            setSelectedSectorId(value);
+            setSelectedCategoryId(null);
+            setGroupBy(null); // Reset grouping when sector changes
+          }}>
+            <SelectTrigger
+              className="w-full sm:w-[180px] rounded-lg bg-white"
+              aria-label="Select sector"
+            >
+              <SelectValue placeholder="Select sector" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl bg-white">
+              {dashboardData.data.sectors.map((sector: any) => (
+                <SelectItem
+                  key={sector.sector_node_id}
+                  value={sector.sector_node_id}
+                  className="rounded-lg"
+                >
+                  {sector.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Category Filter */}
+          {selectedSectorId && sectorCategories.length > 0 && (
+            <Select
+              value={selectedCategoryId || "all"}
+              onValueChange={(value) => {
+                setSelectedCategoryId(value === "all" ? null : value);
+                setGroupBy(null); // Reset grouping when category changes
               }}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
-                  }}
-                  indicator="dot"
-                />
-              }
-            />
-            <Area
-              dataKey="mobile"
-              type="natural"
-              fill="url(#area-chart-01-fillMobile)"
-              stroke="var(--color-mobile)"
-              stackId="a"
-            />
-            <Area
-              dataKey="desktop"
-              type="natural"
-              fill="url(#area-chart-01-fillDesktop)"
-              stroke="var(--color-desktop)"
-              stackId="a"
-            />
-            <ChartLegend
-              content={(props) => (
-                <ChartLegendContent
-                  payload={props.payload}
-                  verticalAlign={props.verticalAlign}
-                />
-              )}
-            />
-          </AreaChart>
-        </ChartContainer>
+            >
+              <SelectTrigger
+                className="w-full sm:w-[180px] rounded-lg bg-white"
+                aria-label="Select category"
+              >
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl bg-white">
+                <SelectItem value="all" className="rounded-lg">
+                  All Categories
+                </SelectItem>
+                {sectorCategories.map((category: any) => (
+                  <SelectItem
+                    key={category.category_id}
+                    value={category.category_id}
+                    className="rounded-lg"
+                  >
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Group By Filter */}
+          <Select value={groupBy || "auto"} onValueChange={(value: "day" | "week" | "month" | "auto") => {
+            setGroupBy(value === "auto" ? null : value);
+          }}>
+            <SelectTrigger
+              className="w-full sm:w-[140px] rounded-lg bg-white"
+              aria-label="Group by"
+            >
+              <SelectValue placeholder="Group by" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl bg-white">
+              <SelectItem value="auto" className="rounded-lg">Auto</SelectItem>
+              <SelectItem value="day" className="rounded-lg">Daily</SelectItem>
+              <SelectItem value="week" className="rounded-lg">Weekly</SelectItem>
+              <SelectItem value="month" className="rounded-lg">Monthly</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
-    </div>
+
+      {/* Chart */}
+      <div className="flex-1 flex items-center justify-center min-h-0">
+        {chartData.length > 0 ? (
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="fill-pending" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-pending)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-pending)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+
+                <linearGradient id="fill-resolved" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-resolved)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-resolved)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+
+                <linearGradient id="fill-rejected" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-rejected)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-rejected)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+              </defs>
+
+              <CartesianGrid vertical={false} />
+
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={groupBy === "day" ? 32 : groupBy === "week" ? 24 : 8}
+                tickFormatter={formatXAxisTick}
+              />
+
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={formatTooltipLabel}
+                    indicator="dot"
+                  />
+                }
+              />
+
+              <Area
+                dataKey="pending"
+                type="natural"
+                fill="url(#fill-pending)"
+                stroke="var(--color-pending)"
+                stackId="a"
+              />
+              <Area
+                dataKey="resolved"
+                type="natural"
+                fill="url(#fill-resolved)"
+                stroke="var(--color-resolved)"
+                stackId="a"
+              />
+              <Area
+                dataKey="rejected"
+                type="natural"
+                fill="url(#fill-rejected)"
+                stroke="var(--color-rejected)"
+                stackId="a"
+              />
+
+              <ChartLegend
+                content={(props) => (
+                  <ChartLegendContent
+                    payload={props.payload}
+                    verticalAlign={props.verticalAlign}
+                  />
+                )}
+              />
+            </AreaChart>
+          </ChartContainer>
+        ) : (
+          <div className="flex items-center justify-center h-64 w-full">
+            <p className="text-sm text-muted-foreground">
+              No data available for the selected filters
+            </p>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }

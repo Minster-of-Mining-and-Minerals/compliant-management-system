@@ -4,155 +4,100 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BiToggleLeft, BiToggleRight } from "react-icons/bi";
-import { Eye, X } from "lucide-react";
+import { Eye, FileText, X } from "lucide-react";
 import { getFileUrl, getFileType } from "@/utils/fileUrl";
+
 /* ================= TYPES ================= */
 
-type ComplaintStatus = "Submitted" | "Under Review" | "Resolved";
+type ComplaintStatus = "pending" | "in_progress" | "resolved";
 
 interface Attachment {
   attachment_id: string;
   file_name: string;
   file_path: string;
+  created_at?: string;
 }
 
 interface Complaint {
-  trackingId: string;
+  complaint_id: string;
+  ticketing_code: string;
   status: ComplaintStatus;
-  category: string;
-  sector: string;
-  department: string;
-  incidentDate: string;
-  submittedAt: string;
+  created_at: string;
   description: string;
-  requestedAction: string;
-  attachments?: Attachment[];
-  response?: {
-    respondedAt: string;
-    office: string;
-    description: string;
-    attachments?: Attachment[];
-  };
-  personalInfo?: {
-    fullName: string;
-    phone: string;
+  request: string;
+  is_anonymous: boolean;
+
+  assignedSector: { name: string };
+  category: { name: string };
+
+  user?: {
+    full_name: string;
+    phone_number: string;
     email: string;
-    city: string;
   };
+
+  location?: {
+    city: string;
+    subcity: string;
+    woreda: string;
+  };
+
+  attachments?: {
+    attachment: Attachment;
+  }[];
 }
 
-/* ================= STATUS COLORS ================= */
+/* ================= HELPERS ================= */
 
-const statusColorMap: Record<ComplaintStatus, string> = {
-  Submitted: "bg-gray-200 text-gray-800",
-  "Under Review": "bg-yellow-100 text-yellow-800",
-  Resolved: "bg-green-100 text-green-700",
+const formatStatus = (status: ComplaintStatus) => {
+  switch (status) {
+    case "pending":
+      return "Pending";
+    case "in_progress":
+      return "In Progress";
+    case "resolved":
+      return "Resolved";
+    default:
+      return status;
+  }
 };
 
-/* ================= ATTACHMENT LIST ================= */
+/* ================= MOCK DATA ================= */
 
-interface Attachment {
-  attachment_id: string;
-  file_name: string;
-  file_path: string;
-}
+const mockComplaint: Complaint = {
+  complaint_id: "cmp-001",
+  ticketing_code: "CMP-2026-001",
+  status: "pending",
+  created_at: "2026-01-22T10:30:00Z",
+  description: "There is a delay in service delivery.",
+  request: "Please resolve this issue urgently.",
+  is_anonymous: false,
 
-interface AttachmentListProps {
-  title: string;
-  files?: Attachment[];
-}
+  assignedSector: { name: "IT Department" },
+  category: { name: "Service Delay" },
 
-export const AttachmentList: React.FC<AttachmentListProps> = ({
-  title,
-  files,
-}) => {
-  const [previewFile, setPreviewFile] = useState<Attachment | null>(null);
+  user: {
+    full_name: "Abel Tesfaye",
+    phone_number: "0912345678",
+    email: "abel@example.com",
+  },
 
-  if (!files || files.length === 0) return null;
+  location: {
+    city: "Addis Ababa",
+    subcity: "Bole",
+    woreda: "03",
+  },
 
-  return (
-    <div className="space-y-2">
-      <p className="font-medium text-golden-dark">{title}</p>
-
-      <div className="grid grid-cols-1 gap-2">
-        {files.map((file) => {
-          const previewUrl = getFileUrl(file.file_path);
-
-          return (
-            <div
-              key={file.attachment_id}
-              className="flex items-center justify-between border border-gray-200 rounded-md p-2 bg-gray-50"
-            >
-              <div className="flex items-center gap-2">
-                {getFileType(file.file_name) === "image" && (
-                  <img
-                    src={previewUrl}
-                    alt={file.file_name}
-                    className="w-10 h-10 object-cover border rounded"
-                  />
-                )}
-
-                <span className="text-sm text-gray-700 truncate max-w-[160px]">
-                  {file.file_name}
-                </span>
-              </div>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setPreviewFile(file)}
-                className="w-8 h-8 text-[#094C81] hover:bg-gray-100"
-              >
-                <Eye className="w-5 h-5" />
-              </Button>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ================= Preview Modal ================= */}
-      {previewFile && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] p-4 relative overflow-auto">
-            <button
-              className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200"
-              onClick={() => setPreviewFile(null)}
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="text-lg font-semibold mb-4">
-              {previewFile.file_name}
-            </h3>
-
-            {getFileType(previewFile.file_name) === "image" && (
-              <img
-                src={getFileUrl(previewFile.file_path)}
-                alt={previewFile.file_name}
-                className="w-full h-auto max-h-[70vh] object-contain"
-              />
-            )}
-
-            {getFileType(previewFile.file_name) === "pdf" && (
-              <iframe
-                src={getFileUrl(previewFile.file_path)}
-                className="w-full h-[70vh]"
-                title={previewFile.file_name}
-              />
-            )}
-
-            {getFileType(previewFile.file_name) === "other" && (
-              <p className="text-gray-600">
-                Preview not available for this file type.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  attachments: [
+    {
+      attachment: {
+        attachment_id: "att-1",
+        file_name: "evidence.pdf",
+        file_path: "/mock/evidence.pdf",
+        created_at: "2026-01-22T10:35:00Z",
+      },
+    },
+  ],
 };
 
 /* ================= PAGE ================= */
@@ -163,222 +108,232 @@ const ComplaintTrackPage = () => {
   const [trackingId, setTrackingId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
   const [complaint, setComplaint] = useState<Complaint | null>(null);
+  const [fileViewerState, setFileViewerState] = useState<any>(null);
 
   /* ================= TRACK HANDLER ================= */
 
   const handleTrack = async () => {
     if (!trackingId.trim()) {
-      setError(t("errors.required"));
+      setError("Tracking ID is required");
       return;
     }
 
     setError("");
     setLoading(true);
 
-    // 🔹 MOCK API (replace later)
+    // 🔹 MOCK API
     setTimeout(() => {
-      if (trackingId === "CMP-12345") {
-        setComplaint({
-          trackingId: "CMP-12345",
-          status: "Resolved",
-          category: "Service Complaint",
-          sector: "Mining License",
-          department: "Licensing Directorate",
-          incidentDate: "2025-01-04",
-          submittedAt: "2025-01-05",
-          description:
-            "My mining license application has been delayed without explanation.",
-          requestedAction: "Please review and provide status update.",
-
-          // 🔹 COMPLAINT EVIDENCE
-          attachments: [
-            {
-              attachment_id: "a1",
-              file_name: "evidence_photo.jpg",
-              file_path: "uploads/complaints/evidence_photo.jpg",
-            },
-          ],
-          // 🔹 OFFICIAL RESPONSE
-          response: {
-            respondedAt: "2025-01-12",
-            office: "Mining License Directorate",
-            description:
-              "After reviewing your complaint, we found missing documentation. Your application has now been processed.",
-            attachments: [
-              {
-                attachment_id: "a1",
-                file_name: "evidence_photo.jpg",
-                file_path: "uploads/complaints/evidence_photo.jpg",
-              },
-            ],
-          },
-
-          personalInfo: {
-            fullName: "Optional User",
-            phone: "+2519******",
-            email: "example@email.com",
-            city: "Addis Ababa",
-          },
-        });
+      if (trackingId === "123") {
+        setComplaint(mockComplaint);
       } else {
         setComplaint(null);
-        setError(t("errors.notFound"));
+        setError("Complaint not found");
       }
       setLoading(false);
-    }, 1200);
+    }, 1000);
   };
+
+  const complaintFiles =
+    complaint?.attachments?.map((a) => ({
+      url: getFileUrl(a.attachment.file_path),
+      name: a.attachment.file_name,
+      uploadedAt: a.attachment.created_at,
+      type: getFileType(a.attachment.file_name),
+    })) || [];
 
   /* ================= UI ================= */
 
   return (
-    <main className="flex flex-col min-h-screen mx-auto px-4 sm:px-6 lg:px-20 pt-32 pb-16">
+    <main className="min-h-screen px-6 lg:px-20 pt-28 pb-16 bg-slate-50">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <p className="mt-2 text-sm text-gray-600 max-w-2xl">{t("subtitle")}</p>
+        <h1 className="text-2xl font-bold">Track Your Complaint</h1>
+        <p className="text-sm text-gray-600">
+          Enter your tracking number to view complaint status
+        </p>
       </div>
 
-      {/* Tracking Input */}
-      <div className="max-w-xl rounded-md shadow-md px-8 py-6 mb-10">
-        <label className="block text-sm text-golden-dark mb-1">
-          {t("trackingId")}
-        </label>
-        <Input
-          value={trackingId}
-          onChange={(e) => setTrackingId(e.target.value)}
-          placeholder="CMP-12345"
-          className="h-12"
-        />
+      <div className="flex gap-10 ">
+        {/* Tracking Input */}
+        <div className="max-w-xl min-w-96 h-fit bg-white rounded-md shadow p-6 mb-10">
+          <label className="text-sm font-medium">Tracking ID</label>
+          <Input
+            value={trackingId}
+            onChange={(e) => setTrackingId(e.target.value)}
+            placeholder="CMP-2026-001"
+            className="mt-1 h-11"
+          />
 
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
-        <Button onClick={handleTrack} disabled={loading} className="mt-4 h-12">
-          {loading ? t("loading") : t("track")}
-        </Button>
-      </div>
+          <Button onClick={handleTrack} disabled={loading} className="mt-4">
+            {loading ? "Checking..." : "Track Complaint"}
+          </Button>
+        </div>
 
-      {/* ================= RESULT ================= */}
-      {complaint && (
-        <div className="space-y-8">
-          {/* ===== Complaint Details ===== */}
-          <div className="rounded-md shadow-md px-10 py-8 space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">{t("details.title")}</h2>
-              <span
-                className={`px-4 py-1 rounded-full text-sm font-medium ${statusColorMap[complaint.status]}`}
-              >
-                {complaint.status}
+        {/* Complaint Detail */}
+        {complaint ? (
+          <div className="bg-white w-full border rounded-xl p-6 shadow-sm">
+            <div className="flex justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold">Complaint Detail</h2>
+                <p className="text-gray-500">
+                  Ticket #{complaint.ticketing_code}
+                </p>
+              </div>
+              <span className="px-3 py-1 rounded-md bg-blue-100 text-blue-900">
+                {formatStatus(complaint.status)}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <p>
-                <b>{t("details.trackingId")}:</b> {complaint.trackingId}
-              </p>
-              <p>
-                <b>{t("details.category")}:</b> {complaint.category}
-              </p>
-              <p>
-                <b>{t("details.sector")}:</b> {complaint.sector}
-              </p>
-              <p>
-                <b>{t("details.department")}:</b> {complaint.department}
-              </p>
-              <p>
-                <b>{t("details.incidentDate")}:</b> {complaint.incidentDate}
-              </p>
-              <p>
-                <b>{t("details.submittedAt")}:</b> {complaint.submittedAt}
-              </p>
-            </div>
-
-            <div>
-              <p className="font-medium text-golden-dark mb-1">
-                {t("details.description")}
-              </p>
-              <p className="text-sm text-gray-700">{complaint.description}</p>
-            </div>
-
-            <AttachmentList
-              title={t("response.attachments")}
-              files={complaint.response?.attachments}
-            />
-
-            {/* Personal Info Toggle */}
-            <button
-              onClick={() => setShowPersonalInfo(!showPersonalInfo)}
-              className="flex items-center gap-2 text-golden-dark"
-            >
-              {showPersonalInfo ? (
-                <BiToggleRight className="h-8 w-8" />
-              ) : (
-                <BiToggleLeft className="h-8 w-8" />
-              )}
-              {t("personalInfo.toggle")}
-            </button>
-
-            {showPersonalInfo && complaint.personalInfo && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <p>
-                  <b>{t("personalInfo.fullName")}:</b>{" "}
-                  {complaint.personalInfo.fullName}
-                </p>
-                <p>
-                  <b>{t("personalInfo.phone")}:</b>{" "}
-                  {complaint.personalInfo.phone}
-                </p>
-                <p>
-                  <b>{t("personalInfo.email")}:</b>{" "}
-                  {complaint.personalInfo.email}
-                </p>
-                <p>
-                  <b>{t("personalInfo.city")}:</b> {complaint.personalInfo.city}
-                </p>
+            {/* Info Grid */}
+            <div className="grid md:grid-cols-4 gap-4 text-sm mb-4">
+              <div>
+                <p className="font-semibold">Sector</p>
+                <p>{complaint.assignedSector.name}</p>
               </div>
-            )}
-          </div>
+              <div>
+                <p className="font-semibold">Category</p>
+                <p>{complaint.category.name}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Reported</p>
+                <p>{new Date(complaint.created_at).toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Status</p>
+                <p>{formatStatus(complaint.status)}</p>
+              </div>
+            </div>
 
-          {/* ===== Official Response ===== */}
-          <div className="rounded-md shadow-md px-10 py-8 border-l-4 border-golden-dark">
-            <h2 className="text-lg font-semibold mb-4">
-              {t("response.title")}
-            </h2>
+            {/* Description */}
+            <div className="grid md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-slate-50 p-4 rounded">
+                <p className="font-semibold mb-1">Description</p>
+                <p>{complaint.description}</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded">
+                <p className="font-semibold mb-1">Requested Action</p>
+                <p>{complaint.request}</p>
+              </div>
+            </div>
 
-            {!complaint.response ? (
-              <p className="text-sm text-gray-600">
-                {t("response.noResponse")}
-              </p>
-            ) : (
-              <div className="space-y-4 text-sm">
-                <p>
-                  <b>{t("response.date")}:</b> {complaint.response.respondedAt}
-                </p>
-                <p>
-                  <b>{t("response.office")}:</b> {complaint.response.office}
-                </p>
-
-                <div>
-                  <p className="font-medium text-golden-dark mb-1">
-                    {t("response.description")}
-                  </p>
-                  <p className="text-gray-700">
-                    {complaint.response.description}
-                  </p>
+            {/* Attachments */}
+            {complaintFiles.length > 0 && (
+              <>
+                <h4 className="font-semibold mb-2">Attachments</h4>
+                <div className="grid md:grid-cols-3 gap-3">
+                  {complaintFiles.map((file, i) => (
+                    <div
+                      key={i}
+                      onClick={() =>
+                        setFileViewerState({ files: complaintFiles, index: i })
+                      }
+                      className="border rounded-lg p-3 cursor-pointer hover:bg-blue-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-red-500" />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm truncate">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {file.uploadedAt &&
+                              new Date(file.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Eye className="w-4 h-4 text-blue-600" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </>
+            )}
 
-                <AttachmentList
-                  title={t("response.attachments")}
-                  files={complaint.response?.attachments}
-                />
+            {/* Complainer Info */}
+            {!complaint.is_anonymous && complaint.user && (
+              <div className="bg-slate-50 p-4 rounded mt-6">
+                <h4 className="font-semibold mb-3">Complainer Information</h4>
+                <div className="grid md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="font-medium">Name</p>
+                    <p>{complaint.user.full_name}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Phone</p>
+                    <p>{complaint.user.phone_number}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Email</p>
+                    <p>{complaint.user.email}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Address</p>
+                    <p>
+                      {complaint.location?.city},{" "}
+                      {complaint.location?.subcity},{" "}
+                      {complaint.location?.woreda}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
-        </div>
-      )}
+        ) : <ComplaintSkeleton />}
+      </div>
     </main>
   );
 };
 
 export default ComplaintTrackPage;
+
+const ComplaintSkeleton = () => {
+  return (
+    <div className="bg-white w-full border rounded-xl p-6 shadow-sm animate-pulse">
+      {/* Header */}
+      <div className="flex justify-between mb-6">
+        <div className="space-y-2">
+          <div className="h-5 w-48 bg-gray-200 rounded" />
+          <div className="h-4 w-32 bg-gray-200 rounded" />
+        </div>
+        <div className="h-6 w-24 bg-gray-200 rounded" />
+      </div>
+
+      {/* Info Grid */}
+      <div className="grid md:grid-cols-4 gap-4 mb-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <div className="h-4 w-20 bg-gray-200 rounded" />
+            <div className="h-4 w-full bg-gray-200 rounded" />
+          </div>
+        ))}
+      </div>
+
+      {/* Description */}
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="space-y-2 bg-slate-50 p-4 rounded">
+            <div className="h-4 w-32 bg-gray-200 rounded" />
+            <div className="h-3 w-full bg-gray-200 rounded" />
+            <div className="h-3 w-5/6 bg-gray-200 rounded" />
+            <div className="h-3 w-4/6 bg-gray-200 rounded" />
+          </div>
+        ))}
+      </div>
+
+      {/* Attachments */}
+      <div className="space-y-3">
+        <div className="h-4 w-28 bg-gray-200 rounded" />
+        <div className="grid md:grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-16 border rounded bg-gray-200"
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};

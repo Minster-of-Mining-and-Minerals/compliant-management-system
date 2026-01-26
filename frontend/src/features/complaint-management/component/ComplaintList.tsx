@@ -8,7 +8,7 @@ import { DataTable } from "@/features/template/component/tableList/DataTable";
 import { TableLayout } from "@/features/template/component/tableList/TableLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
+import { useRouter } from "next/navigation";
 import type { FilterField, ActionButton } from "@/types/tableLayout";
 import {
   useGetComplaintsQuery,
@@ -17,7 +17,47 @@ import {
 import { Complaint } from "@/redux/types/complaint";
 import { formatStatus } from "@/utils/statusFormatter";
 
+
+
+export interface ComplaintTableProps {
+  sideActions?: ActionButton[];
+}
 /* ----------------------------------
+   COMPONENT
+----------------------------------- */
+export default function ComplaintTable({ sideActions }: ComplaintTableProps) {
+  const { data = [], isLoading, isError } = useGetComplaintsQuery();
+  const [deleteComplaint] = useDeleteComplaintMutation();
+  const router = useRouter();
+  /* Pagination */
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+
+  const handlePagination = (index: number, size: number) => {
+    setPageIndex(index);
+    setPageSize(size);
+  };
+
+  /* Filters */
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const filters: FilterField[] = [
+    {
+      key: "status",
+      label: "Status",
+      type: "multiselect",
+      placeholder: "Select status",
+      value: statusFilter,
+      onChange: setStatusFilter,
+      options: [
+        { label: "Pending", value: "pending" },
+        { label: "In Progress", value: "in_progress" },
+        { label: "Resolved", value: "resolved" },
+        { label: "Rejected", value: "rejected" },
+      ],
+    },
+  ];
+  /* ----------------------------------
    TABLE COLUMNS
 ----------------------------------- */
 const columns: ColumnDef<Complaint>[] = [
@@ -61,7 +101,7 @@ const columns: ColumnDef<Complaint>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
       return (
-        <Badge className="text-white" status={status}>
+        <Badge className="white" status={status}>
           {formatStatus(status)}
         </Badge>
       );
@@ -80,61 +120,20 @@ const columns: ColumnDef<Complaint>[] = [
       const complaintId = row.original.complaint_id;
       return (
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon">
-            <Link href={`/compliants/${complaintId}`}>
-              <Eye className="h-4 w-4" />
-            </Link>
+          <Button onClick={() => router.push(`/compliants/${complaintId}`)} variant="ghost" size="icon">
+            <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon">
+          {/* <Button variant="ghost" size="icon">
             <Edit className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon">
             <Trash className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </div>
       );
     },
   },
 ];
-
-export interface ComplaintTableProps {
-  sideActions?: ActionButton[];
-}
-/* ----------------------------------
-   COMPONENT
------------------------------------ */
-export default function ComplaintTable({ sideActions }: ComplaintTableProps) {
-  const { data = [], isLoading, isError } = useGetComplaintsQuery();
-  const [deleteComplaint] = useDeleteComplaintMutation();
-
-  /* Pagination */
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-
-  const handlePagination = (index: number, size: number) => {
-    setPageIndex(index);
-    setPageSize(size);
-  };
-
-  /* Filters */
-  const [statusFilter, setStatusFilter] = useState("");
-
-  const filters: FilterField[] = [
-    {
-      key: "status",
-      label: "Status",
-      type: "multiselect",
-      placeholder: "Select status",
-      value: statusFilter,
-      onChange: setStatusFilter,
-      options: [
-        { label: "Pending", value: "pending" },
-        { label: "In Progress", value: "in_progress" },
-        { label: "Resolved", value: "resolved" },
-        { label: "Rejected", value: "rejected" },
-      ],
-    },
-  ];
 
   /* Actions (top buttons) */
   const actions: ActionButton[] = [];
