@@ -47,6 +47,11 @@ const navigationItems = [
     icon: ClipboardCheck,
   },
   {
+    title: "My Complaints",
+    url: "/my-complaints",
+    icon: ClipboardCheck,
+  },
+  {
     title: "Compliants",
     url: "/compliants",
     icon: ClipboardCheck,

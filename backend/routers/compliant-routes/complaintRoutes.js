@@ -9,6 +9,7 @@ const {
   updateComplaint,
   deleteComplaint,
   acceptComplaint,
+  getComplaintByUserId,
 } = require("../../controllers/compliant-controller/complaintController");
 
 const {
@@ -55,7 +56,25 @@ const { authenticateToken } = require("../../middlewares/authMiddleware");
  *       200:
  *         description: List of complaints
  */
-router.get("/", getComplaints);
+router.get("/", authenticateToken, getComplaints);
+
+/**
+ * @swagger
+ * /complaints/user:
+ *   get:
+ *     summary: Get complaints by user ID
+ *     tags: [Complaints]
+ *     parameters:
+ *       - in: query
+ *         name: user_id
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: List of complaints
+ */
+router.get("/user", authenticateToken, getComplaintByUserId);
 
 /**
  * @swagger

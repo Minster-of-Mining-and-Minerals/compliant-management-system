@@ -11,6 +11,7 @@ const {
   sequelize,
   UserType,
 } = require("../../models");
+const { Op } = require("sequelize");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const bcrypt = require("bcrypt");
 const { generateRandomPassword } = require("../../utils/password");
@@ -250,10 +251,16 @@ const createComplaint = async (req, res) => {
 // =========== Get all complaints ===========
 const getComplaints = async (req, res) => {
   try {
+    const user_id = req.user?.user_id;
     const { status, sector_node_id, category_id, compliant_type_id, search } =
       req.query;
 
-    const whereClause = {};
+    const whereClause = {
+      [Op.or]: [
+        { compliant_user_id: { [Op.ne]: user_id } },
+        { compliant_user_id: null },
+      ],
+    };
 
     if (status) whereClause.status = status;
     if (sector_node_id) whereClause.sector_node_id = sector_node_id;
@@ -281,6 +288,59 @@ const getComplaints = async (req, res) => {
           attributes: ["user_id", "full_name", "email"],
         },
         { model: User, as: "assignedTo", attributes: ["user_id", "full_name"] },
+        {
+          model: SectorNode,
+          as: "assignedSector",
+          attributes: ["sector_node_id", "name"],
+        },
+        {
+          model: ComplaintCategory,
+          as: "category",
+          attributes: ["category_id", "name"],
+        },
+      ],
+      order: [["created_at", "DESC"]],
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Complaints fetched successfully.",
+      data: complaints,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch complaints",
+      error: error.message,
+    });
+  }
+};
+
+// =========== Get complaint by user ID ===========
+const getComplaintByUserId = async (req, res) => {
+  try {
+    const compliant_user_id = req.user?.user_id;
+
+    if (!isUuid(compliant_user_id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid user ID." });
+    }
+
+    const complaints = await Complaint.findAll({
+      where: { compliant_user_id },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["user_id", "full_name", "email", "phone_number"],
+        },
+        {
+          model: User,
+          as: "assignedTo",
+          attributes: ["user_id", "full_name"],
+        },
         {
           model: SectorNode,
           as: "assignedSector",
@@ -530,6 +590,7 @@ module.exports = {
   createComplaint,
   getComplaints,
   getComplaintById,
+  getComplaintByUserId,
   updateComplaint,
   acceptComplaint,
   deleteComplaint,
