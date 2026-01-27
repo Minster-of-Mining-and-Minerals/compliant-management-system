@@ -19,6 +19,7 @@ export const complaintApi = baseApi.injectEndpoints({
         compliant_type_id?: string;
         category_id?: string;
         search?: string;
+        user_id?: string;
       } | void
     >({
       query: (params) =>
@@ -34,6 +35,15 @@ export const complaintApi = baseApi.injectEndpoints({
       query: (id) => `/complaints/${id}`,
       transformResponse: (response: any): Complaint => response.data,
       providesTags: (_r, _e, id) => [{ type: "Complaint", id }],
+    }),
+
+    /** ---------------------------
+     * GET COMPLAINT BY USER ID
+     * --------------------------- */
+    getComplaintByUserId: builder.query<Complaint[], string>({
+      query: (id) => `/complaints/user?user_id=${id}`,
+      transformResponse: (response: any): Complaint[] => response.data ?? [],
+      providesTags: ["Complaint"],
     }),
 
     /** ---------------------------
@@ -100,6 +110,7 @@ export const complaintApi = baseApi.injectEndpoints({
 export const {
   useGetComplaintsQuery,
   useGetComplaintByIdQuery,
+  useGetComplaintByUserIdQuery,
   useCreateComplaintMutation,
   useUpdateComplaintMutation,
   useDeleteComplaintMutation,

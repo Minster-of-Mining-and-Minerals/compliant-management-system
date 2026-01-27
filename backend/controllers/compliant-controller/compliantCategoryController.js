@@ -1,6 +1,6 @@
 "use strict";
 
-const { ComplaintCategory, sequelize } = require("../../models");
+const { ComplaintCategory, Complaint, sequelize } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const { Op } = require("sequelize");
 
@@ -36,7 +36,7 @@ const createComplaintCategory = async (req, res) => {
         created_at: new Date(),
         updated_at: new Date(),
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
@@ -79,6 +79,13 @@ const getComplaintCategories = async (req, res) => {
     const categories = await ComplaintCategory.findAll({
       where: whereClause,
       order: [["created_at", "ASC"]],
+      include: [
+        {
+          model: Complaint,
+          as: "complaints",
+          attributes: ["category_id"],
+        },
+      ],
     });
 
     return res.status(200).json({
@@ -193,7 +200,7 @@ const updateComplaintCategory = async (req, res) => {
         ...req.body,
         updated_at: new Date(),
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
@@ -304,7 +311,7 @@ const toggleComplaintCategoryActiveStatus = async (req, res) => {
 
     await category.update(
       { is_active: !category.is_active, updated_at: new Date() },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
