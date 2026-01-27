@@ -17,9 +17,32 @@ import { Button } from "@/components/ui/button";
 // } from "@/redux/services/notificationApi";
 // import { useAuth } from "@/contexts/AuthContext";
 
+
+interface IssueRef {
+    issue_id: string;
+    ticket_number: string;
+}
+
+type NotificationType =
+    | (typeof CATEGORY_MAP.ISSUE)[number]
+    | (typeof CATEGORY_MAP.USER)[number]
+    | (typeof CATEGORY_MAP.SYSTEM)[number];
+
+interface Notification {
+    notification_id: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    is_read: boolean;
+    created_at: string;
+    issue?: IssueRef;
+}
+
 /* =========================
    CATEGORY CONFIG
 ========================= */
+
+
 export const CATEGORY_MAP = {
     ISSUE: [
         "ISSUE_CREATED",
@@ -54,7 +77,7 @@ const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
 /* =========================
    MOCK DATA
 ========================= */
-const MOCK_NOTIFICATIONS = [
+const MOCK_NOTIFICATIONS: Notification[] = [
     {
         notification_id: "1",
         type: "ISSUE_ASSIGNED",
@@ -88,13 +111,24 @@ const MOCK_NOTIFICATIONS = [
 /* =========================
    HELPERS
 ========================= */
-const getIcon = (type: string) => {
-    if (type.startsWith("ISSUE"))
+const isUserNotification = (
+    type: NotificationType
+): type is (typeof CATEGORY_MAP.USER)[number] => {
+    return CATEGORY_MAP.USER.includes(type as (typeof CATEGORY_MAP.USER)[number]);
+};
+
+const getIcon = (type: NotificationType) => {
+    if (type.startsWith("ISSUE")) {
         return <AlertCircle className="h-5 w-5 text-[#073954]" />;
-    if (CATEGORY_MAP.USER.includes(type as any))
+    }
+
+    if (isUserNotification(type)) {
         return <User className="h-5 w-5 text-[#073954]" />;
+    }
+
     return <Shield className="h-5 w-5 text-[#073954]" />;
 };
+
 
 const formatDateLabel = (date: Date) => {
     return date.toLocaleDateString("en-GB");
@@ -137,7 +171,7 @@ const Notifications = () => {
         );
     };
 
-    const handleNotificationClick = (notification: any) => {
+    const handleNotificationClick = (notification: Notification) => {
         if (!notification.is_read) {
             setNotifications((prev) =>
                 prev.map((n) =>
@@ -152,17 +186,60 @@ const Notifications = () => {
         //   router.push(`/task/${notification.issue.issue_id}`);
         // }
     };
+    type IssueNotification = (typeof CATEGORY_MAP.ISSUE)[number];
+    type UserNotification = (typeof CATEGORY_MAP.USER)[number];
+    type SystemNotification = (typeof CATEGORY_MAP.SYSTEM)[number];
+
+    const isIssueNotification = (
+        type: NotificationType
+    ): type is IssueNotification => {
+        return type.startsWith("ISSUE_");
+    };
+
+    const isUserNotification = (type: NotificationType): type is UserNotification => {
+        return type.startsWith("PASSWORD") || type.startsWith("LOGIN") || type.startsWith("USER") || type.startsWith("PROFILE");
+    };
+
+
+    const SYSTEM_NOTIFICATION_SET = new Set(CATEGORY_MAP.SYSTEM);
+
+    const isSystemNotification = (type: NotificationType): type is SystemNotification => {
+        return SYSTEM_NOTIFICATION_SET.has(type as SystemNotification);
+    };
+
+    const matchesCategory = (
+        category: Category,
+        type: NotificationType
+    ): boolean => {
+        switch (category) {
+            case "ISSUE":
+                return isIssueNotification(type);
+
+            case "USER":
+                return isUserNotification(type);
+
+            case "SYSTEM":
+                return isSystemNotification(type);
+
+            default: {
+                const _exhaustive: never = category;
+                return _exhaustive;
+            }
+        }
+    };
+
+
 
     const filteredNotifications = useMemo(() => {
         return notifications
             .filter((n) => {
-                const categoryMatch = CATEGORY_MAP[activeCategory].includes(
-                    n.type as any
-                );
+                const categoryMatch = matchesCategory(activeCategory, n.type);
+
                 const statusMatch =
                     statusFilter === "ALL" ||
                     (statusFilter === "UNREAD" && !n.is_read) ||
                     (statusFilter === "READ" && n.is_read);
+
                 return categoryMatch && statusMatch;
             })
             .sort(

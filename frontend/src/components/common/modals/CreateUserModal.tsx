@@ -25,6 +25,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
+import { SectorNode } from "@/redux/types/sectorNode";
 
 interface CreateUserModalProps {
   user_type?: string;
@@ -46,7 +47,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [sectorId, setSectorId] = useState("");
-  const [departments, setDepartments] = useState([]);
+  const [departments, setDepartments] = useState<SectorNode[]>([]);
   const [departmentId, setDepartmentId] = useState("");
 
   const { data: rolesResponse } = useGetRolesQuery();
