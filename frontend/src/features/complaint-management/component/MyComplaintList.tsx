@@ -18,6 +18,7 @@ import {
 import { Complaint } from "@/redux/types/complaint";
 import { formatStatus } from "@/utils/statusFormatter";
 import { useSession } from "next-auth/react";
+import CreateMyComplaint from "@/components/common/modals/CreateMyComplaint";
 
 /* ----------------------------------
    COMPONENT
@@ -163,19 +164,26 @@ export default function MyComplaintTable() {
   );
 
   return (
-    <TableLayout
-      actions={actions}
-      filters={filters}
-      filterColumnsPerRow={1}
-    >
-      <DataTable
-        columns={columns}
-        data={paginatedData}
-        totalPageCount={Math.ceil(filteredData.length / pageSize)}
-        handlePagination={handlePagination}
-        tablePageSize={pageSize}
-        currentIndex={pageIndex}
+    <>
+      <TableLayout
+        actions={actions}
+        filters={filters}
+        filterColumnsPerRow={1}
+      >
+        <DataTable
+          columns={columns}
+          data={paginatedData}
+          totalPageCount={Math.ceil(filteredData.length / pageSize)}
+          handlePagination={handlePagination}
+          tablePageSize={pageSize}
+          currentIndex={pageIndex}
+        />
+
+      </TableLayout>
+      <CreateMyComplaint
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
       />
-    </TableLayout>
+    </>
   );
 }
