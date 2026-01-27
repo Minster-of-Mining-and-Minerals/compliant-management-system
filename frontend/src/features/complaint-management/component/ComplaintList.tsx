@@ -147,14 +147,7 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
   ];
 
   /* Actions (top buttons) */
-  const actions: ActionButton[] = userType == "internal" ? [
-    {
-      label: "Create Complaints",
-      icon: <Plus className="h-4 w-4" />,
-      variant: "default",
-      onClick: () => setModalOpen(true),
-    },
-  ] : [];
+  const actions: ActionButton[] = [];
 
   /* Client-side filtering */
   const filteredData = data.filter((item) => {

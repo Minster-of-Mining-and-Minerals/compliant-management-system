@@ -2,7 +2,6 @@
 import ComplaintTable from "@/features/complaint-management/component/ComplaintList";
 import { Users } from "lucide-react";
 import { useState } from "react";
-import ExternalUserTable from "@/features/user-management/api/component/ExternalUserTable";
 import { ActionButton } from "@/types/tableLayout";
 function Compliants() {
   const [activeTab, setActiveTab] = useState<"complaints" | "complainants">(
