@@ -9,6 +9,8 @@ const {
   updateSectorNode,
   deleteSectorNode,
   toggleSectorNodeActiveStatus,
+  getSectorNodeUsers,
+  getSectorNodeChildrenUsers,
 } = require("../../controllers/sector-controllers/sectorController");
 
 const {
@@ -45,6 +47,44 @@ const {
  *         description: List of sector nodes
  */
 router.get("/", getSectorNodes);
+
+/**
+ * @swagger
+ * /sector-nodes/children-users/:id
+ *   get:
+ *     summary: Get all users under a sector node (including descendants)
+ *     tags: [SectorNodes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Sector node ID
+ *     responses:
+ *       200:
+ *         description: List of users under the sector node
+ */
+router.get("/children-users/:id", getSectorNodeChildrenUsers);
+
+/**
+ * @swagger
+ * /sector-nodes/users/:id
+ *   get:
+ *     summary: Get all users directly under a sector node (no descendants)
+ *     tags: [SectorNodes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Sector node ID
+ *     responses:
+ *       200:
+ *         description: List of users directly under the sector node
+ */
+router.get("/users/:id", getSectorNodeUsers);
 
 /**
  * @swagger

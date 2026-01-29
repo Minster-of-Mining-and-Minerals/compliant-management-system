@@ -17,6 +17,7 @@ import {
 import { Complaint } from "@/redux/types/complaint";
 import { formatStatus } from "@/utils/statusFormatter";
 import { useGetUserTypesQuery } from "@/redux/api/userApi";
+import { useSession } from "next-auth/react";
 
 
 
@@ -28,6 +29,9 @@ export interface ComplaintTableProps {
    COMPONENT
 ----------------------------------- */
 export default function ComplaintTable({ sideActions, userType = "internal" }: ComplaintTableProps) {
+
+  const { data: session } = useSession();
+  const sector_node_id = session?.user?.sector?.sector_node_id || "";
   const {
     data: userTypes = [],
   } = useGetUserTypesQuery();
@@ -35,7 +39,8 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
     (type: any) => type.name === userType
   )?.user_type_id;
   const { data = [], isLoading, isError } = useGetComplaintsQuery({
-    compliant_type_id: userTypeId
+    compliant_type_id: userTypeId,
+    sector_node_id
   });
   const [deleteComplaint] = useDeleteComplaintMutation();
   const router = useRouter();

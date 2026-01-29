@@ -5,6 +5,7 @@ import {
   ToggleSectorNodeStatusPayload,
   UpdateSectorNodePayload,
 } from "../types/sectorNode";
+import { User } from "../types/user";
 
 export const sectorNodeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -92,6 +93,24 @@ export const sectorNodeApi = baseApi.injectEndpoints({
         "SectorNode",
       ],
     }),
+
+    /** ---------------------------
+     * GET SECTOR NODE USERS
+     * --------------------------- */
+    getSectorNodeUsers: builder.query<User[], string>({
+      query: (id) => `/sector-nodes/users/${id}`,
+      transformResponse: (response: any): User[] => response.data,
+      providesTags: (_r, _e, id) => [{ type: "SectorNode", id }, "SectorNode"],
+    }),
+
+    /** ---------------------------
+     * GET SECTOR NODE CHILDREN USERS
+     * --------------------------- */
+    getSectorNodeChildrenUsers: builder.query<User[], string>({
+      query: (id) => `/sector-nodes/children-users/${id}`,
+      transformResponse: (response: any): User[] => response.data,
+      providesTags: (_r, _e, id) => [{ type: "SectorNode", id }, "SectorNode"],
+    }),
   }),
 });
 
@@ -102,4 +121,6 @@ export const {
   useUpdateSectorNodeMutation,
   useDeleteSectorNodeMutation,
   useToggleSectorNodeStatusMutation,
+  useGetSectorNodeChildrenUsersQuery,
+  useGetSectorNodeUsersQuery,
 } = sectorNodeApi;
