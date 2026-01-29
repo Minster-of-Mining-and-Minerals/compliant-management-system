@@ -263,14 +263,41 @@ const getComplaints = async (req, res) => {
     };
 
     if (status) whereClause.status = status;
-    if (sector_node_id) whereClause.sector_node_id = sector_node_id;
     if (compliant_type_id) whereClause.compliant_type_id = compliant_type_id;
     if (category_id) whereClause.category_id = category_id;
 
+    /**
+     * Sector subtree filtering (ONLY if sector_node_id is provided)
+     */
+    if (sector_node_id) {
+      // Validate existence
+      const sectorNode = await SectorNode.findByPk(sector_node_id);
+      if (!sectorNode) {
+        return res.status(404).json({
+          success: false,
+          message: "Sector node not found",
+        });
+      }
+
+      // Collect all descendants
+      const descendantIds = await getDescendantSectorNodeIds(sector_node_id);
+
+      // Include the node itself
+      const sectorIds = [sector_node_id, ...descendantIds];
+
+      whereClause.sector_node_id = {
+        [Op.in]: sectorIds,
+      };
+    }
+
     if (search) {
-      whereClause[Op.or] = [
-        { title: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } },
+      whereClause[Op.and] = [
+        {
+          [Op.or]: [
+            { title: { [Op.like]: `%${search}%` } },
+            { description: { [Op.like]: `%${search}%` } },
+          ],
+        },
       ];
     }
 
@@ -631,4 +658,18 @@ const generateTicket = async () => {
   const timestamp = Date.now().toString(36).toUpperCase();
   const randomCode = crypto.randomBytes(2).toString("hex").toUpperCase();
   return `TICK-${year}-${timestamp}-${randomCode}`;
+};
+
+const getDescendantSectorNodeIds = async (sectorNodeId, ids = []) => {
+  const children = await SectorNode.findAll({
+    where: { parent_id: sectorNodeId },
+    attributes: ["sector_node_id"],
+  });
+
+  for (const child of children) {
+    ids.push(child.sector_node_id);
+    await getDescendantSectorNodeIds(child.sector_node_id, ids);
+  }
+
+  return ids;
 };

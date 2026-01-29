@@ -11,6 +11,8 @@ import { ComplaintAssignment } from "@/redux/types/complaintAssignment";
 import { useGetUsersQuery } from "@/redux/api/userApi";
 import { User } from "@/redux/types/user";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+import { useGetSectorNodeChildrenUsersQuery } from "@/redux/api/sectorNodeApi";
 
 interface AssignmentPreviewProps {
     complaint_id: string;
@@ -18,17 +20,19 @@ interface AssignmentPreviewProps {
 }
 
 
-
 export default function AssignmentPreview({
     complaint_id,
     onClose,
 }: AssignmentPreviewProps) {
     // Get users data
+    const { data: session } = useSession();
+    // console.log("session", session);
+    const sector_id = session?.user?.sector?.sector_node_id || "";
     const {
         data: usersResponse,
         isLoading: isLoadingUsers,
         isError,
-    } = useGetUsersQuery();
+    } = useGetSectorNodeChildrenUsersQuery(sector_id);
 
     // Get latest assignment for this complaint
     const {
