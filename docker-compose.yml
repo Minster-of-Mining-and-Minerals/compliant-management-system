@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: cms_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: cms_db
+      POSTGRES_USER: cms_user
+      POSTGRES_PASSWORD: cms@mom.gov.et
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cms_network
+
+  backend:
+    build: ./backend
+    container_name: cms_backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - postgres
+    networks:
+      - cms_network
+    # OPTIONAL (uncomment if you want direct access)
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cms_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env
+    environment:
+      - NODE_ENV=production
+      - AUTH_TRUSTED_HOST=true
+    depends_on:
+      - backend
+    networks:
+      - cms_network
+
+volumes:
+  postgres_data:
+
+networks:
+  cms_network:
+    driver: bridge
+
