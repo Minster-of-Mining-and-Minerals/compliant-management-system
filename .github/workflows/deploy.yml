@@ -14,8 +14,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Setup SSH agent with private key
-      - name: Setup SSH
+      # Step 2: Setup SSH agent with private key (multi-line safe)
+      - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.8.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -24,14 +24,17 @@ jobs:
       - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${{ secrets.SERVER_PORT }}" "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
-      # Step 4: Deploy code via SSH
+      # Step 4: Deploy via SSH
       - name: Deploy via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -p "${{ secrets.SERVER_PORT }}" "${{ secrets.SERVER_USER }}"@"${{ secrets.SERVER_HOST }}" << 'EOF'
             set -e
-            cd ${{ secrets.PROJECT_PATH }}
+
+            # Go to project directory
+            cd "${{ secrets.PROJECT_PATH }}"
 
             echo "📦 Pulling latest code"
             git reset --hard
@@ -40,9 +43,10 @@ jobs:
 
             echo "🐳 Building & starting containers"
             docker compose down
-            docker compose build
+            docker compose build --no-cache
             docker compose up -d
 
             echo "🧹 Cleaning unused images"
             docker image prune -f
           EOF
+
