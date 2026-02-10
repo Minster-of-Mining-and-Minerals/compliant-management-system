@@ -5,6 +5,7 @@ import { SectorNode } from "./redux/types/sectorNode";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   session: {
     strategy: "jwt",
     maxAge: 3 * 60 * 60, // 3 hours
