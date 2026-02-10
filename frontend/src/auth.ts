@@ -1,20 +1,39 @@
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
-import { JWT } from "next-auth/jwt";
 import { SectorNode } from "./redux/types/sectorNode";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   secret: process.env.NEXTAUTH_SECRET,
+  
+  // 🔥 CRITICAL FOR DOCKER
   trustHost: true,
+  
   session: {
     strategy: "jwt",
     maxAge: 3 * 60 * 60, // 3 hours
     updateAge: 25 * 60,
   },
+  
+  // 🔥 EXPLICIT COOKIE CONFIG
+  cookies: {
+    sessionToken: {
+      name: "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: false, // Set to false for HTTP in Docker
+        // domain: process.env.NODE_ENV === "production" ? ".yourdomain.com" : undefined,
+      },
+    },
+  },
+  
   pages: {
     signIn: "/login",
     error: "/login",
   },
+  
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -32,32 +51,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           accessToken: user.accessToken,
         };
       }
-      if (token.exp && token.exp < Date.now() / 1000) {
-        console.log("Token expired");
-        return null;
-      }
       return token;
     },
+    
     async session({ session, token }) {
-      return {
-        ...session,
-        accessToken: token.accessToken, // <-- ADD THIS LINE
-        user: {
-          ...session.user,
-          id: token.id as string,
-          role: token.role,
-          phone_number: token.phone_number,
-          profile_image: token.profile_image,
-          is_first_logged_in: token.is_first_logged_in,
-          sector: token.sector,
-          department: token.department,
-          roles: token.roles,
-          permissions: token.permissions,
-        },
-      };
+      if (token) {
+        return {
+          ...session,
+          accessToken: token.accessToken,
+          user: {
+            ...session.user,
+            id: token.id as string,
+            role: token.role,
+            phone_number: token.phone_number,
+            profile_image: token.profile_image,
+            is_first_logged_in: token.is_first_logged_in,
+            sector: token.sector,
+            department: token.department,
+            roles: token.roles,
+            permissions: token.permissions,
+          },
+        };
+      }
+      return session;
     },
   },
+  
+  // 🔥 ENABLE DEBUG LOGGING
+  debug: process.env.NODE_ENV === "development",
 });
+
 
 // Type augmentations
 declare module "next-auth" {
@@ -81,6 +104,7 @@ declare module "next-auth" {
     department?: SectorNode;
     permissions?: string[] | null;
   }
+
 
   interface Session {
     accessToken?: string;
@@ -111,6 +135,7 @@ declare module "next-auth" {
   }
 }
 
+
 declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
@@ -133,3 +158,7 @@ declare module "next-auth/jwt" {
     permissions?: string[] | null;
   }
 }
+
+
+
+

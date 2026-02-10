@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 
@@ -8,13 +7,13 @@ const intlMiddleware = createMiddleware(routing);
 const publicRoutes = ["/", "/login", "/feedback", "/complaint"];
 const authRoutes = ["/login"];
 
-export default async function middleware(req: NextRequest) {
+export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 👇 run intl but DO NOT return yet
+  // Apply intl middleware first
   const intlResponse = intlMiddleware(req);
-
-  // Get locale from pathname
+  
+  // Get locale
   const locale = routing.locales.find((l) =>
     pathname.startsWith(`/${l}`)
   ) ?? routing.defaultLocale;
@@ -24,29 +23,56 @@ export default async function middleware(req: NextRequest) {
     ""
   ) || "/";
 
-  const session = await auth();
-
+  // 🔥 CRITICAL: Check ALL possible NextAuth session cookies
+  const allCookies = req.cookies.getAll();
+  const sessionCookies = [
+    "next-auth.session-token",      // Default in development
+    "__Secure-next-auth.session-token", // Secure version
+    "authjs.session-token",         // NextAuth v5
+    "__Secure-authjs.session-token", // Secure v5
+  ];
+  
+  let hasSessionToken = false;
+  
+  // Check each cookie name
+  for (const cookie of allCookies) {
+    if (sessionCookies.includes(cookie.name) && cookie.value) {
+      hasSessionToken = true;
+      break;
+    }
+  }
 
   const isPublicRoute = publicRoutes.includes(pathnameWithoutLocale);
   const isAuthRoute = authRoutes.includes(pathnameWithoutLocale);
 
-  // 🔐 Auth redirect
-  if (isAuthRoute && session) {
-    return NextResponse.redirect(
-      new URL(`/${locale}/dashboard`, req.url)
-    );
+  console.log("🔐 MIDDLEWARE DEBUG:");
+  console.log("  Path:", pathnameWithoutLocale);
+  console.log("  Found cookies:", allCookies.map(c => c.name));
+  console.log("  Has session token:", hasSessionToken);
+  console.log("  Is public route:", isPublicRoute);
+
+  // 🔐 Rule 1: If logged in and trying to access login page, redirect to dashboard
+  if (isAuthRoute && hasSessionToken) {
+    console.log("  Redirecting authenticated user to dashboard");
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
   }
 
-  if (!isPublicRoute && !session) {
+  // 🔒 Rule 2: If NOT logged in and trying to access protected route, redirect to login
+  if (!isPublicRoute && !hasSessionToken) {
+    console.log("  Redirecting unauthenticated user to login");
     const loginUrl = new URL(`/${locale}/login`, req.url);
-    loginUrl.searchParams.set("callbackUrl", pathnameWithoutLocale);
+    // Use the full pathname, not pathnameWithoutLocale
+    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // ✅ return intl response if it exists
-  return intlResponse ?? NextResponse.next();
+  // ✅ Allow access
+  return intlResponse;
 }
 
 export const config = {
-  matcher: ["/((?!_next|api|favicon.ico|.*\\..*).*)"],
+  matcher: [
+    // Match all routes except static files, API routes, etc.
+    "/((?!_next/static|_next/image|favicon.ico|api/auth|.*\\..*).*)",
+  ],
 };

@@ -103,10 +103,24 @@ app.use(cors(corsOptions));
 // ================== Database Connection ==================
 const { sequelize } = require("./models");
 
-sequelize
-  .authenticate()
-  .then(() => console.log(" Database connected successfully"))
-  .catch((err) => console.error(" Database connection error:", err));
+const connectWithRetry = async (retries = 10, delay = 5000) => {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      await sequelize.authenticate();
+      console.log("✅ Database connected successfully");
+      break;
+    } catch (err) {
+      console.error(`❌ DB connection failed (attempt ${i}/${retries}):`, err.message);
+      if (i === retries) {
+        console.error("Could not connect to DB after multiple attempts. Exiting...");
+        process.exit(1);
+      }
+      await new Promise((res) => setTimeout(res, delay));
+    }
+  }
+};
+
+connectWithRetry();
 
 // ================== Swagger Setup ==================
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
