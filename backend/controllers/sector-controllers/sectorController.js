@@ -1,6 +1,6 @@
 "use strict";
 
-const { SectorNode, sequelize } = require("../../models");
+const { SectorNode, User, sequelize } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const { Op } = require("sequelize");
 
@@ -38,7 +38,7 @@ const createSectorNode = async (req, res) => {
         created_at: new Date(),
         updated_at: new Date(),
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
@@ -182,7 +182,7 @@ const updateSectorNode = async (req, res) => {
         ...req.body,
         updated_at: new Date(),
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
@@ -231,7 +231,7 @@ const deleteSectorNode = async (req, res) => {
 
     await node.update(
       { is_active: false, updated_at: new Date() },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
@@ -279,7 +279,7 @@ const toggleSectorNodeActiveStatus = async (req, res) => {
 
     await node.update(
       { is_active: !node.is_active, updated_at: new Date() },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
@@ -301,6 +301,122 @@ const toggleSectorNodeActiveStatus = async (req, res) => {
   }
 };
 
+/**
+ * =================== Get Sector Node Users ===================
+ */
+const getSectorNodeUsers = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!isUuid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid sector node ID format.",
+      });
+    }
+
+    const node = await SectorNode.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: "users",
+          attributes: { exclude: ["password"] },
+        },
+        { model: SectorNode, as: "parent" },
+        { model: SectorNode, as: "children" },
+      ],
+    });
+
+    if (!node) {
+      return res.status(404).json({
+        success: false,
+        message: "Sector node not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Sector node users fetched successfully",
+      data: {
+        sector_node: node,
+        users: node.users,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching sector node users:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching sector node users",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * =================== Get Sector Node's Children Users ===================
+ */
+const getSectorNodeChildrenUsers = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!isUuid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid sector node ID format.",
+        data: [],
+      });
+    }
+
+    const node = await SectorNode.findByPk(id);
+
+    if (!node) {
+      return res.status(404).json({
+        success: false,
+        message: "Sector node not found.",
+        data: [],
+      });
+    }
+
+    // Get all descendant node IDs
+    const childNodeIds = await collectChildNodeIds(id);
+
+    if (childNodeIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No child sector nodes found",
+        data: [],
+      });
+    }
+
+    const users = await User.findAll({
+      where: {
+        sector_node_id: childNodeIds,
+      },
+      attributes: { exclude: ["password"] },
+      include: [
+        {
+          model: SectorNode,
+          as: "sectorNode",
+          attributes: ["sector_node_id", "name"],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Children sector node users fetched successfully",
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error fetching children sector node users:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching children sector node users",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createSectorNode,
   getSectorNodes,
@@ -308,4 +424,20 @@ module.exports = {
   updateSectorNode,
   deleteSectorNode,
   toggleSectorNodeActiveStatus,
+  getSectorNodeChildrenUsers,
+  getSectorNodeUsers,
+};
+
+const collectChildNodeIds = async (nodeId, collected = []) => {
+  const children = await SectorNode.findAll({
+    where: { parent_id: nodeId },
+    attributes: ["sector_node_id"],
+  });
+
+  for (const child of children) {
+    collected.push(child.sector_node_id);
+    await collectChildNodeIds(child.sector_node_id, collected);
+  }
+
+  return collected;
 };
