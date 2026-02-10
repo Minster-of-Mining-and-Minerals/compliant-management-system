@@ -22,6 +22,15 @@ import { CreateComplaintCategoryModal } from "@/components/common/modals/CreateC
 
 export const columns: ColumnDef<ComplaintCategory>[] = [
     {
+        accessorKey: "type",
+        header: "Type",
+        cell: ({ row }) => (
+            <span className="font-medium text-primary">
+                {row.getValue("type")}
+            </span>
+        ),
+    },
+    {
         accessorKey: "name",
         header: "Category Name",
         cell: ({ row }) => (

@@ -57,6 +57,7 @@ const ComplaintPage = () => {
 
   const { data: complaintCategories = [] } = useGetComplaintCategoriesQuery({
     is_active: true,
+    type: "external",
   });
 
   const [createComplaint, { isLoading: isSubmitting }] =
@@ -147,10 +148,10 @@ const ComplaintPage = () => {
       const location =
         city.trim() || subCity.trim() || woreda.trim()
           ? {
-              city: city.trim(),
-              subcity: subCity.trim(),
-              woreda: woreda.trim(),
-            }
+            city: city.trim(),
+            subcity: subCity.trim(),
+            woreda: woreda.trim(),
+          }
           : null;
 
       // Prepare attachment_ids as string (comma-separated filenames or IDs)
@@ -225,9 +226,8 @@ const ComplaintPage = () => {
 
                 <button
                   type="button"
-                  className={`p-0 transition-all duration-200 ${
-                    isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
-                  }`}
+                  className={`p-0 transition-all duration-200 ${isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
+                    }`}
                   onClick={handlePersonalInfoToggle}
                   disabled={isTogglingPersonalInfo}
                   title={

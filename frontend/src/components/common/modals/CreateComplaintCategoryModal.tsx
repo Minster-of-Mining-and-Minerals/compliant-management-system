@@ -11,6 +11,7 @@ import {
 } from "@/redux/api/complaintCategoryApi";
 import { CreateComplaintCategoryPayload } from "@/redux/types/complaintCategory";
 import { TextArea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CreateComplaintCategoryModalProps {
     isOpen: boolean;
@@ -22,6 +23,8 @@ export const CreateComplaintCategoryModal: React.FC<
 > = ({ isOpen, onClose }) => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [type, setType] = useState<"internal" | "external">("internal");
+
 
     const [createCategory, { isLoading }] =
         useCreateComplaintCategoryMutation();
@@ -34,6 +37,7 @@ export const CreateComplaintCategoryModal: React.FC<
 
         const payload: CreateComplaintCategoryPayload = {
             name: name.trim(),
+            type,
             ...(description && { description: description.trim() }),
         };
 
@@ -81,17 +85,40 @@ export const CreateComplaintCategoryModal: React.FC<
 
                 {/* Content */}
                 <div className="flex flex-col space-y-4">
-                    <div className="space-y-2">
-                        <Label className="text-sm font-medium text-golden-dark">
-                            Category Name <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Service Delay"
-                            className="h-12 border border-golden-dark px-4 rounded-md focus:ring focus:ring-golden-dark"
-                        />
+                    <div className="w-full flex items-center justify-between gap-4">
+                        <div className="w-full space-y-2">
+                            <Label className="block text-sm text-golden-dark font-medium">
+                                Category Type <span className="text-red-500">*</span>
+                            </Label>
+
+                            <Select
+                                value={type}
+                                onValueChange={(val) => setType(val as "internal" | "external")}
+                            >
+                                <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-[#094C81] bg-white">
+                                    <SelectValue placeholder="Select Category Type" />
+                                </SelectTrigger>
+
+                                <SelectContent className="text-[#094C81] bg-white">
+                                    <SelectItem value="internal">Internal</SelectItem>
+                                    <SelectItem value="external">External</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                        </div>
+                        <div className="w-full space-y-2">
+                            <Label className="text-sm font-medium text-golden-dark">
+                                Category Name <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="e.g. Service Delay"
+                                className="border border-golden-dark px-4 rounded-md focus:ring focus:ring-golden-dark"
+                            />
+                        </div>
                     </div>
+
 
                     <div className="space-y-2">
                         <Label className="text-sm font-medium text-golden-dark">
@@ -105,6 +132,9 @@ export const CreateComplaintCategoryModal: React.FC<
                             className="border border-golden-dark px-4 rounded-md focus:ring focus:ring-golden-dark"
                         />
                     </div>
+
+
+
                 </div>
 
                 {/* Footer */}

@@ -5,16 +5,16 @@ import { SectorNode } from "./redux/types/sectorNode";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   secret: process.env.NEXTAUTH_SECRET,
-  
+
   // 🔥 CRITICAL FOR DOCKER
   trustHost: true,
-  
+
   session: {
     strategy: "jwt",
     maxAge: 3 * 60 * 60, // 3 hours
     updateAge: 25 * 60,
   },
-  
+
   // 🔥 EXPLICIT COOKIE CONFIG
   cookies: {
     sessionToken: {
@@ -28,12 +28,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     },
   },
-  
+
   pages: {
     signIn: "/login",
     error: "/login",
   },
-  
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -53,7 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return token;
     },
-    
+
     async session({ session, token }) {
       if (token) {
         return {
@@ -76,11 +76,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-  
+
   // 🔥 ENABLE DEBUG LOGGING
   debug: process.env.NODE_ENV === "development",
 });
-
 
 // Type augmentations
 declare module "next-auth" {
@@ -104,7 +103,6 @@ declare module "next-auth" {
     department?: SectorNode;
     permissions?: string[] | null;
   }
-
 
   interface Session {
     accessToken?: string;
@@ -135,7 +133,6 @@ declare module "next-auth" {
   }
 }
 
-
 declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
@@ -158,7 +155,3 @@ declare module "next-auth/jwt" {
     permissions?: string[] | null;
   }
 }
-
-
-
-

@@ -202,16 +202,22 @@ const createComplaint = async (req, res) => {
     // Send Email
     // Optional: send welcome email if email provided
     if (email) {
-      await sendEmail(
-        email,
-        `Welcome to ${process.env.APP_NAME}`,
-        `
-          Dear ${full_name || "User"},
-          Your complaint has been submitted successfully.
-          Ticketing Code: ${ticketing_code}
-          Please save this ticketing code for future reference and tracking status of your complaint.
-          `,
-      );
+      try {
+        await sendEmail(
+          email,
+          `Welcome to ${process.env.APP_NAME}`,
+          `
+            Dear ${full_name || "User"},
+            Your complaint has been submitted successfully.
+
+            Ticketing Code: ${ticketing_code}
+
+            Please save this ticketing code for future reference.
+            `,
+        );
+      } catch (mailError) {
+        console.error("Email sending failed:", mailError.message);
+      }
     }
 
     // ================================

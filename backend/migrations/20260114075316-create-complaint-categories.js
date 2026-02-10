@@ -12,11 +12,15 @@ module.exports = {
       name: {
         type: Sequelize.STRING(100),
         allowNull: false,
-        unique: true,
       },
       description: {
         type: Sequelize.TEXT,
         allowNull: true,
+      },
+      type: {
+        type: Sequelize.ENUM("external", "internal"),
+        allowNull: false,
+        defaultValue: "external",
       },
       is_active: {
         type: Sequelize.BOOLEAN,

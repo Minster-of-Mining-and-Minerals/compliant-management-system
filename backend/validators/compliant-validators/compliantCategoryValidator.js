@@ -21,6 +21,10 @@ const createComplaintCategorySchema = Joi.object({
     "string.max": "Description must not exceed 500 characters.",
   }),
 
+  type: Joi.string().min(3).max(500).required().messages({
+    "string.empty": "Type must be selected.",
+  }),
+
   is_active: Joi.boolean().optional().messages({
     "boolean.base": "Active status must be a boolean value.",
   }),
@@ -115,7 +119,7 @@ exports.validateIdParam = (req, res, next) => {
     { id: req.params.id },
     {
       abortEarly: true,
-    }
+    },
   );
 
   if (error) {
