@@ -23,6 +23,21 @@ export const sectorNodeApi = baseApi.injectEndpoints({
     }),
 
     /** ---------------------------
+     * GET ALL SECTOR NODES WITH FLAT CHILDRENS
+     * --------------------------- */
+    getSectorNodesWithFlatChildren: builder.query<
+      SectorNode[],
+      { is_active?: boolean; search?: string } | void
+    >({
+      query: (params) =>
+        params
+          ? { url: "/sector-nodes/flat", params }
+          : { url: "/sector-nodes/flat" },
+      transformResponse: (response: any): SectorNode[] => response.data ?? [],
+      providesTags: ["SectorNode"],
+    }),
+
+    /** ---------------------------
      * GET SECTOR NODE BY ID
      * --------------------------- */
     getSectorNodeById: builder.query<SectorNode, string>({
@@ -116,6 +131,7 @@ export const sectorNodeApi = baseApi.injectEndpoints({
 
 export const {
   useGetSectorNodesQuery,
+  useGetSectorNodesWithFlatChildrenQuery,
   useGetSectorNodeByIdQuery,
   useCreateSectorNodeMutation,
   useUpdateSectorNodeMutation,

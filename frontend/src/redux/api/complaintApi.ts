@@ -38,6 +38,15 @@ export const complaintApi = baseApi.injectEndpoints({
     }),
 
     /** ---------------------------
+     * GET COMPLAINT BY  TICKETING CODE
+     * --------------------------- */
+    getComplaintByTicketingCode: builder.query<Complaint, string>({
+      query: (id) => `/complaints/ticketing_code/${id}`,
+      transformResponse: (response: any): Complaint => response.data,
+      providesTags: (_r, _e, id) => [{ type: "Complaint", id }],
+    }),
+
+    /** ---------------------------
      * GET COMPLAINT BY USER ID
      * --------------------------- */
     getComplaintByUserId: builder.query<Complaint[], string>({
@@ -110,6 +119,7 @@ export const complaintApi = baseApi.injectEndpoints({
 export const {
   useGetComplaintsQuery,
   useGetComplaintByIdQuery,
+  useGetComplaintByTicketingCodeQuery,
   useGetComplaintByUserIdQuery,
   useCreateComplaintMutation,
   useUpdateComplaintMutation,

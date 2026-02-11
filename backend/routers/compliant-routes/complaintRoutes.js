@@ -10,6 +10,7 @@ const {
   deleteComplaint,
   acceptComplaint,
   getComplaintByUserId,
+  getComplaintByTicketingNumber,
 } = require("../../controllers/compliant-controller/complaintController");
 
 const {
@@ -75,6 +76,27 @@ router.get("/", authenticateToken, getComplaints);
  *         description: List of complaints
  */
 router.get("/user", authenticateToken, getComplaintByUserId);
+
+/**
+ * @swagger
+ * /complaints/{id}:
+ *   get:
+ *     summary: Get complaint by ID
+ *     tags: [Complaints]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Complaint ID
+ *     responses:
+ *       200:
+ *         description: Complaint details
+ *       404:
+ *         description: Complaint not found
+ */
+router.get("/ticketing_code", getComplaintByTicketingNumber);
 
 /**
  * @swagger

@@ -182,7 +182,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 disabled={!sectorId || isLoading}
               >
                 <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-[#094C81] bg-white">
-                  <SelectValue placeholder="Select Sector" />
+                  <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
 
                 <SelectContent className="text-[#094C81] bg-white max-h-64 overflow-y-auto">

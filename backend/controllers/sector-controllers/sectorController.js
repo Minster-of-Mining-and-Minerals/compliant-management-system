@@ -109,6 +109,80 @@ const getSectorNodes = async (req, res) => {
 };
 
 /**
+ * =================== Get Sectors With Flat Descendants ===================
+ */
+
+const getSectorsWithFlatChildren = async (req, res) => {
+  try {
+    const { is_active, search } = req.query;
+
+    const whereClause = {};
+
+    if (is_active !== undefined) {
+      whereClause.is_active = is_active === "true";
+    }
+
+    if (search) {
+      whereClause[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    // 1️⃣ Fetch ALL sector nodes at once
+    const allNodes = await SectorNode.findAll({
+      where: whereClause,
+      order: [["created_at", "ASC"]],
+      raw: true,
+    });
+
+    // 2️⃣ Group nodes by parent_id
+    const nodesByParent = {};
+    allNodes.forEach((node) => {
+      const parentId = node.parent_id || "ROOT";
+      if (!nodesByParent[parentId]) {
+        nodesByParent[parentId] = [];
+      }
+      nodesByParent[parentId].push(node);
+    });
+
+    // 3️⃣ Recursive collector for flat children
+    const collectDescendants = (parentId, result = []) => {
+      const children = nodesByParent[parentId] || [];
+
+      for (const child of children) {
+        result.push(child);
+        collectDescendants(child.sector_node_id, result);
+      }
+
+      return result;
+    };
+
+    // 4️⃣ Root sectors (no parent)
+    const rootSectors = nodesByParent["ROOT"] || [];
+
+    // 5️⃣ Build final response
+    const response = rootSectors.map((sector) => ({
+      sector,
+      children: collectDescendants(sector.sector_node_id, []),
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Sectors with flat children fetched successfully",
+      data: response,
+    });
+  } catch (error) {
+    console.error("Error fetching flat sector tree:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch sectors",
+      error: error.message,
+    });
+  }
+};
+
+/**
  * =================== Get Sector Node By ID ===================
  */
 const getSectorNodeById = async (req, res) => {
@@ -426,6 +500,7 @@ module.exports = {
   toggleSectorNodeActiveStatus,
   getSectorNodeChildrenUsers,
   getSectorNodeUsers,
+  getSectorsWithFlatChildren,
 };
 
 const collectChildNodeIds = async (nodeId, collected = []) => {
