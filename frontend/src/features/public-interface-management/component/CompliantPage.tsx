@@ -46,6 +46,7 @@ const ComplaintPage = () => {
   const [city, setCity] = useState("");
   const [subCity, setSubCity] = useState("");
   const [woreda, setWoreda] = useState("");
+  const [sectorName, setSectorName] = useState("");
 
   // Additional Fields (matching CreateComplaintPayload)
   const [incidentDate, setIncidentDate] = useState("");
@@ -68,6 +69,7 @@ const ComplaintPage = () => {
   const handleSectorChange = (value: string) => {
     setSectorId(value);
     setDepartmentId("");
+    setSectorName("");
     const selectedSector = data.find((item) => item.sector_node_id === value);
     setDepartments(selectedSector?.children || []);
   };
@@ -198,8 +200,9 @@ const ComplaintPage = () => {
       // MOCK ticket number (replace with API response later)
       const mockTicket = `CMP-${Date.now().toString().slice(-6)}`;
 
-      setTicketNumber(mockTicket);
+      setTicketNumber(result?.ticketing_code);
       setShowTicketModal(true);
+      // setSectorName(result?.sector_name);
 
       toast.success(t("toast.success.submitted"));
       ResetForm();
@@ -646,7 +649,7 @@ const ComplaintPage = () => {
         open={showTicketModal}
         onClose={() => setShowTicketModal(false)}
         ticketNumber={ticketNumber}
-        sectorName="Mining & Energy"
+        sectorName={sectorName}
         submittedAt={new Date().toISOString().split("T")[0]}
       />
     </>
