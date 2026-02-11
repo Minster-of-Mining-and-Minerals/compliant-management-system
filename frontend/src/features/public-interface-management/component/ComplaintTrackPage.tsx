@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, FileText, X } from "lucide-react";
 import { getFileUrl, getFileType } from "@/utils/fileUrl";
+import { useGetComplaintByTicketingCodeQuery } from "@/redux/api/complaintApi";
 
 /* ================= TYPES ================= */
 
@@ -104,6 +105,7 @@ const mockComplaint: Complaint = {
 
 const ComplaintTrackPage = () => {
   const t = useTranslations("ComplaintTrackPage");
+  const { data, isLoading } = useGetComplaintByTicketingCodeQuery("TICK-26-MLHP16FV-36C6")
 
   const [trackingId, setTrackingId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -143,7 +145,7 @@ const ComplaintTrackPage = () => {
     })) || [];
 
   /* ================= UI ================= */
-
+  console.log(data)
   return (
     <main className="min-h-screen px-6 lg:px-20 pt-28 pb-16 bg-slate-50">
       {/* Header */}

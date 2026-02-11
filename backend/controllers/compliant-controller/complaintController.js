@@ -503,6 +503,7 @@ const getComplaintById = async (req, res) => {
 const getComplaintByTicketingNumber = async (req, res) => {
   try {
     const { ticket_number } = req.params;
+    console.log("req.params", req);
 
     const complaint = await Complaint.findOne({
       where: { ticketing_code: ticket_number }, // ✅ FIXED

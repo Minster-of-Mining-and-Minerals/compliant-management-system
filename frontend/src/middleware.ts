@@ -9,7 +9,6 @@ const authRoutes = ["/login"];
 
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
   // Apply intl middleware first
   const intlResponse = intlMiddleware(req);
 
