@@ -250,13 +250,13 @@ export default function VariantStatasCard() {
       <Card className="hover:shadow-lg transition-all duration-300 border-border/50 p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-sm text-red-500 mb-2">Error loading statistics</p>
-            <button
+            <p className="text-sm text-gray-500 mb-2">No data available</p>
+            {/* <button
               onClick={() => refetch()}
               className="text-sm text-primary hover:underline"
             >
               Retry
-            </button>
+            </button> */}
           </div>
         </div>
       </Card>

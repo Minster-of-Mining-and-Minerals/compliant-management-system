@@ -285,13 +285,8 @@ export function ChartBarMixed() {
       <Card className="hover:shadow-lg transition-all duration-300 w-full h-full flex flex-col p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-sm text-red-500 mb-2">Error loading chart data</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-sm text-primary hover:underline"
-            >
-              Retry
-            </button>
+            <p className="text-sm text-gray-500 mb-2">No data available</p>
+
           </div>
         </div>
       </Card>
