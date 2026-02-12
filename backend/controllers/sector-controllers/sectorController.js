@@ -129,24 +129,27 @@ const getSectorsWithFlatChildren = async (req, res) => {
       ];
     }
 
-    // 1️⃣ Fetch ALL sector nodes at once
+    // 1️⃣ Fetch ALL nodes
     const allNodes = await SectorNode.findAll({
       where: whereClause,
       order: [["created_at", "ASC"]],
       raw: true,
     });
 
-    // 2️⃣ Group nodes by parent_id
+    // 2️⃣ Group by parent_id
     const nodesByParent = {};
+
     allNodes.forEach((node) => {
       const parentId = node.parent_id || "ROOT";
+
       if (!nodesByParent[parentId]) {
         nodesByParent[parentId] = [];
       }
+
       nodesByParent[parentId].push(node);
     });
 
-    // 3️⃣ Recursive collector for flat children
+    // 3️⃣ Recursive function to collect ALL descendants (flattened)
     const collectDescendants = (parentId, result = []) => {
       const children = nodesByParent[parentId] || [];
 
@@ -158,22 +161,31 @@ const getSectorsWithFlatChildren = async (req, res) => {
       return result;
     };
 
-    // 4️⃣ Root sectors (no parent)
-    const rootSectors = nodesByParent["ROOT"] || [];
+    // 4️⃣ Get root nodes (parent_id = null)
+    const rootNodes = nodesByParent["ROOT"] || [];
 
-    // 5️⃣ Build final response
-    const response = rootSectors.map((sector) => ({
+    // 5️⃣ Get ONLY root children (ignore root itself)
+    let firstLevelSectors = [];
+
+    rootNodes.forEach((root) => {
+      const children = nodesByParent[root.sector_node_id] || [];
+      firstLevelSectors.push(...children);
+    });
+
+    // 6️⃣ Build final response
+    const response = firstLevelSectors.map((sector) => ({
       sector,
       children: collectDescendants(sector.sector_node_id, []),
     }));
 
     return res.status(200).json({
       success: true,
-      message: "Sectors with flat children fetched successfully",
+      message:
+        "Root children sectors with flattened descendants fetched successfully",
       data: response,
     });
   } catch (error) {
-    console.error("Error fetching flat sector tree:", error);
+    console.error("Error fetching sector tree:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch sectors",

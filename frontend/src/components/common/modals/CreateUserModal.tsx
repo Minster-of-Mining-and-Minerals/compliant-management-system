@@ -24,7 +24,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
+import { useGetSectorNodesQuery, useGetSectorNodesWithFlatChildrenQuery } from "@/redux/api/sectorNodeApi";
 import { SectorNode } from "@/redux/types/sectorNode";
 
 interface CreateUserModalProps {
@@ -51,14 +51,15 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [departmentId, setDepartmentId] = useState("");
 
   const { data: rolesResponse } = useGetRolesQuery();
-  const { data = [] } = useGetSectorNodesQuery();
+  const { data = [] } = useGetSectorNodesWithFlatChildrenQuery();
   const { data: userTypes = [] } = useGetUserTypesQuery();
 
 
   const roles = rolesResponse || [];
-  const root = data.filter((item) => item.parent_id === null);
-  const sectors = root.flatMap((root) => root.children || []);
-
+  const sectors = data.map((item) => ({
+    ...item.sector,
+    children: item.children || [],
+  }));
 
   const [createUser, { isLoading }] = useCreateUserMutation();
   const userTypeId = userTypes?.find(
@@ -68,7 +69,9 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const handleSectorChange = (value: string) => {
     setSectorId(value);
     setDepartmentId("");
-    const selectedSector = data.find((item) => item.sector_node_id === value);
+    const selectedSector = sectors.find(
+      (item) => item.sector_node_id === value
+    );
     setDepartments(selectedSector?.children || []);
   };
 

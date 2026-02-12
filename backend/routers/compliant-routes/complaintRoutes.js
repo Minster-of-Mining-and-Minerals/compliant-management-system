@@ -96,7 +96,7 @@ router.get("/user", authenticateToken, getComplaintByUserId);
  *       404:
  *         description: Complaint not found
  */
-router.get("/ticketing_code", getComplaintByTicketingNumber);
+router.get("/ticketing_code/:ticketing_code", getComplaintByTicketingNumber);
 
 /**
  * @swagger
