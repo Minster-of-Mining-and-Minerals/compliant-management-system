@@ -202,16 +202,22 @@ const createComplaint = async (req, res) => {
     // Send Email
     // Optional: send welcome email if email provided
     if (email) {
-      await sendEmail(
-        email,
-        `Welcome to ${process.env.APP_NAME}`,
-        `
-          Dear ${full_name || "User"},
-          Your complaint has been submitted successfully.
-          Ticketing Code: ${ticketing_code}
-          Please save this ticketing code for future reference and tracking status of your complaint.
-          `,
-      );
+      try {
+        await sendEmail(
+          email,
+          `Welcome to ${process.env.APP_NAME}`,
+          `
+            Dear ${full_name || "User"},
+            Your complaint has been submitted successfully.
+
+            Ticketing Code: ${ticketing_code}
+
+            Please save this ticketing code for future reference.
+            `,
+        );
+      } catch (mailError) {
+        console.error("Email sending failed:", mailError.message);
+      }
     }
 
     // ================================
@@ -494,6 +500,102 @@ const getComplaintById = async (req, res) => {
   }
 };
 
+const getComplaintByTicketingNumber = async (req, res) => {
+  try {
+    const { ticketing_code: ticket_number } = req.params;
+
+    const complaint = await Complaint.findOne({
+      where: { ticketing_code: ticket_number }, // ✅ FIXED
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["user_id", "full_name", "email", "phone_number"],
+        },
+        {
+          model: User,
+          as: "assignedTo",
+          attributes: ["user_id", "full_name"],
+        },
+        {
+          model: SectorNode,
+          as: "assignedSector",
+          attributes: ["sector_node_id", "name"],
+        },
+        {
+          model: ComplaintCategory,
+          as: "category",
+          attributes: ["category_id", "name"],
+        },
+        {
+          model: ComplaintAttachment,
+          as: "attachments",
+          attributes: ["attachment_id", "created_at"],
+          include: [
+            {
+              model: Attachment,
+              as: "attachment",
+            },
+          ],
+        },
+        {
+          model: ComplaintHistory,
+          as: "history",
+          include: [
+            {
+              model: User,
+              as: "user",
+              attributes: ["user_id", "full_name", "email", "phone_number"],
+            },
+          ],
+        },
+        {
+          model: ComplaintResolution,
+          as: "resolution",
+          include: [
+            {
+              model: User,
+              as: "resolver",
+              attributes: ["user_id", "full_name", "email", "phone_number"],
+            },
+            {
+              model: ResolutionAttachment,
+              as: "attachments",
+              attributes: ["attachment_id", "created_at"],
+              include: [
+                {
+                  model: Attachment,
+                  as: "attachment",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: "Complaint not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Complaint fetched successfully.",
+      data: complaint,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch complaint",
+      error: error.message,
+    });
+  }
+};
+
 // =========== Update complaint ===========
 const updateComplaint = async (req, res) => {
   const t = await sequelize.transaction();
@@ -617,6 +719,7 @@ module.exports = {
   createComplaint,
   getComplaints,
   getComplaintById,
+  getComplaintByTicketingNumber,
   getComplaintByUserId,
   updateComplaint,
   acceptComplaint,

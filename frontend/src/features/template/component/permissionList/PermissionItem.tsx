@@ -1,6 +1,7 @@
 import React from "react";
 import { BiToggleLeft, BiToggleRight } from "react-icons/bi";
 import { Permission } from "../../types/permission";
+import { PermissionGuard } from "@/features/complaint-management/component/PermissionGuard";
 
 interface PermissionItemProps {
   permission: Permission;
@@ -27,33 +28,31 @@ export const PermissionItem: React.FC<PermissionItemProps> = ({
           {permission.action.replace("_", " ")}
         </span>
       </div>
-
-      <button
-        className={`p-0 transition-all duration-200 ${
-          isActive ? "text-green-600" : "text-gray-400"
-        }`}
-        onClick={handleToggle}
-        disabled={isToggling}
-        title={isActive ? "Deactivate permission" : "Activate permission"}
-      >
-        {isToggling ? (
-          <div className="w-10 h-10 flex items-center justify-center">
-            <div className="h-6 w-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : isActive ? (
-          <BiToggleRight
-            className={`h-10 w-10 transition-transform duration-300 ${
-              isActive ? "scale-100 rotate-0" : "scale-90 rotate-180"
+      <PermissionGuard requireAll={["PERMISSION:UPDATE"]}>
+        <button
+          className={`p-0 transition-all duration-200 ${isActive ? "text-green-600" : "text-gray-400"
             }`}
-          />
-        ) : (
-          <BiToggleLeft
-            className={`h-10 w-10 transition-transform duration-300 ${
-              isActive ? "scale-100 rotate-0" : "scale-90 rotate-180"
-            } text-red-200 hover:text-red-300`}
-          />
-        )}
-      </button>
+          onClick={handleToggle}
+          disabled={isToggling}
+          title={isActive ? "Deactivate permission" : "Activate permission"}
+        >
+          {isToggling ? (
+            <div className="w-10 h-10 flex items-center justify-center">
+              <div className="h-6 w-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : isActive ? (
+            <BiToggleRight
+              className={`h-10 w-10 transition-transform duration-300 ${isActive ? "scale-100 rotate-0" : "scale-90 rotate-180"
+                }`}
+            />
+          ) : (
+            <BiToggleLeft
+              className={`h-10 w-10 transition-transform duration-300 ${isActive ? "scale-100 rotate-0" : "scale-90 rotate-180"
+                } text-red-200 hover:text-red-300`}
+            />
+          )}
+        </button></PermissionGuard>
+
     </div>
   );
 };

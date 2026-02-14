@@ -24,7 +24,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
+import { useGetSectorNodesQuery, useGetSectorNodesWithFlatChildrenQuery } from "@/redux/api/sectorNodeApi";
+import { SectorNode } from "@/redux/types/sectorNode";
 
 interface CreateUserModalProps {
   user_type?: string;
@@ -46,18 +47,19 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [sectorId, setSectorId] = useState("");
-  const [departments, setDepartments] = useState([]);
+  const [departments, setDepartments] = useState<SectorNode[]>([]);
   const [departmentId, setDepartmentId] = useState("");
 
   const { data: rolesResponse } = useGetRolesQuery();
-  const { data = [] } = useGetSectorNodesQuery();
+  const { data = [] } = useGetSectorNodesWithFlatChildrenQuery();
   const { data: userTypes = [] } = useGetUserTypesQuery();
 
 
   const roles = rolesResponse || [];
-  const root = data.filter((item) => item.parent_id === null);
-  const sectors = root.flatMap((root) => root.children || []);
-
+  const sectors = data.map((item) => ({
+    ...item.sector,
+    children: item.children || [],
+  }));
 
   const [createUser, { isLoading }] = useCreateUserMutation();
   const userTypeId = userTypes?.find(
@@ -67,7 +69,9 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const handleSectorChange = (value: string) => {
     setSectorId(value);
     setDepartmentId("");
-    const selectedSector = data.find((item) => item.sector_node_id === value);
+    const selectedSector = sectors.find(
+      (item) => item.sector_node_id === value
+    );
     setDepartments(selectedSector?.children || []);
   };
 
@@ -182,7 +186,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 disabled={!sectorId || isLoading}
               >
                 <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-[#094C81] bg-white">
-                  <SelectValue placeholder="Select Sector" />
+                  <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
 
                 <SelectContent className="text-[#094C81] bg-white max-h-64 overflow-y-auto">

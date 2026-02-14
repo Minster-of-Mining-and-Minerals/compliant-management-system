@@ -32,14 +32,14 @@ export const complaintCategoryApi = baseApi.injectEndpoints({
      * --------------------------- */
     getComplaintCategories: builder.query<
       ComplaintCategory[],
-      { is_active?: boolean; search?: string } | undefined
+      { is_active?: boolean; type?: string; search?: string } | undefined
     >({
       query: (params) => ({
         url: "/complaint-categories",
         params: params || undefined,
       }),
       transformResponse: (
-        response: ApiResponse<ComplaintCategory[]>
+        response: ApiResponse<ComplaintCategory[]>,
       ): ComplaintCategory[] => response.data ?? [],
       providesTags: (result) =>
         result
@@ -59,7 +59,7 @@ export const complaintCategoryApi = baseApi.injectEndpoints({
     getComplaintCategoryById: builder.query<ComplaintCategory, string>({
       query: (id) => `/complaint-categories/${id}`,
       transformResponse: (
-        response: ApiResponse<ComplaintCategory>
+        response: ApiResponse<ComplaintCategory>,
       ): ComplaintCategory => response.data,
       providesTags: (_r, _e, id) => [{ type: "ComplaintCategory", id }],
     }),
@@ -77,7 +77,7 @@ export const complaintCategoryApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (
-        response: ApiResponse<ComplaintCategory>
+        response: ApiResponse<ComplaintCategory>,
       ): ComplaintCategory => response.data,
       invalidatesTags: [{ type: "ComplaintCategory", id: "LIST" }],
     }),
@@ -95,7 +95,7 @@ export const complaintCategoryApi = baseApi.injectEndpoints({
         body: data,
       }),
       transformResponse: (
-        response: ApiResponse<ComplaintCategory>
+        response: ApiResponse<ComplaintCategory>,
       ): ComplaintCategory => response.data,
       invalidatesTags: (_r, _e, { id }) => [
         { type: "ComplaintCategory", id },

@@ -11,6 +11,7 @@ const {
   toggleSectorNodeActiveStatus,
   getSectorNodeUsers,
   getSectorNodeChildrenUsers,
+  getSectorsWithFlatChildren,
 } = require("../../controllers/sector-controllers/sectorController");
 
 const {
@@ -47,6 +48,29 @@ const {
  *         description: List of sector nodes
  */
 router.get("/", getSectorNodes);
+
+/**
+ * @swagger
+ * /sector-nodes:
+ *   get:
+ *     summary: Get all sector nodes with flat children
+ *     tags: [SectorNodes]
+ *     parameters:
+ *       - in: query
+ *         name: is_active
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search nodes by name
+ *     responses:
+ *       200:
+ *         description: List of sector nodes with flat children 
+ */
+router.get("/flat", getSectorsWithFlatChildren);
 
 /**
  * @swagger

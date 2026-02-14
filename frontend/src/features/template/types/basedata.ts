@@ -4,4 +4,5 @@ type DataCardItem = {
   subtitle: string;
   icon: React.ElementType;
   link: string;
+  permission?: string[];
 };

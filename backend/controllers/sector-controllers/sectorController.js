@@ -109,6 +109,92 @@ const getSectorNodes = async (req, res) => {
 };
 
 /**
+ * =================== Get Sectors With Flat Descendants ===================
+ */
+
+const getSectorsWithFlatChildren = async (req, res) => {
+  try {
+    const { is_active, search } = req.query;
+
+    const whereClause = {};
+
+    if (is_active !== undefined) {
+      whereClause.is_active = is_active === "true";
+    }
+
+    if (search) {
+      whereClause[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    // 1️⃣ Fetch ALL nodes
+    const allNodes = await SectorNode.findAll({
+      where: whereClause,
+      order: [["created_at", "ASC"]],
+      raw: true,
+    });
+
+    // 2️⃣ Group by parent_id
+    const nodesByParent = {};
+
+    allNodes.forEach((node) => {
+      const parentId = node.parent_id || "ROOT";
+
+      if (!nodesByParent[parentId]) {
+        nodesByParent[parentId] = [];
+      }
+
+      nodesByParent[parentId].push(node);
+    });
+
+    // 3️⃣ Recursive function to collect ALL descendants (flattened)
+    const collectDescendants = (parentId, result = []) => {
+      const children = nodesByParent[parentId] || [];
+
+      for (const child of children) {
+        result.push(child);
+        collectDescendants(child.sector_node_id, result);
+      }
+
+      return result;
+    };
+
+    // 4️⃣ Get root nodes (parent_id = null)
+    const rootNodes = nodesByParent["ROOT"] || [];
+
+    // 5️⃣ Get ONLY root children (ignore root itself)
+    let firstLevelSectors = [];
+
+    rootNodes.forEach((root) => {
+      const children = nodesByParent[root.sector_node_id] || [];
+      firstLevelSectors.push(...children);
+    });
+
+    // 6️⃣ Build final response
+    const response = firstLevelSectors.map((sector) => ({
+      sector,
+      children: collectDescendants(sector.sector_node_id, []),
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Root children sectors with flattened descendants fetched successfully",
+      data: response,
+    });
+  } catch (error) {
+    console.error("Error fetching sector tree:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch sectors",
+      error: error.message,
+    });
+  }
+};
+
+/**
  * =================== Get Sector Node By ID ===================
  */
 const getSectorNodeById = async (req, res) => {
@@ -426,6 +512,7 @@ module.exports = {
   toggleSectorNodeActiveStatus,
   getSectorNodeChildrenUsers,
   getSectorNodeUsers,
+  getSectorsWithFlatChildren,
 };
 
 const collectChildNodeIds = async (nodeId, collected = []) => {

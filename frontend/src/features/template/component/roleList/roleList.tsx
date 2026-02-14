@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DataTable } from "@/features/template/component/tableList/DataTable";
-import { TableLayout } from "@/features/template/component/TableLayout";
+import { TableLayout } from "@/features/template/component/tableList/TableLayout";
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,12 +85,14 @@ export default function RoleList() {
       icon: <Download className="h-4 w-4" />,
       variant: "outline",
       onClick: () => console.log("Export clicked"),
+      // permissions: ["DATA:EXPORT"],
     },
     {
       label: "New Role",
       icon: <Plus className="h-4 w-4" />,
       variant: "default",
       onClick: () => router.push("roles/new"),
+      // permissions: ["ROLE:CREATE"],
     },
   ];
 

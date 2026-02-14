@@ -23,7 +23,6 @@ module.exports = (sequelize, DataTypes) => {
       name: {
         type: DataTypes.STRING(100),
         allowNull: false,
-        unique: true,
       },
       description: {
         type: DataTypes.TEXT,
@@ -32,6 +31,11 @@ module.exports = (sequelize, DataTypes) => {
       is_active: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
+      },
+      type: {
+        type: DataTypes.ENUM("external", "internal"),
+        allowNull: false,
+        defaultValue: "internal",
       },
       created_at: {
         type: DataTypes.DATE,
@@ -48,7 +52,13 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "complaint_categories",
       timestamps: false,
       underscored: true,
-    }
+      indexes: [
+        {
+          unique: true,
+          fields: ["name", "type"],
+        },
+      ],
+    },
   );
 
   return ComplaintCategory;

@@ -20,6 +20,7 @@ export interface CreateComplaintCategoryPayload {
   name: string;
   description?: string;
   is_active?: boolean;
+  type: string;
 }
 
 export interface UpdateComplaintCategoryPayload {

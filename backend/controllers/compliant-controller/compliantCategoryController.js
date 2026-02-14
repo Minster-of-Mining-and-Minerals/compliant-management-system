@@ -10,11 +10,11 @@ const { Op } = require("sequelize");
 const createComplaintCategory = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { name, description } = req.body;
+    const { name, description, type } = req.body;
 
     // ===== Check duplicate name =====
     const existingCategory = await ComplaintCategory.findOne({
-      where: { name },
+      where: { name, type },
       transaction: t,
     });
 
@@ -31,6 +31,7 @@ const createComplaintCategory = async (req, res) => {
       {
         category_id: uuidv4(),
         name,
+        type,
         description: description || null,
         is_active: true,
         created_at: new Date(),
@@ -62,11 +63,15 @@ const createComplaintCategory = async (req, res) => {
  */
 const getComplaintCategories = async (req, res) => {
   try {
-    const { is_active, search } = req.query;
+    const { is_active, search, type } = req.query;
     const whereClause = {};
 
     if (is_active !== undefined) {
       whereClause.is_active = is_active === "true";
+    }
+
+    if (type) {
+      whereClause.type = type; // exact match, ENUM-safe
     }
 
     if (search) {

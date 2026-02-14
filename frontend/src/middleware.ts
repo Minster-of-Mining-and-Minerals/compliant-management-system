@@ -4,15 +4,14 @@ import { routing } from "./i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
 
-const publicRoutes = ["/", "/login", "/feedback", "/complaint"];
+const publicRoutes = ["/", "/login", "/feedback", "/complaint", "/track-complaint"];
 const authRoutes = ["/login"];
 
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
   // Apply intl middleware first
   const intlResponse = intlMiddleware(req);
-  
+
   // Get locale
   const locale = routing.locales.find((l) =>
     pathname.startsWith(`/${l}`)
@@ -31,9 +30,9 @@ export default function middleware(req: NextRequest) {
     "authjs.session-token",         // NextAuth v5
     "__Secure-authjs.session-token", // Secure v5
   ];
-  
+
   let hasSessionToken = false;
-  
+
   // Check each cookie name
   for (const cookie of allCookies) {
     if (sessionCookies.includes(cookie.name) && cookie.value) {

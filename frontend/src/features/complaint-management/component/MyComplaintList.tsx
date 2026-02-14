@@ -18,12 +18,14 @@ import {
 import { Complaint } from "@/redux/types/complaint";
 import { formatStatus } from "@/utils/statusFormatter";
 import { useSession } from "next-auth/react";
+import CreateMyComplaint from "@/components/common/modals/CreateMyComplaint";
 
 /* ----------------------------------
    COMPONENT
 ----------------------------------- */
 export default function MyComplaintTable() {
   const { data: session } = useSession();
+  const user_sector = session?.user.sector?.sector_node_id || "";
   const user_id = session?.user?.id || "";
   const { data = [], isLoading, isError } = useGetComplaintByUserIdQuery(
     user_id,
@@ -125,7 +127,7 @@ export default function MyComplaintTable() {
         const complaintId = row.original.complaint_id;
         return (
           <div className="flex items-center gap-1">
-            <Button onClick={() => router.push(`/compliants/${complaintId}`)} variant="ghost" size="icon">
+            <Button onClick={() => router.push(`/my-complaints/${complaintId}`)} variant="ghost" size="icon">
               <Eye className="h-4 w-4" />
             </Button>
             {/* <Button variant="ghost" size="icon">
@@ -147,6 +149,7 @@ export default function MyComplaintTable() {
       icon: <Plus className="h-4 w-4" />,
       variant: "default",
       onClick: () => setModalOpen(true),
+      // permissions: ["COMPLAINT:CREATE"],
     },
   ];
 
@@ -163,19 +166,27 @@ export default function MyComplaintTable() {
   );
 
   return (
-    <TableLayout
-      actions={actions}
-      filters={filters}
-      filterColumnsPerRow={1}
-    >
-      <DataTable
-        columns={columns}
-        data={paginatedData}
-        totalPageCount={Math.ceil(filteredData.length / pageSize)}
-        handlePagination={handlePagination}
-        tablePageSize={pageSize}
-        currentIndex={pageIndex}
+    <>
+      <TableLayout
+        actions={actions}
+        filters={filters}
+        filterColumnsPerRow={1}
+      >
+        <DataTable
+          columns={columns}
+          data={paginatedData}
+          totalPageCount={Math.ceil(filteredData.length / pageSize)}
+          handlePagination={handlePagination}
+          tablePageSize={pageSize}
+          currentIndex={pageIndex}
+        />
+
+      </TableLayout>
+      <CreateMyComplaint
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        sector_node_id={user_sector}
       />
-    </TableLayout>
+    </>
   );
 }

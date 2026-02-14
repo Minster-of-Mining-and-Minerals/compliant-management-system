@@ -1,21 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, FileText, X } from "lucide-react";
+import { Eye, FileText } from "lucide-react";
 import { getFileUrl, getFileType } from "@/utils/fileUrl";
-
+import { useGetComplaintByTicketingCodeQuery } from "@/redux/api/complaintApi";
+import { useRouter, useSearchParams } from "next/navigation";
 /* ================= TYPES ================= */
 
 type ComplaintStatus = "pending" | "in_progress" | "resolved";
 
-interface Attachment {
+interface AttachmentFile {
   attachment_id: string;
   file_name: string;
   file_path: string;
-  created_at?: string;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
+interface AttachmentWrapper {
+  attachment_id: string;
+  created_at: string;
+  attachment: AttachmentFile;
 }
 
 interface Complaint {
@@ -24,26 +31,33 @@ interface Complaint {
   status: ComplaintStatus;
   created_at: string;
   description: string;
-  request: string;
+  request?: string;
   is_anonymous: boolean;
 
-  assignedSector: { name: string };
-  category: { name: string };
+  assignedSector?: {
+    name: string;
+  };
+
+  category?: {
+    name: string;
+  };
 
   user?: {
     full_name: string;
     phone_number: string;
     email: string;
-  };
+  } | null;
 
-  location?: {
-    city: string;
-    subcity: string;
-    woreda: string;
-  };
+  attachments?: AttachmentWrapper[];
 
-  attachments?: {
-    attachment: Attachment;
+  resolution?: {
+    resolution_id: string;
+    reason: string;
+    resolved_at: string;
+    resolver?: {
+      full_name: string;
+    };
+    attachments?: AttachmentWrapper[];
   }[];
 }
 
@@ -62,87 +76,60 @@ const formatStatus = (status: ComplaintStatus) => {
   }
 };
 
-/* ================= MOCK DATA ================= */
-
-const mockComplaint: Complaint = {
-  complaint_id: "cmp-001",
-  ticketing_code: "CMP-2026-001",
-  status: "pending",
-  created_at: "2026-01-22T10:30:00Z",
-  description: "There is a delay in service delivery.",
-  request: "Please resolve this issue urgently.",
-  is_anonymous: false,
-
-  assignedSector: { name: "IT Department" },
-  category: { name: "Service Delay" },
-
-  user: {
-    full_name: "Abel Tesfaye",
-    phone_number: "0912345678",
-    email: "abel@example.com",
-  },
-
-  location: {
-    city: "Addis Ababa",
-    subcity: "Bole",
-    woreda: "03",
-  },
-
-  attachments: [
-    {
-      attachment: {
-        attachment_id: "att-1",
-        file_name: "evidence.pdf",
-        file_path: "/mock/evidence.pdf",
-        created_at: "2026-01-22T10:35:00Z",
-      },
-    },
-  ],
+const getStatusStyle = (status: ComplaintStatus) => {
+  switch (status) {
+    case "pending":
+      return "bg-yellow-100 text-yellow-800";
+    case "in_progress":
+      return "bg-blue-100 text-blue-800";
+    case "resolved":
+      return "bg-green-100 text-green-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
 };
 
 /* ================= PAGE ================= */
 
 const ComplaintTrackPage = () => {
-  const t = useTranslations("ComplaintTrackPage");
-
   const [trackingId, setTrackingId] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [complaint, setComplaint] = useState<Complaint | null>(null);
-  const [fileViewerState, setFileViewerState] = useState<any>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  /* ================= TRACK HANDLER ================= */
+  const ticketNumber = searchParams.get("ticketNumber");
 
-  const handleTrack = async () => {
-    if (!trackingId.trim()) {
-      setError("Tracking ID is required");
-      return;
+  useEffect(() => {
+    if (ticketNumber) {
+      setTrackingId(ticketNumber);
     }
+  }, [ticketNumber]);
+  const { data, isLoading, error } =
+    useGetComplaintByTicketingCodeQuery(ticketNumber ?? "", {
+      skip: !ticketNumber,
+    });
 
-    setError("");
-    setLoading(true);
+  const complaint: Complaint | null = data || null;
+  console.log(complaint, "complaint")
+  const handleTrack = () => {
+    if (!trackingId.trim()) return;
 
-    // 🔹 MOCK API
-    setTimeout(() => {
-      if (trackingId === "123") {
-        setComplaint(mockComplaint);
-      } else {
-        setComplaint(null);
-        setError("Complaint not found");
-      }
-      setLoading(false);
-    }, 1000);
+    router.push(
+      `/en/track-complaint?ticketNumber=${trackingId.trim()}`
+    );
   };
-
-  const complaintFiles =
-    complaint?.attachments?.map((a) => ({
-      url: getFileUrl(a.attachment.file_path),
-      name: a.attachment.file_name,
-      uploadedAt: a.attachment.created_at,
-      type: getFileType(a.attachment.file_name),
-    })) || [];
-
-  /* ================= UI ================= */
+  const complaintFiles = complaint
+    ? [
+      ...(complaint.attachments?.map((a) => a.attachment) || []),
+      ...(complaint.resolution?.flatMap((r) =>
+        r.attachments?.map((a) => a.attachment) || []
+      ) || []),
+    ].map((file) => ({
+      url: getFileUrl(file.file_path),
+      name: file.file_name,
+      uploadedAt: file.created_at,
+      type: getFileType(file.file_name),
+    }))
+    : [];
 
   return (
     <main className="min-h-screen px-6 lg:px-20 pt-28 pb-16 bg-slate-50">
@@ -154,52 +141,68 @@ const ComplaintTrackPage = () => {
         </p>
       </div>
 
-      <div className="flex gap-10 ">
+      <div className="flex gap-10">
         {/* Tracking Input */}
         <div className="max-w-xl min-w-96 h-fit bg-white rounded-md shadow p-6 mb-10">
           <label className="text-sm font-medium">Tracking ID</label>
           <Input
             value={trackingId}
             onChange={(e) => setTrackingId(e.target.value)}
-            placeholder="CMP-2026-001"
+            placeholder="TICK-XXXX"
             className="mt-1 h-11"
           />
 
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-
-          <Button onClick={handleTrack} disabled={loading} className="mt-4">
-            {loading ? "Checking..." : "Track Complaint"}
+          <Button
+            onClick={handleTrack}
+            disabled={isLoading}
+            className="mt-4 w-full"
+          >
+            {isLoading ? "Checking..." : "Track Complaint"}
           </Button>
+
+          {error && (
+            <p className="mt-3 text-sm text-red-600">
+              Complaint not found
+            </p>
+          )}
         </div>
 
         {/* Complaint Detail */}
-        {complaint ? (
+        {isLoading ? (
+          <ComplaintSkeleton />
+        ) : complaint ? (
           <div className="bg-white w-full border rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between mb-4">
+            <div className="flex justify-between mb-6">
               <div>
                 <h2 className="text-xl font-bold">Complaint Detail</h2>
                 <p className="text-gray-500">
                   Ticket #{complaint.ticketing_code}
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-md bg-blue-100 text-blue-900">
+              <span
+                className={`px-3 py-1 rounded-md text-sm ${getStatusStyle(
+                  complaint.status
+                )}`}
+              >
                 {formatStatus(complaint.status)}
               </span>
             </div>
 
             {/* Info Grid */}
-            <div className="grid md:grid-cols-4 gap-4 text-sm mb-4">
+            <div className="grid md:grid-cols-4 gap-4 text-sm mb-6">
               <div>
                 <p className="font-semibold">Sector</p>
-                <p>{complaint.assignedSector.name}</p>
+                <p>{complaint.assignedSector?.name || "-"}</p>
               </div>
               <div>
                 <p className="font-semibold">Category</p>
-                <p>{complaint.category.name}</p>
+                <p>{complaint.category?.name || "-"}</p>
               </div>
               <div>
                 <p className="font-semibold">Reported</p>
-                <p>{new Date(complaint.created_at).toLocaleString()}</p>
+                <p>
+                  {new Date(complaint.created_at).toLocaleString()}
+                </p>
               </div>
               <div>
                 <p className="font-semibold">Status</p>
@@ -219,33 +222,48 @@ const ComplaintTrackPage = () => {
               </div>
             </div>
 
+            {/* Resolution */}
+            {complaint.resolution?.length > 0 && (
+              <div className="bg-green-50 p-4 rounded mb-6">
+                <h4 className="font-semibold mb-2">Resolution</h4>
+                <p className="mb-2">
+                  {complaint.resolution[0].reason}
+                </p>
+                <p className="text-xs text-gray-600">
+                  Resolved at:{" "}
+                  {new Date(
+                    complaint.resolution[0].resolved_at
+                  ).toLocaleString()}
+                </p>
+              </div>
+            )}
+
             {/* Attachments */}
             {complaintFiles.length > 0 && (
               <>
-                <h4 className="font-semibold mb-2">Attachments</h4>
+                <h4 className="font-semibold mb-3">Attachments</h4>
                 <div className="grid md:grid-cols-3 gap-3">
                   {complaintFiles.map((file, i) => (
-                    <div
+                    <a
                       key={i}
-                      onClick={() =>
-                        setFileViewerState({ files: complaintFiles, index: i })
-                      }
-                      className="border rounded-lg p-3 cursor-pointer hover:bg-blue-50"
+                      href={file.url}
+                      target="_blank"
+                      className="border rounded-lg p-3 hover:bg-blue-50 flex items-center gap-3"
                     >
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-red-500" />
-                        <div className="flex-1">
-                          <p className="font-medium text-sm truncate">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {file.uploadedAt &&
-                              new Date(file.uploadedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <Eye className="w-4 h-4 text-blue-600" />
+                      <FileText className="w-5 h-5 text-red-500" />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {file.uploadedAt &&
+                            new Date(
+                              file.uploadedAt
+                            ).toLocaleDateString()}
+                        </p>
                       </div>
-                    </div>
+                      <Eye className="w-4 h-4 text-blue-600" />
+                    </a>
                   ))}
                 </div>
               </>
@@ -254,8 +272,10 @@ const ComplaintTrackPage = () => {
             {/* Complainer Info */}
             {!complaint.is_anonymous && complaint.user && (
               <div className="bg-slate-50 p-4 rounded mt-6">
-                <h4 className="font-semibold mb-3">Complainer Information</h4>
-                <div className="grid md:grid-cols-4 gap-4 text-sm">
+                <h4 className="font-semibold mb-3">
+                  Complainer Information
+                </h4>
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <p className="font-medium">Name</p>
                     <p>{complaint.user.full_name}</p>
@@ -268,19 +288,13 @@ const ComplaintTrackPage = () => {
                     <p className="font-medium">Email</p>
                     <p>{complaint.user.email}</p>
                   </div>
-                  <div>
-                    <p className="font-medium">Address</p>
-                    <p>
-                      {complaint.location?.city},{" "}
-                      {complaint.location?.subcity},{" "}
-                      {complaint.location?.woreda}
-                    </p>
-                  </div>
                 </div>
               </div>
             )}
           </div>
-        ) : <ComplaintSkeleton />}
+        ) : ticketNumber ? (
+          <p className="text-red-600 mt-6">Complaint not found</p>
+        ) : null}
       </div>
     </main>
   );
@@ -288,19 +302,12 @@ const ComplaintTrackPage = () => {
 
 export default ComplaintTrackPage;
 
+/* ================= SKELETON ================= */
+
 const ComplaintSkeleton = () => {
   return (
     <div className="bg-white w-full border rounded-xl p-6 shadow-sm animate-pulse">
-      {/* Header */}
-      <div className="flex justify-between mb-6">
-        <div className="space-y-2">
-          <div className="h-5 w-48 bg-gray-200 rounded" />
-          <div className="h-4 w-32 bg-gray-200 rounded" />
-        </div>
-        <div className="h-6 w-24 bg-gray-200 rounded" />
-      </div>
-
-      {/* Info Grid */}
+      <div className="h-6 w-48 bg-gray-200 rounded mb-6" />
       <div className="grid md:grid-cols-4 gap-4 mb-6">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="space-y-2">
@@ -309,30 +316,14 @@ const ComplaintSkeleton = () => {
           </div>
         ))}
       </div>
-
-      {/* Description */}
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
+      <div className="grid md:grid-cols-2 gap-4">
         {Array.from({ length: 2 }).map((_, i) => (
           <div key={i} className="space-y-2 bg-slate-50 p-4 rounded">
             <div className="h-4 w-32 bg-gray-200 rounded" />
             <div className="h-3 w-full bg-gray-200 rounded" />
             <div className="h-3 w-5/6 bg-gray-200 rounded" />
-            <div className="h-3 w-4/6 bg-gray-200 rounded" />
           </div>
         ))}
-      </div>
-
-      {/* Attachments */}
-      <div className="space-y-3">
-        <div className="h-4 w-28 bg-gray-200 rounded" />
-        <div className="grid md:grid-cols-3 gap-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-16 border rounded bg-gray-200"
-            />
-          ))}
-        </div>
       </div>
     </div>
   );

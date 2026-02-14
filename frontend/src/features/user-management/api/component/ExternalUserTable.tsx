@@ -124,6 +124,7 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
             icon: <Download className="h-4 w-4" />,
             variant: "outline",
             loading: exportLoading,
+            // permissions: ["USER:EXPORT"],
             onClick: async () => {
                 try {
                     const blob = await exportUsers().unwrap();
@@ -147,6 +148,7 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
         //     icon: <Plus className="h-4 w-4" />,
         //     variant: "default",
         //     onClick: () => setModalOpen(true),
+        //     permissions: ["USER:CREATE"],
         // },
     ];
 

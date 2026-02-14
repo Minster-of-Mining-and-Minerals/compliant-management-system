@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("login called: ", req.body);
 
     const user = await User.findOne({
       where: { email },
@@ -90,6 +91,8 @@ const login = async (req, res) => {
       { where: { user_id: user.user_id } },
     );
 
+    console.log("to be returned");
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -106,6 +109,7 @@ const login = async (req, res) => {
           department: user.department || null,
         },
         roles: userRoles,
+        permissions: userRoles.flatMap((r) => r.permissions),
       },
     });
   } catch (error) {
