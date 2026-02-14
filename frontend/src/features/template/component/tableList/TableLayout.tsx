@@ -12,6 +12,8 @@ import {
   SelectValue,
   SelectTrigger,
 } from "@/components/ui/select";
+import { hasAnyPermission } from "@/lib/permissions";
+import { useSession } from "next-auth/react";
 
 export const TableLayout: React.FC<PageLayoutProps> = ({
   title,
@@ -25,6 +27,8 @@ export const TableLayout: React.FC<PageLayoutProps> = ({
   toggleHierarchyNode,
   setToggleHierarchyNode,
 }) => {
+  const { data: session } = useSession();
+  const userPermissions = session?.user.permissions || [];
   // Get URL state for search
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -40,6 +44,13 @@ export const TableLayout: React.FC<PageLayoutProps> = ({
     },
     [searchParams, router]
   );
+
+  const filteredActions = actions.filter((action) => {
+    if (!action.permissions || action.permissions.length === 0) {
+      return true; // no permission required
+    }
+    return hasAnyPermission(userPermissions, action.permissions);
+  });
 
   return (
     <div className=" p-6 border rounded-lg w-full bg-white shadow">
@@ -126,9 +137,9 @@ export const TableLayout: React.FC<PageLayoutProps> = ({
               />
             )}
 
-            {actions.length > 0 && (
+            {filteredActions.length > 0 && (
               <div className="flex items-center space-x-2">
-                {actions.map((action, index) => (
+                {filteredActions.map((action, index) => (
                   <Button
                     key={index}
                     variant={action.variant || "default"}

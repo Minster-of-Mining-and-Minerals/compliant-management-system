@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
 import { SectorNode } from "./redux/types/sectorNode";
+import { normalizePermissions } from "./lib/permissions";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -47,7 +48,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           sector: user.sector,
           department: user.department,
           roles: user.roles,
-          permissions: user.permissions,
+          permissions: normalizePermissions(user?.permissions),
           accessToken: user.accessToken,
         };
       }
@@ -69,7 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             sector: token.sector,
             department: token.department,
             roles: token.roles,
-            permissions: token.permissions,
+            permissions: normalizePermissions(token.permissions),
           },
         };
       }

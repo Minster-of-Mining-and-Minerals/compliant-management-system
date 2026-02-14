@@ -18,6 +18,7 @@ import { useCreateComplaintMutation } from "@/redux/api/complaintApi";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { SectorNode } from "@/redux/types/sectorNode";
+import { useGetUserTypesQuery } from "@/redux/api/userApi";
 
 interface CreateMyComplaintProps {
     isOpen: boolean;
@@ -30,8 +31,11 @@ interface ComplaintFormValues {
 
 const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
     const { data: session } = useSession();
-    // Here add user type of internal by frtching and filtering the id
-    // Basic form fields
+    const { data: userTypes = [] } = useGetUserTypesQuery();
+    const complaint_type_id = userTypes?.find(
+        (type: any) => type.name === "internal"
+    )?.user_type_id;
+
     const [sectorId, setSectorId] = useState("");
     const [departments, setDepartments] = useState<SectorNode[]>([]);
     const [departmentId, setDepartmentId] = useState("");
@@ -140,9 +144,11 @@ const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
 
             const payload = {
                 // User info from session
+                complaint_type_id,
                 full_name: session?.user?.name || undefined,
                 email: session?.user?.email || undefined,
-                user_id: session?.user?.id || undefined,
+                // user_id: session?.user?.id || undefined,
+                phone_number: session?.user?.phone_number || undefined,
 
                 // Required fields
                 category_id: complaintCategoryId,
