@@ -24,7 +24,7 @@ export const NAVIGATION: NavItem[] = [
     url: "/dashboard",
     icon: LayoutDashboard,
     anyPermissions: [
-      "DASHBOARD:VIEW",
+      //   "DASHBOARD:VIEW",
       "DASHBOARD:VIEW_ALL",
       "DASHBOARD:VIEW_OWN",
     ],

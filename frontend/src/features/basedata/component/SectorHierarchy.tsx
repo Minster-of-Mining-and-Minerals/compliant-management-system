@@ -15,6 +15,7 @@ import { SectorNode } from "@/redux/types/sectorNode";
 import { CustomNodeProps, D3TreeNode, HierarchyD3TreeProps } from "@/types/d3treeNode";
 import { CreateChildModal } from "@/components/common/modals/CreateChildModal";
 import { buildSectorTree } from "@/utils/buildSectorTree";
+import { PermissionGuard } from "@/features/complaint-management/component/PermissionGuard";
 
 /**
  * Converts a StructureNode to D3Tree format
@@ -121,12 +122,15 @@ const CustomNode: React.FC<CustomNodeProps> = ({
             <button className="flex-1 bg-golden-dark hover:bg-golden-dark text-white font-semibold py-2 rounded-lg transition-colors duration-200 text-xs">
               Details
             </button>
-            <button
-              onClick={handleAddChild}
-              className="flex-1 bg-golden-dark hover:bg-golden-dark text-white font-semibold py-2 rounded-lg transition-colors duration-200 text-xs"
-            >
-              Add Child
-            </button>
+            <PermissionGuard requireAll={["SECTOR:CREATE"]}>
+              <button
+                onClick={handleAddChild}
+                className="flex-1 bg-golden-dark hover:bg-golden-dark text-white font-semibold py-2 rounded-lg transition-colors duration-200 text-xs"
+              >
+                Add Child
+              </button>
+            </PermissionGuard>
+
           </div>
         </div>
       </foreignObject>

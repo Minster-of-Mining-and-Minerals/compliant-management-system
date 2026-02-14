@@ -25,6 +25,7 @@ import CreateMyComplaint from "@/components/common/modals/CreateMyComplaint";
 ----------------------------------- */
 export default function MyComplaintTable() {
   const { data: session } = useSession();
+  const user_sector = session?.user.sector?.sector_node_id || "";
   const user_id = session?.user?.id || "";
   const { data = [], isLoading, isError } = useGetComplaintByUserIdQuery(
     user_id,
@@ -126,7 +127,7 @@ export default function MyComplaintTable() {
         const complaintId = row.original.complaint_id;
         return (
           <div className="flex items-center gap-1">
-            <Button onClick={() => router.push(`/compliants/${complaintId}`)} variant="ghost" size="icon">
+            <Button onClick={() => router.push(`/my-complaints/${complaintId}`)} variant="ghost" size="icon">
               <Eye className="h-4 w-4" />
             </Button>
             {/* <Button variant="ghost" size="icon">
@@ -184,6 +185,7 @@ export default function MyComplaintTable() {
       <CreateMyComplaint
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
+        sector_node_id={user_sector}
       />
     </>
   );

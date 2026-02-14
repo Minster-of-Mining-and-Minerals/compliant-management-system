@@ -23,13 +23,15 @@ import { useGetUserTypesQuery } from "@/redux/api/userApi";
 interface CreateMyComplaintProps {
     isOpen: boolean;
     onClose: () => void;
+    sector_node_id?: string;
 }
 
 interface ComplaintFormValues {
     attachment_id: File[];
 }
 
-const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
+const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplaintProps) => {
+    console.log("passed sector: ", sector_node_id)
     const { data: session } = useSession();
     const { data: userTypes = [] } = useGetUserTypesQuery();
     const complaint_type_id = userTypes?.find(
@@ -66,6 +68,8 @@ const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
     const [createComplaint, { isLoading: isSubmitting }] =
         useCreateComplaintMutation();
 
+
+
     const handleSectorChange = (value: string) => {
         setSectorId(value);
         setDepartmentId("");
@@ -89,6 +93,19 @@ const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
             setComplaintCategoryName(complaintCategories[0].name);
         }
     }, [complaintCategories, complaintCategoryId]);
+
+    useEffect(() => {
+        if (!sector_node_id || sectors.length === 0) return;
+
+        const selectedSector = sectors.find(
+            (item) => item.sector_node_id === sector_node_id
+        );
+
+        setDepartments(selectedSector?.children || []);
+        setSectorId(sector_node_id); // Optional: set the selected sector
+        setDepartmentId(""); // reset department selection
+    }, [sector_node_id, sectors]);
+
 
     const handleChange = (field: keyof ComplaintFormValues, value: any) => {
         setFormValues((prev) => ({
@@ -152,7 +169,7 @@ const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
 
                 // Required fields
                 category_id: complaintCategoryId,
-                sector_node_id: sectorId,
+                sector_node_id: sector_node_id ?? sectorId,
                 department_id: departmentId || undefined,
                 description: complaintDescription.trim(),
 
@@ -262,7 +279,7 @@ const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
                         </div>
 
                         {/* Sector */}
-                        <div className="w-full">
+                        {!sector_node_id && <div className="w-full">
                             <label
                                 htmlFor="sector"
                                 className="block text-sm text-golden-dark"
@@ -289,7 +306,7 @@ const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </div>
+                        </div>}
 
                         {/* Department */}
                         <div className="w-full">

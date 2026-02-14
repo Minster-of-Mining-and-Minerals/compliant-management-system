@@ -241,6 +241,7 @@ export default function ComplaintCategoryTable() {
             icon: <Plus className="h-4 w-4" />,
             variant: "default",
             onClick: () => setModalOpen(true),
+            // permissions: ["COMPLAINT_CATEGORY:CREATE"],
         },
     ];
 
