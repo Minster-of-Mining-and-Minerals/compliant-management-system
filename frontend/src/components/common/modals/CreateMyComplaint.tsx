@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { TextArea } from "@/components/ui/textarea";
 import { FileUploadField } from "@/components/ui/FileUploadField";
-import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
+import { useGetSectorNodesQuery, useGetSectorNodesWithFlatChildrenQuery } from "@/redux/api/sectorNodeApi";
 import { useGetComplaintCategoriesQuery } from "@/redux/api/complaintCategoryApi";
 import { useCreateComplaintMutation } from "@/redux/api/complaintApi";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ interface ComplaintFormValues {
 
 const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
     const { data: session } = useSession();
-
+    // Here add user type of internal by frtching and filtering the id
     // Basic form fields
     const [sectorId, setSectorId] = useState("");
     const [departments, setDepartments] = useState<SectorNode[]>([]);
@@ -48,12 +48,15 @@ const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
     const [requestedAction, setRequestedAction] = useState("");
 
     // API queries
-    const { data: sectorNodesData = [] } = useGetSectorNodesQuery();
-    const root = sectorNodesData.filter((item) => item.parent_id === null);
-    const sectors = root.flatMap((root) => root.children || []);
+    const { data: sectorNodesData = [] } = useGetSectorNodesWithFlatChildrenQuery();
+    const sectors = sectorNodesData.map((item) => ({
+        ...item.sector,
+        children: item.children || [],
+    }));
 
     const { data: complaintCategories = [] } = useGetComplaintCategoriesQuery({
         is_active: true,
+        type: "internal",
     });
 
     const [createComplaint, { isLoading: isSubmitting }] =
@@ -62,7 +65,7 @@ const CreateMyComplaint = ({ isOpen, onClose }: CreateMyComplaintProps) => {
     const handleSectorChange = (value: string) => {
         setSectorId(value);
         setDepartmentId("");
-        const selectedSector = sectorNodesData.find(
+        const selectedSector = sectors.find(
             (item) => item.sector_node_id === value
         );
         setDepartments(selectedSector?.children || []);

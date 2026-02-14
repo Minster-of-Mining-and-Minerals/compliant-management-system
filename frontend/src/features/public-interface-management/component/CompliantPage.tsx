@@ -198,8 +198,6 @@ const ComplaintPage = () => {
 
       const result = await createComplaint(payload).unwrap();
 
-      // MOCK ticket number (replace with API response later)
-      const mockTicket = `CMP-${Date.now().toString().slice(-6)}`;
 
       setTicketNumber(result?.ticketing_code);
       setShowTicketModal(true);
