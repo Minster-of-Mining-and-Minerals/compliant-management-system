@@ -22,10 +22,12 @@ export const normalizePermissions = (
  * User must have ALL permissions
  */
 export const hasAllPermissions = (
-  userPermissions: readonly PermissionKey[],
+  rawUserPermissions?: readonly RawPermission[] | null,
   required?: readonly PermissionKey[],
 ): boolean => {
   if (!required?.length) return true;
+
+  const userPermissions = normalizePermissions(rawUserPermissions);
   return required.every((p) => userPermissions.includes(p));
 };
 
@@ -33,10 +35,12 @@ export const hasAllPermissions = (
  * User must have AT LEAST ONE permission
  */
 export const hasAnyPermission = (
-  userPermissions: readonly PermissionKey[],
+  rawUserPermissions?: readonly RawPermission[] | null,
   required?: readonly PermissionKey[],
 ): boolean => {
   if (!required?.length) return true;
+
+  const userPermissions = normalizePermissions(rawUserPermissions);
   return required.some((p) => userPermissions.includes(p));
 };
 
@@ -44,10 +48,13 @@ export const hasAnyPermission = (
  * User must have ONLY these permissions
  */
 export const hasOnlyPermissions = (
-  userPermissions: readonly PermissionKey[],
+  rawUserPermissions?: readonly RawPermission[] | null,
   required?: readonly PermissionKey[],
 ): boolean => {
   if (!required?.length) return false;
+
+  const userPermissions = normalizePermissions(rawUserPermissions);
+
   if (userPermissions.length !== required.length) return false;
   return required.every((p) => userPermissions.includes(p));
 };

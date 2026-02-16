@@ -85,14 +85,14 @@ export default function RoleList() {
       icon: <Download className="h-4 w-4" />,
       variant: "outline",
       onClick: () => console.log("Export clicked"),
-      // permissions: ["DATA:EXPORT"],
+      permissions: ["DATA:EXPORT"],
     },
     {
       label: "New Role",
       icon: <Plus className="h-4 w-4" />,
       variant: "default",
       onClick: () => router.push("roles/new"),
-      // permissions: ["ROLE:CREATE"],
+      permissions: ["ROLES:CREATE"],
     },
   ];
 

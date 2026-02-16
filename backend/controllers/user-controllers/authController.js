@@ -91,26 +91,27 @@ const login = async (req, res) => {
       { where: { user_id: user.user_id } },
     );
 
-    console.log("to be returned");
+    const result = {
+      user: {
+        user_id: user.user_id,
+        full_name: user.full_name,
+        email: user.email,
+        phone_number: user.phone_number,
+        profile_image: user.profile_image,
+        is_first_logged_in: user.is_first_logged_in,
+        sector: user.sectorNode || null,
+        department: user.department || null,
+      },
+      roles: userRoles,
+      permissions: userRoles.flatMap((r) => r.permissions),
+    };
+    console.log("to be returned: ", result);
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
       token,
-      data: {
-        user: {
-          user_id: user.user_id,
-          full_name: user.full_name,
-          email: user.email,
-          phone_number: user.phone_number,
-          profile_image: user.profile_image,
-          is_first_logged_in: user.is_first_logged_in,
-          sector: user.sectorNode || null,
-          department: user.department || null,
-        },
-        roles: userRoles,
-        permissions: userRoles.flatMap((r) => r.permissions),
-      },
+      data: result,
     });
   } catch (error) {
     console.error(error);

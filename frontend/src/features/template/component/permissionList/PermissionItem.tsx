@@ -28,7 +28,7 @@ export const PermissionItem: React.FC<PermissionItemProps> = ({
           {permission.action.replace("_", " ")}
         </span>
       </div>
-      <PermissionGuard requireAll={["PERMISSION:UPDATE"]}>
+      <PermissionGuard requireAll={["PERMISSIONS:UPDATE"]}>
         <button
           className={`p-0 transition-all duration-200 ${isActive ? "text-green-600" : "text-gray-400"
             }`}
@@ -51,7 +51,8 @@ export const PermissionItem: React.FC<PermissionItemProps> = ({
                 } text-red-200 hover:text-red-300`}
             />
           )}
-        </button></PermissionGuard>
+        </button>
+      </PermissionGuard>
 
     </div>
   );

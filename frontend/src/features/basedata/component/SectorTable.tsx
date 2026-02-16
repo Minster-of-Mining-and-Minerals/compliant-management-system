@@ -120,7 +120,7 @@ export default function SectorsTable() {
       icon: <Plus className="h-4 w-4" />,
       variant: "default",
       onClick: () => setModalOpen(true),
-      // permissions: ["SECTOR:CREATE"],
+      permissions: ["SECTOR:CREATE"],
     },
   ];
 

@@ -45,6 +45,7 @@ import {
   useGetComplaintByIdQuery,
 } from "@/redux/api/complaintApi";
 import { useBreadcrumbTitleEffect } from "@/hooks/useBreadcrumbTitleEffect";
+import { hasAnyPermission, PermissionKey } from "@/lib/permissions";
 type PreviewFile = {
   name: string;
   url: string;
@@ -71,12 +72,10 @@ export default function ComplaintDetailPage() {
     index: number;
   } | null>(null);
 
-  const [hierarchyStructure, setHierarchyStructure] = useState<any>(null);
 
-  // Collapsible sections state
-  const [expandedResolutions, setExpandedResolutions] = useState<string[]>([]);
 
   const userId = session?.user?.id || "";
+  const userPermissions = (session?.user?.permissions ?? []) as PermissionKey[];
 
   useEffect(() => {
     setEscalateComplaint(canEscalate(userId, complaint?.status, complaint));
@@ -201,6 +200,7 @@ export default function ComplaintDetailPage() {
           handleMarkAsInProgress();
         }
       },
+      permission: ["COMPLAINT:ACCEPT"],
     },
     {
       key: "resolve",
@@ -213,6 +213,7 @@ export default function ComplaintDetailPage() {
       border: "#BFD7EA",
       enabled: resolveComplaint,
       onClick: () => resolveComplaint && handleActions("resolve"),
+      permission: ["COMPLAINT:RESOLVE"],
     },
     {
       key: "assign",
@@ -225,12 +226,13 @@ export default function ComplaintDetailPage() {
       border: "#BFD7EA",
       enabled: assignComplaint,
       onClick: () => assignComplaint && handleActions("assign"),
+      permission: ["COMPLAINT:ASSIGN"],
     },
   ];
 
   if (isLoading) return <div>Loading...</div>;
   if (isError || !complaint) return <div>Error loading complaint details</div>;
-  console.log("Complaint Data:", complaint);
+
   return (
     <>
       <div className="bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden font-sans  py-6 pb-24 flex flex-col items-start">
@@ -508,61 +510,62 @@ export default function ComplaintDetailPage() {
 
               {complaint?.status !== "resolved" ? (
                 <>
-                  <h3 className="text-[#1E516A] font-semibold text-lg mt-4 mb-3 flex items-center gap-2">
+                  {hasAnyPermission(userPermissions, ["COMPLAINT:ACCEPT", "COMPLAINT:RESOLVE", "COMPLAINT:ASSIGN"]) && <h3 className="text-[#1E516A] font-semibold text-lg mt-4 mb-3 flex items-center gap-2">
                     🎯 Select Action
-                  </h3>
+                  </h3>}
 
                   <div className="flex flex-col md:flex-row gap-4 mb-6">
-                    {actionButtons.map((action) => (
-                      <button
-                        key={action.key}
-                        onClick={() => {
-                          if (action.enabled) setSelectedAction(action.key);
-                          action.onClick();
-                        }}
-                        disabled={!action.enabled}
-                        className={`flex-1 text-left border rounded-lg p-4 transition-all relative ${selectedAction === action.key
-                          ? `border-[${action.border}] bg-[${action.bg}]`
-                          : action.enabled
-                            ? "border-[#D5E3EC] bg-white hover:bg-gray-50 cursor-pointer"
-                            : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
-                          }`}
-                      >
-                        {!action.enabled && (
-                          <div className="absolute top-2 right-2">
-                            <Lock className="w-4 h-4 text-golden-dark" />
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 mb-1">
-                          <div
-                            className={`w-5 h-5 rounded-full flex items-center justify-center ${selectedAction === action.key
-                              ? "bg-golden-dark" // Primary background
-                              : action.enabled
-                                ? "border-2 border-gray-300"
-                                : "border-2 border-gray-200 bg-gray-100"
-                              }`}
-                          >
-                            {selectedAction === action.key && (
-                              <Check className="w-3 h-3 bg-golden text-white" />
-                            )}
-                          </div>
-                          <p
-                            className={`font-semibold ${action.enabled
-                              ? "text-golden-dark"
-                              : "text-gray-500"
-                              }`}
-                          >
-                            {action.label}
-                          </p>
-                        </div>
-                        <p
-                          className={`text-sm ${action.enabled ? "text-gray-600" : "text-gray-400"
+                    {actionButtons.filter((action) => hasAnyPermission(userPermissions, action.permission))
+                      .map((action) => (
+                        <button
+                          key={action.key}
+                          onClick={() => {
+                            if (action.enabled) setSelectedAction(action.key);
+                            action.onClick();
+                          }}
+                          disabled={!action.enabled}
+                          className={`flex-1 text-left border rounded-lg p-4 transition-all relative ${selectedAction === action.key
+                            ? `border-[${action.border}] bg-[${action.bg}]`
+                            : action.enabled
+                              ? "border-[#D5E3EC] bg-white hover:bg-gray-50 cursor-pointer"
+                              : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
                             }`}
                         >
-                          {action.desc}
-                        </p>
-                      </button>
-                    ))}
+                          {!action.enabled && (
+                            <div className="absolute top-2 right-2">
+                              <Lock className="w-4 h-4 text-golden-dark" />
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 mb-1">
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center ${selectedAction === action.key
+                                ? "bg-golden-dark" // Primary background
+                                : action.enabled
+                                  ? "border-2 border-gray-300"
+                                  : "border-2 border-gray-200 bg-gray-100"
+                                }`}
+                            >
+                              {selectedAction === action.key && (
+                                <Check className="w-3 h-3 bg-golden text-white" />
+                              )}
+                            </div>
+                            <p
+                              className={`font-semibold ${action.enabled
+                                ? "text-golden-dark"
+                                : "text-gray-500"
+                                }`}
+                            >
+                              {action.label}
+                            </p>
+                          </div>
+                          <p
+                            className={`text-sm ${action.enabled ? "text-gray-600" : "text-gray-400"
+                              }`}
+                          >
+                            {action.desc}
+                          </p>
+                        </button>
+                      ))}
                   </div>
                 </>
               ) : null}

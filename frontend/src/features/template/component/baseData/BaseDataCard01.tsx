@@ -16,7 +16,7 @@ const dataCards: DataCardItem[] = [
     subtitle: "All registered sectors",
     icon: Building,
     link: "/basedata/sectors",
-    // permission: ["SECTOR:VIEW", "SECTOR:UPDATE", "SECTOR:DELETE", "SECTOR:CREATE"],
+    permission: ["SECTOR:READ", "SECTOR:UPDATE", "SECTOR:DELETE", "SECTOR:CREATE"],
   },
   {
     id: 0,
@@ -24,7 +24,7 @@ const dataCards: DataCardItem[] = [
     subtitle: "All registered complaint categories",
     icon: FileText,
     link: "/basedata/complaint-categories",
-    // permission: ["COMPLAINT_CATEGORY:VIEW", "COMPLAINT_CATEGORY:UPDATE", "COMPLAINT_CATEGORY:DELETE", "COMPLAINT_CATEGORY:CREATE"],
+    permission: ["COMPLAINT_CATEGORIES:READ", "COMPLAINT_CATEGORIES:UPDATE", "COMPLAINT_CATEGORIES:DELETE", "COMPLAINT_CATEGORIES:CREATE"],
   },
 
 ];
@@ -67,12 +67,10 @@ function BaseDataCard01() {
                   </div>
 
                   {/* Action */}
-                  <PermissionGuard requireAll={["DASHBOARD:VIEW"]}>
-                    <Button variant="outline" size="default" className="rounded-lg bg-golden-dark px-7 text-white gap-1 hover:bg-golden-darkHover hover:text-white ">
-                      {/* <Eye className="h-4 w-4" /> */}
-                      View
-                    </Button>
-                  </PermissionGuard>
+                  <Button variant="outline" size="default" className="rounded-lg bg-golden-dark px-7 text-white gap-1 hover:bg-golden-darkHover hover:text-white ">
+                    {/* <Eye className="h-4 w-4" /> */}
+                    View
+                  </Button>
 
                 </CardContent>
               </Card>
