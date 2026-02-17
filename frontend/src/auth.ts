@@ -16,6 +16,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     updateAge: 25 * 60,
   },
 
+  // jwt: {
+  //   encryption: false, // 🔥 MUST disable encryption for middleware access
+  // },
+
   // 🔥 EXPLICIT COOKIE CONFIG
   cookies: {
     sessionToken: {
@@ -48,7 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           sector: user.sector,
           department: user.department,
           roles: user.roles,
-          permissions: normalizePermissions(user?.permissions),
+          permissions: user?.permissions,
           accessToken: user.accessToken,
         };
       }
@@ -70,7 +74,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             sector: token.sector,
             department: token.department,
             roles: token.roles,
-            permissions: normalizePermissions(token.permissions),
+            permissions: token.permissions,
           },
         };
       }
@@ -96,8 +100,8 @@ declare module "next-auth" {
       name: string;
       permissions: Array<{
         permission_id: string;
-        name: string;
-        key: string;
+        resource: string;
+        action: string;
       }>;
     }>;
     sector?: SectorNode;
@@ -125,8 +129,8 @@ declare module "next-auth" {
         name: string;
         permissions: Array<{
           permission_id: string;
-          name: string;
-          key: string;
+          resource: string;
+          action: string;
         }>;
       }>;
       permissions?: string[] | null;

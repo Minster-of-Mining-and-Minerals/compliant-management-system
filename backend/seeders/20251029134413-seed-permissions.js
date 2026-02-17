@@ -28,58 +28,32 @@ module.exports = {
       { resource: "roles", action: "assign_permission" },
 
       // Organization Management
-      { resource: "organizations", action: "create" },
-      { resource: "organizations", action: "read" },
-      { resource: "organizations", action: "update" },
-      { resource: "organizations", action: "delete" },
+      { resource: "sector", action: "create" },
+      { resource: "sector", action: "read" },
+      { resource: "sector", action: "update" },
+      { resource: "sector", action: "delete" },
 
-      // Organization Structure
-      { resource: "organization_structures", action: "create" },
-      { resource: "organization_structures", action: "read" },
-      { resource: "organization_structures", action: "update" },
-      { resource: "organization_structures", action: "delete" },
+      // Complaint Management
+      { resource: "complaint", action: "create" },
+      { resource: "complaint", action: "update" },
+      { resource: "complaint", action: "delete" },
+      { resource: "complaint", action: "assign" },
+      { resource: "complaint", action: "accept" },
+      { resource: "complaint", action: "resolve" },
+      { resource: "complaint", action: "view_own" },
+      { resource: "complaint", action: "view_all" },
 
-      // Project Management
-      { resource: "projects", action: "create" },
-      { resource: "projects", action: "read" },
-      { resource: "projects", action: "update" },
-      { resource: "projects", action: "delete" },
-      { resource: "projects", action: "assign_users" },
+      // Feedback Management
+      { resource: "feedback", action: "view" },
 
-      // Issue Management
-      { resource: "issues", action: "create" },
-      { resource: "issues", action: "read" },
-      { resource: "issues", action: "update" },
-      { resource: "issues", action: "delete" },
-      { resource: "issues", action: "assign" },
-      { resource: "issues", action: "accept" },
-      { resource: "issues", action: "resolve" },
-      { resource: "issues", action: "escalate" },
-      { resource: "issues", action: "view_own" },
-      { resource: "issues", action: "view_all" },
+      { resource: "complaint_categories", action: "create" },
+      { resource: "complaint_categories", action: "read" },
+      { resource: "complaint_categories", action: "update" },
+      { resource: "complaint_categories", action: "delete" },
 
-      // Issue Priority & Category
-      { resource: "issue_priorities", action: "create" },
-      { resource: "issue_priorities", action: "read" },
-      { resource: "issue_priorities", action: "update" },
-      { resource: "issue_priorities", action: "delete" },
+      // Data Export
+      { resource: "data", action: "export" },
 
-      { resource: "issue_categories", action: "create" },
-      { resource: "issue_categories", action: "read" },
-      { resource: "issue_categories", action: "update" },
-      { resource: "issue_categories", action: "delete" },
-
-      // Issue Flow Management
-      { resource: "issue_flows", action: "create" },
-      { resource: "issue_flows", action: "read" },
-      { resource: "issue_flows", action: "update" },
-      { resource: "issue_flows", action: "delete" },
-
-      // Humnan Resource Management
-      { resource: "human_resources", action: "create" },
-      { resource: "human_resources", action: "read" },
-      { resource: "human_resources", action: "update" },
-      { resource: "human_resources", action: "delete" },
     ];
 
     for (const perm of permissions) {
@@ -95,12 +69,12 @@ module.exports = {
               updated_at: now,
             },
           ],
-          { ignoreDuplicates: true }
+          { ignoreDuplicates: true },
         );
       } catch (error) {
         if (error.name === "SequelizeUniqueConstraintError") {
           console.log(
-            `Permission ${perm.resource}:${perm.action} already exists, skipping...`
+            `Permission ${perm.resource}:${perm.action} already exists, skipping...`,
           );
           continue;
         }

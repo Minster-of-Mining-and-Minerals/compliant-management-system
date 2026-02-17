@@ -1,7 +1,5 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthConfig } from "next-auth";
-import { Role } from "./redux/types/auth";
-import { normalizePermissions } from "./lib/permissions";
 
 export default {
   providers: [
@@ -52,8 +50,7 @@ export default {
 
           const user = data.data.user;
           const roles = data.data?.roles ?? [];
-          const permissions =
-            normalizePermissions(data.data?.permissions) ?? [];
+          const permissions = data.data?.permissions ?? [];
           const token = data.token || data.data?.token;
 
           if (!token) {

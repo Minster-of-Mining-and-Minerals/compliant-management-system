@@ -79,36 +79,37 @@ const columns: ColumnDef<Feedback>[] = [
     {
         id: "actions",
         header: "Actions",
-        cell: ({ row }) => { 
+        cell: ({ row }) => {
             const feedbackId = row.original.feedback_id;
             return (
-            <div className="flex items-center gap-1">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleView(row.original)}
-                >
-                    <Link href={`/feedbacks/${feedbackId}`}>
-                    <Eye className="h-4 w-4" />
-                    </Link>
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(row.original)}
-                >
-                    <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(row.original.feedback_id)}
-                    className="text-red-500 hover:text-red-700"
-                >
-                    <Trash className="h-4 w-4" />
-                </Button>
-            </div>
-        )}
+                <div className="flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleView(row.original)}
+                    >
+                        <Link href={`/feedbacks/${feedbackId}`}>
+                            <Eye className="h-4 w-4" />
+                        </Link>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(row.original)}
+                    >
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(row.original.feedback_id)}
+                        className="text-red-500 hover:text-red-700"
+                    >
+                        <Trash className="h-4 w-4" />
+                    </Button>
+                </div>
+            )
+        }
     },
 ];
 
@@ -228,6 +229,7 @@ export default function FeedbackTable() {
                 console.log("Export feedbacks");
             },
             variant: "outline",
+            permissions: ["DATA:EXPORT"],
         },
     ];
 
@@ -260,7 +262,7 @@ export default function FeedbackTable() {
                         >
                             <Eye className="h-4 w-4" />
                         </Button>
-                         
+
                         {/* <Button
                             variant="ghost"
                             size="icon"
