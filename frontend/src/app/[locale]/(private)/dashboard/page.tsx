@@ -11,6 +11,5 @@ export default function DashboardPage() {
         <DashboardLayout />
       </main>
     </PermissionGuard>
-
   );
 }
