@@ -4,30 +4,35 @@ import { routing } from "./i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
 
-const publicRoutes = ["/", "/login", "/feedback", "/complaint", "/track-complaint"];
+const publicRoutes = [
+  "/",
+  "/login",
+  "/feedback",
+  "/complaint",
+  "/track-complaint",
+];
 const authRoutes = ["/login"];
 
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   // Apply intl middleware first
+
   const intlResponse = intlMiddleware(req);
 
   // Get locale
-  const locale = routing.locales.find((l) =>
-    pathname.startsWith(`/${l}`)
-  ) ?? routing.defaultLocale;
+  const locale =
+    routing.locales.find((l) => pathname.startsWith(`/${l}`)) ??
+    routing.defaultLocale;
 
-  const pathnameWithoutLocale = pathname.replace(
-    new RegExp(`^/${locale}`),
-    ""
-  ) || "/";
+  const pathnameWithoutLocale =
+    pathname.replace(new RegExp(`^/${locale}`), "") || "/";
 
   // 🔥 CRITICAL: Check ALL possible NextAuth session cookies
   const allCookies = req.cookies.getAll();
   const sessionCookies = [
-    "next-auth.session-token",      // Default in development
+    "next-auth.session-token", // Default in development
     "__Secure-next-auth.session-token", // Secure version
-    "authjs.session-token",         // NextAuth v5
+    "authjs.session-token", // NextAuth v5
     "__Secure-authjs.session-token", // Secure v5
   ];
 
@@ -46,7 +51,10 @@ export default function middleware(req: NextRequest) {
 
   console.log("🔐 MIDDLEWARE DEBUG:");
   console.log("  Path:", pathnameWithoutLocale);
-  console.log("  Found cookies:", allCookies.map(c => c.name));
+  console.log(
+    "  Found cookies:",
+    allCookies.map((c) => c.name),
+  );
   console.log("  Has session token:", hasSessionToken);
   console.log("  Is public route:", isPublicRoute);
 

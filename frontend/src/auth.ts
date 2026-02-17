@@ -16,6 +16,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     updateAge: 25 * 60,
   },
 
+  // jwt: {
+  //   encryption: false, // 🔥 MUST disable encryption for middleware access
+  // },
+
   // 🔥 EXPLICIT COOKIE CONFIG
   cookies: {
     sessionToken: {
@@ -56,7 +60,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     async session({ session, token }) {
-      
       if (token) {
         return {
           ...session,
