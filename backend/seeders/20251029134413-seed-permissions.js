@@ -40,11 +40,11 @@ module.exports = {
       { resource: "complaint", action: "assign" },
       { resource: "complaint", action: "accept" },
       { resource: "complaint", action: "resolve" },
-      { resource: "complaint", action: "view_own" },
-      { resource: "complaint", action: "view_all" },
+      { resource: "complaint", action: "read_own" },
+      { resource: "complaint", action: "read_all" },
 
       // Feedback Management
-      { resource: "feedback", action: "view" },
+      { resource: "feedback", action: "read" },
 
       { resource: "complaint_categories", action: "create" },
       { resource: "complaint_categories", action: "read" },

@@ -27,20 +27,19 @@ export default function middleware(req: NextRequest) {
   const pathnameWithoutLocale =
     pathname.replace(new RegExp(`^/${locale}`), "") || "/";
 
-  // 🔥 CRITICAL: Check ALL possible NextAuth session cookies
+  // 🔥 FIXED: Check for ANY cookie that starts with session token patterns
   const allCookies = req.cookies.getAll();
-  const sessionCookies = [
-    "next-auth.session-token", // Default in development
-    "__Secure-next-auth.session-token", // Secure version
-    "authjs.session-token", // NextAuth v5
-    "__Secure-authjs.session-token", // Secure v5
-  ];
 
+  // Look for any cookie that starts with these prefixes (handles chunked cookies)
   let hasSessionToken = false;
 
-  // Check each cookie name
   for (const cookie of allCookies) {
-    if (sessionCookies.includes(cookie.name) && cookie.value) {
+    if (
+      cookie.name.startsWith("next-auth.session-token") ||
+      cookie.name.startsWith("__Secure-next-auth.session-token") ||
+      cookie.name.startsWith("authjs.session-token") ||
+      cookie.name.startsWith("__Secure-authjs.session-token")
+    ) {
       hasSessionToken = true;
       break;
     }
