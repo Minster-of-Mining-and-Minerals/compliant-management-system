@@ -9,23 +9,37 @@ export const login = async (email: string, password: string) => {
   }
 
   try {
+    // This is the key change - use the exact same pattern as the working curl command
     await signIn("credentials", {
-      redirect: false,
       email,
       password,
+      redirect: false, // Keep redirect false to handle it manually
     });
 
+    // If we get here, signIn succeeded
     return { success: true };
   } catch (error) {
     if (error instanceof AuthError) {
+      console.error("Auth error type:", error.type);
+      console.error("Auth error cause:", error.cause);
+
+      // The error type might be different from what you expect
+      // Let's check all possible auth errors
       switch (error.type) {
         case "CredentialsSignin":
           return { error: "Invalid email or password." };
+        case "CallbackRouteError":
+          // This often means the credentials provider rejected the login
+          return { error: "Invalid email or password." };
         default:
-          return { error: "Something went wrong." };
+          console.error("Unhandled auth error:", error);
+          return { error: "Something went wrong. Please try again." };
       }
     }
-    throw error;
+
+    // For non-AuthError errors
+    console.error("Non-auth error:", error);
+    return { error: "An unexpected error occurred." };
   }
 };
 
