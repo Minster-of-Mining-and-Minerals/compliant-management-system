@@ -34,24 +34,23 @@ const createComplaintSchema = Joi.object({
     }),
 
   sector_node_id: Joi.string()
-    .required()
     .custom((value, helpers) => {
       if (!isUuid(value)) return helpers.error("any.invalid");
       return value;
     })
     .messages({
-      "any.required": "Sector node is required.",
       "any.invalid": "Sector node ID must be a valid UUID.",
     }),
 
   department_id: Joi.string()
-    .required()
+    .optional()
+    .allow("", null)
     .custom((value, helpers) => {
+      if (!value) return value; // skip validation if empty
       if (!isUuid(value)) return helpers.error("any.invalid");
       return value;
     })
     .messages({
-      "any.required": "Department node is required.",
       "any.invalid": "Department node ID must be a valid UUID.",
     }),
 

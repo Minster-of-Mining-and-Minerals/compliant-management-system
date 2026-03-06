@@ -41,6 +41,7 @@ const createComplaint = async (req, res) => {
       attachment_ids,
     } = req.body;
 
+
     // ====== Validate Complaint Type ======
     let type_id = complaint_type_id;
     if (complaint_type_id) {
@@ -88,25 +89,29 @@ const createComplaint = async (req, res) => {
     }
 
     // ====== Validate sector if provided ======
-    const sector = await SectorNode.findByPk(sector_node_id, {
-      transaction: t,
-    });
-    if (!sector) {
-      await t.rollback();
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid sector node." });
+    if (sector_node_id) {
+      const sector = await SectorNode.findByPk(sector_node_id, {
+        transaction: t,
+      });
+      if (!sector) {
+        await t.rollback();
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid sector node." });
+      }
     }
 
     // ====== Validate department if provided ======
-    const department = await SectorNode.findByPk(department_id, {
-      transaction: t,
-    });
-    if (!department) {
-      await t.rollback();
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid department." });
+    if (department_id) {
+      const department = await SectorNode.findByPk(department_id, {
+        transaction: t,
+      });
+      if (!department) {
+        await t.rollback();
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid department." });
+      }
     }
 
     // ====== Handle user creation (if not anonymous) ======
@@ -742,7 +747,7 @@ const generateTicket = async () => {
     // Check if ticket exists in database
     try {
       const existing = await Complaint.findOne({
-        where: { ticket_number: ticket },
+        where: { ticketing_code: ticket },
       });
 
       if (!existing) {

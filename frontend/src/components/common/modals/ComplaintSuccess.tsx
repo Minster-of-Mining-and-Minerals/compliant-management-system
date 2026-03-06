@@ -44,7 +44,10 @@ const TicketSuccessModal = ({
         link.download = `complaint-ticket-${ticketNumber}.png`;
         link.click();
     };
-    const trackingUrl = "http://localhost:3000/en/track-complaint?ticketNumber=" + ticketNumber
+
+    const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL;
+
+    const trackingUrl = `${FRONTEND_URL}/en/track-complaint?ticketNumber=${ticketNumber}`;
     return (
         /* ===== OVERLAY ===== */
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
