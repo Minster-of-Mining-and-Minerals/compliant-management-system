@@ -30,6 +30,7 @@ export const baseApi = createApi({
     "Attachment",
     "Feedback",
     "Dashboard",
+    "Representative",
   ],
   endpoints: () => ({}),
 });

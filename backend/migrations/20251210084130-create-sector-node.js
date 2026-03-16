@@ -19,6 +19,10 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
+      head_id: {
+        type: Sequelize.UUID,
+        allowNull: true,
+      },
       name: {
         type: Sequelize.STRING(255),
         allowNull: false,
@@ -38,24 +42,24 @@ module.exports = {
         defaultValue: true,
       },
       created_at: {
-        type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        type: Sequelize.DATE,
       },
       updated_at: {
-        type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        type: Sequelize.DATE,
       },
       deleted_at: {
-        type: Sequelize.DATE,
         allowNull: true,
+        type: Sequelize.DATE,
       },
     });
+
+    // Add index on parent_id
+    await queryInterface.addIndex("sector_nodes", ["parent_id"]);
   },
 
   async down(queryInterface, Sequelize) {
-    // Drop table
     await queryInterface.dropTable("sector_nodes");
   },
 };

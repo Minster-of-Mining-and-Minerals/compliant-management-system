@@ -21,10 +21,30 @@ module.exports = (sequelize, DataTypes) => {
         as: "users",
       });
 
+      // SectorNode has one head (user)
+      SectorNode.belongsTo(models.User, {
+        foreignKey: "head_id",
+        as: "head",
+      });
+
+      // SectorNode has many representatives
+      SectorNode.belongsToMany(models.User, {
+        through: models.SectorRepresentative,
+        foreignKey: "sector_node_id",
+        otherKey: "user_id",
+        as: "representatives",
+      });
+
       // SectorNode model
       SectorNode.hasMany(models.Complaint, {
         foreignKey: "sector_node_id",
         as: "complaints",
+      });
+
+      // SectorNode has many assignments
+      SectorNode.hasMany(models.ComplaintSectorAssignment, {
+        foreignKey: "department_id",
+        as: "assignments",
       });
     }
   }
@@ -45,6 +65,15 @@ module.exports = (sequelize, DataTypes) => {
       name: {
         type: DataTypes.STRING(255),
         allowNull: false,
+      },
+
+      head_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "user_id",
+        },
       },
 
       description: {

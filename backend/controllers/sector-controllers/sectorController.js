@@ -1,6 +1,6 @@
 "use strict";
 
-const { SectorNode, User, sequelize } = require("../../models");
+const { SectorNode, User, SectorRepresentative, sequelize } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const { Op } = require("sequelize");
 
@@ -10,7 +10,7 @@ const { Op } = require("sequelize");
 const createSectorNode = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { name, description, parent_id, level } = req.body;
+    const { name, description, parent_id, level, head_id } = req.body;
 
     // ===== Check duplicate name under the same parent =====
     const existingNode = await SectorNode.findOne({
@@ -26,6 +26,18 @@ const createSectorNode = async (req, res) => {
       });
     }
 
+    // ===== If head_id provided, verify user exists =====
+    if (head_id) {
+      const head = await User.findByPk(head_id, { transaction: t });
+      if (!head) {
+        await t.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Provided head user does not exist.",
+        });
+      }
+    }
+
     // ===== Create Node =====
     const node = await SectorNode.create(
       {
@@ -33,6 +45,7 @@ const createSectorNode = async (req, res) => {
         name,
         description,
         parent_id: parent_id || null,
+        head_id: head_id || null,
         level: level || 1,
         is_active: true,
         created_at: new Date(),
@@ -88,6 +101,11 @@ const getSectorNodes = async (req, res) => {
         {
           model: SectorNode,
           as: "parent",
+        },
+        {
+          model: User,
+          as: "head",
+          attributes: { exclude: ["password"] },
         },
       ],
       order: [["created_at", "ASC"]],
@@ -212,6 +230,22 @@ const getSectorNodeById = async (req, res) => {
       include: [
         { model: SectorNode, as: "children" },
         { model: SectorNode, as: "parent" },
+        {
+          model: User,
+          as: "head",
+          attributes: { exclude: ["password"] },
+        },
+        {
+          model: User,
+          as: "representatives",
+          through: {
+            attributes: ["representative_id", "can_manage", "valid_from", "valid_until", "is_active", "notes", "appointed_by"],
+            where: {
+              is_active: true
+            }
+          },
+          attributes: { exclude: ["password"] },
+        },
       ],
     });
 
@@ -261,6 +295,18 @@ const updateSectorNode = async (req, res) => {
         success: false,
         message: "Sector node not found.",
       });
+    }
+
+    // If updating head_id, verify user exists
+    if (req.body.head_id) {
+      const head = await User.findByPk(req.body.head_id, { transaction: t });
+      if (!head) {
+        await t.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Provided head user does not exist.",
+        });
+      }
     }
 
     await node.update(
@@ -315,6 +361,18 @@ const deleteSectorNode = async (req, res) => {
       });
     }
 
+    // Deactivate all active representatives for this sector
+    await SectorRepresentative.update(
+      { is_active: false, updated_at: new Date() },
+      {
+        where: {
+          sector_node_id: id,
+          is_active: true
+        },
+        transaction: t
+      }
+    );
+
     await node.update(
       { is_active: false, updated_at: new Date() },
       { transaction: t },
@@ -363,6 +421,21 @@ const toggleSectorNodeActiveStatus = async (req, res) => {
       });
     }
 
+    // If deactivating, also deactivate representatives
+    if (node.is_active) {
+      await SectorRepresentative.update(
+        { is_active: false, updated_at: new Date() },
+        {
+          where: {
+            sector_node_id: id,
+            is_active: true
+          },
+          transaction: t
+        }
+      );
+    }
+
+
     await node.update(
       { is_active: !node.is_active, updated_at: new Date() },
       { transaction: t },
@@ -372,9 +445,8 @@ const toggleSectorNodeActiveStatus = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Sector node ${
-        node.is_active ? "activated" : "deactivated"
-      } successfully`,
+      message: `Sector node ${node.is_active ? "activated" : "deactivated"
+        } successfully`,
     });
   } catch (error) {
     await t.rollback();
