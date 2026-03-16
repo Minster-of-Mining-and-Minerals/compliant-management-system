@@ -329,16 +329,19 @@ const getUsers = async (req, res) => {
   try {
     const {
       // institute_id,
+      sector_node_id,
       user_type_id,
       is_active,
       search, // optional: for name/email search
     } = req.query;
 
+    console.log("sector_node_id: ", sector_node_id, req.query)
     // ====== Build filters dynamically ======
     const whereClause = {};
 
     // if (institute_id) whereClause.institute_id = institute_id;
     if (user_type_id) whereClause.user_type_id = user_type_id;
+    if (sector_node_id) whereClause.sector_node_id = sector_node_id;
     if (is_active !== undefined) whereClause.is_active = is_active === "true";
 
     if (search) {

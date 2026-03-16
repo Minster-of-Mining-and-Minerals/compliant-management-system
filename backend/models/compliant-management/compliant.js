@@ -29,6 +29,12 @@ module.exports = (sequelize, DataTypes) => {
         as: "assignedSector",
       });
 
+      // Complaint has many department assignments
+      Complaint.hasMany(models.ComplaintSectorAssignment, {
+        foreignKey: "complaint_id",
+        as: "departmentAssignments",
+      });
+
       // Complaint belongs to User (assigned staff)
       Complaint.belongsTo(models.User, {
         foreignKey: "assigned_to_user_id",

@@ -27,6 +27,7 @@ const complaintCategoryRoute = require("./routers/compliant-routes/compliantCate
 const complaintRoute = require("./routers/compliant-routes/complaintRoutes");
 const complaintResolutionRoute = require("./routers/compliant-routes/complaintResolutionRoutes");
 const complaintAssignmentRoute = require("./routers/compliant-routes/complaintAssignmentRoutes");
+const complaintSectorAssignmentRoute = require("./routers/compliant-routes/complaintSectorAssignmentRoutes");
 
 // ================== Feedback Routes ==========================
 const feedbackRoute = require("./routers/feedback-routes/feedbackRoutes");
@@ -144,6 +145,7 @@ app.use("/api/sector-nodes", sectorRoute);
 app.use("/api/complaint-categories", complaintCategoryRoute);
 app.use("/api/complaints", complaintRoute);
 app.use("/api/complaint-assignments", complaintAssignmentRoute);
+app.use("/api/complaint-sector-assignments", complaintSectorAssignmentRoute);
 app.use("/api/complaint-resolutions", complaintResolutionRoute);
 
 // ================== Api Feedback Routes =====================
