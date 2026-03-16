@@ -21,6 +21,7 @@ const changePasswordRoutes = require("./routers/user-routes/passwordChangeRoutes
 
 // ================== Sector Routes ==========================
 const sectorRoute = require("./routers/sector-routes/sectorRoutes");
+const sectorRepresentativeRoute = require("./routers/sector-routes/sectorRepresentativeRoutes");
 
 // ================== Compliant Routes ==========================
 const complaintCategoryRoute = require("./routers/compliant-routes/compliantCategoryRoute");
@@ -140,6 +141,7 @@ app.use("/api/permissions", permissionRoute);
 
 // ================== Api Sector Routes =====================
 app.use("/api/sector-nodes", sectorRoute);
+app.use("/api/sector-representatives", sectorRepresentativeRoute);
 
 // ================== Api Complaint Category Routes =====================
 app.use("/api/complaint-categories", complaintCategoryRoute);
