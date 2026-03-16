@@ -14,73 +14,13 @@ import { SectorNode } from "@/redux/types/sectorNode";
 import Loading01 from "@/features/template/component/Loading/Loading01";
 import HierarchyD3Tree from "./SectorHierarchy";
 import { CreateSectorModal } from "@/components/common/modals/CreateSectorModal";
+import { useRouter } from "next/navigation";
 
-export const columns: ColumnDef<SectorNode>[] = [
-  {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => (
-      console.log(row.original.name, "row.original.name"),
-      (
-        <span className="font-medium text-primary">
-          {row.getValue("name")}
-        </span>
-      )
-    ),
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => (
-      <div className="max-w-[300px] truncate text-muted-foreground">
-        {row.getValue("description")}
-      </div>
-    ),
-  },
-  {
-    id: "parent",
-    header: "Parent",
-    cell: ({ row }) => {
-      const parent = row.original.parent?.name;
-      return (
-        <span className="text-sm text-muted-foreground">{parent ?? "—"}</span>
-      );
-    },
-  },
-  {
-    accessorKey: "is_active",
-    header: "Status",
-    cell: ({ row }) => {
-      const isActive = row.getValue("is_active") as boolean;
-      return (
-        <Badge variant={isActive ? "default" : "secondary"}>
-          {isActive ? "Active" : "Inactive"}
-        </Badge>
-      );
-    },
-  },
 
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon">
-          <Eye className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon">
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon">
-          <Trash className="h-4 w-4" />
-        </Button>
-      </div>
-    ),
-  },
-];
 
 export default function SectorsTable() {
   const [toggleHierarchyView, setToggleHierarchyView] = useState(false);
+  const router = useRouter();
   const {
     data = [],
     isLoading,
@@ -95,6 +35,74 @@ export default function SectorsTable() {
     setPageIndex(index);
     setPageSize(size);
   };
+  const columns: ColumnDef<SectorNode>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => (
+        console.log(row.original.name, "row.original.name"),
+        (
+          <span className="font-medium text-primary">
+            {row.getValue("name")}
+          </span>
+        )
+      ),
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => (
+        <div className="max-w-[300px] truncate text-muted-foreground">
+          {row.getValue("description")}
+        </div>
+      ),
+    },
+    {
+      id: "parent",
+      header: "Parent",
+      cell: ({ row }) => {
+        const parent = row.original.parent?.name;
+        return (
+          <span className="text-sm text-muted-foreground">{parent ?? "—"}</span>
+        );
+      },
+    },
+    {
+      accessorKey: "is_active",
+      header: "Status",
+      cell: ({ row }) => {
+        const isActive = row.getValue("is_active") as boolean;
+        return (
+          <Badge variant={isActive ? "default" : "secondary"}>
+            {isActive ? "Active" : "Inactive"}
+          </Badge>
+        );
+      },
+    },
+
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+
+          <Button onClick={
+            () => {
+              router.push(`/basedata/sectors/${row.original.sector_node_id}`);
+            }
+          } variant="ghost" size="icon">
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Trash className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
   // Filters
   const [statusFilter, setStatusFilter] = useState("");
 
