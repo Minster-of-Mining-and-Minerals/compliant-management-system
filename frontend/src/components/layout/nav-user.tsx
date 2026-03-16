@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "@/auth";
 import { logout } from "@/actions/user";
+import { useRouter } from "next/navigation";
 
 interface NavUserProps {
   user: {
@@ -23,6 +24,7 @@ interface NavUserProps {
 }
 
 export function NavUser({ user }: NavUserProps) {
+  const router = useRouter();
   // Get initials for avatar fallback
   const initials = user.name
     .split(" ")
@@ -36,7 +38,9 @@ export function NavUser({ user }: NavUserProps) {
     // signOut({ redirectTo: "/login" });
   };
 
-
+  const handleProfile = () => {
+    router.push("/profile");
+  }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -75,7 +79,7 @@ export function NavUser({ user }: NavUserProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleProfile}>
           <User className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>

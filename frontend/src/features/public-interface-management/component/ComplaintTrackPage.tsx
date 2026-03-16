@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, FileText } from "lucide-react";
+import { Eye, FileText, Download, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getFileUrl, getFileType } from "@/utils/fileUrl";
 import { useGetComplaintByTicketingCodeQuery } from "@/redux/api/complaintApi";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -89,10 +90,83 @@ const getStatusStyle = (status: ComplaintStatus) => {
   }
 };
 
+const shortenFileName = (name: string, maxLength: number = 25) => {
+  if (!name) return "Unknown Document";
+  if (name.length <= maxLength) return name;
+  const extIndex = name.lastIndexOf(".");
+  const ext = extIndex !== -1 ? name.substring(extIndex) : "";
+  const nameWithoutExt = extIndex !== -1 ? name.substring(0, extIndex) : name;
+  const keepLength = maxLength - ext.length - 3; // 3 for "..."
+  if (keepLength <= 0) return name.substring(0, maxLength - 3) + "...";
+  return nameWithoutExt.substring(0, keepLength) + "..." + ext;
+};
+
+/* ================= COMPONENTS ================= */
+
+interface AttachmentViewerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedFile: { url: string; name: string; type: string } | null;
+}
+
+const AttachmentViewerModal = ({ isOpen, onClose, selectedFile }: AttachmentViewerProps) => {
+  if (!isOpen || !selectedFile) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-8">
+      <div className="bg-white rounded-lg shadow-2xl w-full h-full max-w-[100vw] flex flex-col overflow-hidden relative">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b shrink-0 bg-white">
+          <h2 className="text-lg font-semibold w-1/2 flex-1 mr-4" title={selectedFile.name}>
+            {shortenFileName(selectedFile.name, 40)}
+          </h2>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* <a href={selectedFile.url} download target="_blank" rel="noreferrer">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Download className="w-4 h-4" /> <span className="hidden sm:inline">Download</span>
+              </Button>
+            </a> */}
+            <Button variant="ghost" size="sm" onClick={onClose} className="rounded-full h-10 w-10 p-0">
+              <span className="sr-only">Close</span>
+              <X className="w-8 h-8" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex-1 w-full bg-slate-50 flex items-center justify-center p-2 sm:p-4 overflow-hidden relative min-h-0">
+          {selectedFile.url.toLowerCase().match(/\.(jpeg|jpg|gif|png|webp)$/) || selectedFile.type.startsWith('image/') ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={selectedFile.url}
+              alt={selectedFile.name}
+              className="max-w-full max-h-full object-contain"
+            />
+          ) : selectedFile.url.toLowerCase().endsWith('.pdf') || selectedFile.type === 'application/pdf' ? (
+            <iframe
+              src={selectedFile.url}
+              className="w-full h-full border-0 absolute inset-0"
+              title={selectedFile.name}
+            />
+          ) : (
+            <div className="text-center p-8 overflow-y-auto w-full h-full flex flex-col items-center justify-center">
+              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-4 text-sm sm:text-base">Preview not available for this file type.</p>
+              <a href={selectedFile.url} download target="_blank" rel="noreferrer">
+                <Button variant="default">Download File Instead</Button>
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ================= PAGE ================= */
 
 const ComplaintTrackPage = () => {
   const [trackingId, setTrackingId] = useState("");
+  const [selectedFile, setSelectedFile] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -180,7 +254,7 @@ const ComplaintTrackPage = () => {
                 </p>
               </div>
               <span
-                className={`px-3 py-1 rounded-md text-sm ${getStatusStyle(
+                className={`px-3 py-1 rounded-md text-sm flex justify-center items-center ${getStatusStyle(
                   complaint.status
                 )}`}
               >
@@ -244,16 +318,18 @@ const ComplaintTrackPage = () => {
                 <h4 className="font-semibold mb-3">Attachments</h4>
                 <div className="grid md:grid-cols-3 gap-3">
                   {complaintFiles.map((file, i) => (
-                    <a
+                    <div
                       key={i}
-                      href={file.url}
-                      target="_blank"
-                      className="border rounded-lg p-3 hover:bg-blue-50 flex items-center gap-3"
+                      onClick={() => {
+                        setSelectedFile(file);
+                        setIsViewerOpen(true);
+                      }}
+                      className="border rounded-lg p-3 hover:bg-blue-50 flex items-center gap-3 cursor-pointer"
                     >
                       <FileText className="w-5 h-5 text-red-500" />
                       <div className="flex-1">
-                        <p className="font-medium text-sm truncate">
-                          {file.name}
+                        <p className="font-medium text-sm truncate" title={file.name}>
+                          {shortenFileName(file.name)}
                         </p>
                         <p className="text-xs text-gray-500">
                           {file.uploadedAt &&
@@ -263,7 +339,7 @@ const ComplaintTrackPage = () => {
                         </p>
                       </div>
                       <Eye className="w-4 h-4 text-blue-600" />
-                    </a>
+                    </div>
                   ))}
                 </div>
               </>
@@ -296,6 +372,13 @@ const ComplaintTrackPage = () => {
           <p className="text-red-600 mt-6">Complaint not found</p>
         ) : null}
       </div>
+
+      {/* Attachment Viewer Modal Component */}
+      <AttachmentViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        selectedFile={selectedFile}
+      />
     </main>
   );
 };
