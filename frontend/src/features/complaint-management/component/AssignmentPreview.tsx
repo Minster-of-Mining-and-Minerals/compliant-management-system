@@ -26,24 +26,40 @@ export default function AssignmentPreview({
         >
             {/* Header (Tabs) */}
             <div className="p-6 border-b border-[#D5E3EC] bg-gradient-to-r from-golden-dark50 to-golden-dark80">
-                <div className="flex gap-6">
-                    <h2
+                <div className="flex bg-white/20 p-1 rounded-xl w-fit mb-4 relative shadow-inner">
+                    <button
                         onClick={() => setTab("users")}
-                        className={`text-xl font-bold cursor-pointer transition ${tab === "users" ? "text-white" : "text-white/60"
-                            }`}
+                        className={`relative px-6 py-2.5 text-base font-semibold rounded-lg transition-colors w-32 text-center outline-none ${
+                            tab === "users" ? "text-slate-900 shadow-sm" : "text-white hover:text-white/80"
+                        }`}
                     >
-                        Users
-                    </h2>
-                    <h2
+                        {tab === "users" && (
+                            <motion.div
+                                layoutId="activeTabBackground"
+                                className="absolute inset-0 bg-white rounded-lg shadow-sm"
+                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            />
+                        )}
+                        <span className="relative z-10">Users</span>
+                    </button>
+                    <button
                         onClick={() => setTab("departments")}
-                        className={`text-xl font-bold cursor-pointer transition ${tab === "departments" ? "text-white" : "text-white/60"
-                            }`}
+                        className={`relative px-6 py-2.5 text-base font-semibold rounded-lg transition-colors w-36 text-center outline-none ${
+                            tab === "departments" ? "text-slate-900 shadow-sm" : "text-white hover:text-white/80"
+                        }`}
                     >
-                        Departments
-                    </h2>
+                        {tab === "departments" && (
+                            <motion.div
+                                layoutId="activeTabBackground"
+                                className="absolute inset-0 bg-white rounded-lg shadow-sm"
+                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            />
+                        )}
+                        <span className="relative z-10">Departments</span>
+                    </button>
                 </div>
 
-                <p className="text-white text-sm mt-1">
+                <p className="text-white/90 text-sm mt-2 font-medium">
                     {tab === "users"
                         ? "Select users to assign this complaint to"
                         : "Select departments to assign this complaint to"}
