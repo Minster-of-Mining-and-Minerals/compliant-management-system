@@ -1,30 +1,31 @@
-export interface DashboardIssue {
-  issue_id: string;
-  ticket_number: string;
+export interface DashboardComplaint {
+  complaint_id: string;
+  ticketing_code: string;
   status: string;
   created_at: string;
 }
 
-export interface DashboardProject {
-  project_id: string;
+export interface DashboardCategory {
+  category_id: string;
   name: string;
-  is_active: boolean;
-  total_issues: number;
-  issues: DashboardIssue[];
+  description: string;
+  total_complaints: number;
+  complaints: DashboardComplaint[];
 }
 
-export interface DashboardInstitute {
-  institute_id: string;
+export interface DashboardSector {
+  sector_node_id: string;
   name: string;
-  is_active: boolean;
-  total_projects: number;
-  projects: DashboardProject[];
+  description: string;
+  created_at: string;
+  total_complaints: number;
+  complaint_categories: DashboardCategory[];
 }
 
 export interface DashboardSummary {
-  total_institutes: number;
-  total_projects: number;
-  total_issues: number;
+  total_sectors: number;
+  total_categories: number;
+  total_complaints: number;
 }
 
 export interface DashboardResponse {
@@ -32,16 +33,13 @@ export interface DashboardResponse {
   message: string;
   data: {
     summary: DashboardSummary;
-    institutes: DashboardInstitute[];
+    sectors: DashboardSector[];
   };
 }
 
 export interface DashboardQueryParams {
-  // Add any query params you might need in the future
-  // e.g., date_range, status_filter, etc.
   start_date?: string;
   end_date?: string;
   status?: string;
-  institute_id?: string;
-  project_id?: string;
+  type?: "complaint" | "feedback";
 }

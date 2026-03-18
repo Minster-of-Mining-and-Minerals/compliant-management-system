@@ -1,6 +1,7 @@
 // controllers/compliant-management/feedbackController.js
 "use strict";
 const { Feedback, SectorNode, sequelize } = require("../../models");
+const NotificationService = require("../../services/notificationService");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const { Op } = require("sequelize");
 
@@ -55,6 +56,9 @@ const createFeedback = async (req, res) => {
       },
       { transaction: t },
     );
+
+    // Trigger Notification
+    await NotificationService.notifyFeedbackSubmission(newFeedback, t);
 
     await t.commit();
 

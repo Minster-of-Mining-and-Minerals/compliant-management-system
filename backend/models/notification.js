@@ -4,34 +4,22 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Notification extends Model {
     static associate(models) {
- // here these are realtionships so when you create these models uncomment the below
+      this.belongsTo(models.User, {
+        foreignKey: "recipient_id",
+        as: "recipient",
+      });
 
- 
-    //   this.belongsTo(models.InternalUser, {
-    //     foreignKey: "recipient_id",
-    //     constraints: false,
-    //     as: "internalRecipient",
-    //   });
+      this.belongsTo(models.Complaint, {
+        foreignKey: "related_entity_id",
+        constraints: false,
+        as: "complaint",
+      });
 
-    //   this.belongsTo(models.ExternalUser, {
-    //     foreignKey: "recipient_id",
-    //     constraints: false,
-    //     as: "externalRecipient",
-    //   });
-
-    
-      
-    //   this.belongsTo(models.Issue, {
-    //     foreignKey: "related_entity_id",
-    //     constraints: false,
-    //     as: "issue",
-    //   });
-
-    //   this.belongsTo(models.Project, {
-    //     foreignKey: "related_entity_id",
-    //     constraints: false,
-    //     as: "project",
-    //   });
+      this.belongsTo(models.Feedback, {
+        foreignKey: "related_entity_id",
+        constraints: false,
+        as: "feedback",
+      });
     }
   }
 
@@ -53,6 +41,10 @@ module.exports = (sequelize, DataTypes) => {
         validate: {
           isIn: [["internal", "external"]],
         },
+      },
+      type: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
       },
       title: {
         type: DataTypes.STRING(255),

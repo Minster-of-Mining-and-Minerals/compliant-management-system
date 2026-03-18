@@ -1,11 +1,13 @@
 const { User, UserType, RoleSubRolePermission } = require("../../models");
 const {
   getSectorComplaintDashboard,
+  getSectorFeedbackDashboard,
 } = require("../../services/dashboadService");
 
 const getDashboardStats = async (req, res) => {
   try {
     const userId = req.user.user_id;
+    const type = req.query.type || "complaint"; // "complaint" | "feedback"
 
     // Get user with their type
     const user = await User.findByPk(userId, {
@@ -25,7 +27,10 @@ const getDashboardStats = async (req, res) => {
       });
     }
 
-    const result = await getSectorComplaintDashboard();
+    const sectorNodeId = user.sector_node_id;
+    const result = type === "feedback"
+      ? await getSectorFeedbackDashboard(sectorNodeId)
+      : await getSectorComplaintDashboard(sectorNodeId);
 
     if (!result.success) {
       return res.status(500).json({

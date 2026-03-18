@@ -18,6 +18,7 @@ const userRoleRoute = require("./routers/user-routes/userRoleRoutes");
 const authRoute = require("./routers/user-routes/authRoutes");
 const permissionRoute = require("./routers/user-routes/permissionRoutes");
 const changePasswordRoutes = require("./routers/user-routes/passwordChangeRoutes");
+const notificationRoute = require("./routers/user-routes/notificationRoutes");
 
 // ================== Sector Routes ==========================
 const sectorRoute = require("./routers/sector-routes/sectorRoutes");
@@ -135,6 +136,7 @@ app.use("/api/user-roles", userRoleRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/change-password", changePasswordRoutes);
 app.use("/api/permissions", permissionRoute);
+app.use("/api/notifications", notificationRoute);
 
 // app.use("/api/issue-attachments", issueFileAttachmentRoutes);
 // app.use("/api/attachments", fileAttachmentRoutes);

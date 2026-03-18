@@ -28,11 +28,11 @@ export const description =
 /* =========================
    COMPONENT
    ========================= */
-export function ChartPieInteractive() {
+export function ChartPieInteractive({ dataType = "complaint" }: { dataType?: "complaint" | "feedback" }) {
   const id = "pie-sector-category";
 
   // Get dashboard data
-  const { data: dashboardData, isLoading, isError } = useGetDashboardStatsQuery();
+  const { data: dashboardData, isLoading, isError } = useGetDashboardStatsQuery({ type: dataType });
 
   // State for filters
   const [selectedSectorId, setSelectedSectorId] = React.useState<string>("");
@@ -207,10 +207,12 @@ export function ChartPieInteractive() {
       <div className="flex flex-col 3xl:flex-row items-start gap-3 justify-between ">
         <div className="grid gap-1">
           <h3 className="text-lg font-semibold">
-            Complaints by Category
+            {dataType === "feedback" ? "Feedbacks by Rating" : "Complaints by Category"}
           </h3>
           <p className="text-sm text-muted-foreground">
-            Distribution of complaints by category type
+            {dataType === "feedback"
+              ? "Distribution of feedbacks by rating group"
+              : "Distribution of complaints by category type"}
           </p>
         </div>
 
@@ -231,31 +233,33 @@ export function ChartPieInteractive() {
           </Button>
 
           {/* Sector Filter */}
-          <Select
-            value={selectedSectorId}
-            onValueChange={(value) => {
-              setSelectedSectorId(value);
-              setSelectedCategoryId(null);
-            }}
-          >
-            <SelectTrigger
-              className="h-7 w-[160px] rounded-lg pl-2.5 bg-white"
-              aria-label="Select sector"
+          {dashboardData.data.sectors.length > 1 && (
+            <Select
+              value={selectedSectorId}
+              onValueChange={(value) => {
+                setSelectedSectorId(value);
+                setSelectedCategoryId(null);
+              }}
             >
-              <SelectValue placeholder="Select sector" />
-            </SelectTrigger>
-            <SelectContent align="end" className="rounded-xl bg-white">
-              {dashboardData.data.sectors.map((sector: any) => (
-                <SelectItem
-                  key={sector.sector_node_id}
-                  value={sector.sector_node_id}
-                  className="rounded-lg"
-                >
-                  {sector.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectTrigger
+                className="h-7 w-[160px] rounded-lg pl-2.5 bg-white"
+                aria-label="Select sector"
+              >
+                <SelectValue placeholder="Select sector" />
+              </SelectTrigger>
+              <SelectContent align="end" className="rounded-xl bg-white">
+                {dashboardData.data.sectors.map((sector: any) => (
+                  <SelectItem
+                    key={sector.sector_node_id}
+                    value={sector.sector_node_id}
+                    className="rounded-lg"
+                  >
+                    {sector.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Category Filter */}
           {selectedSectorId && availableCategories.length > 0 && (

@@ -43,17 +43,46 @@ export const isWithinRange = (date: string, range: "90d" | "30d" | "7d") => {
 
 export type TimeRange = "90d" | "30d" | "7d";
 
-export default function VariantStatasCard() {
+// Rating colors for feedback mode
+const ratingColors: Record<number, string> = {
+  1: "hsl(0, 100%, 45%)",     // Red
+  2: "hsl(25, 100%, 50%)",    // Orange
+  3: "hsl(45, 100%, 50%)",    // Yellow
+  4: "hsl(90, 60%, 45%)",     // Light green
+  5: "hsl(120, 100%, 35%)",   // Green
+};
+
+const ratingLabels: Record<number, string> = {
+  1: "⭐ 1 Star",
+  2: "⭐⭐ 2 Stars",
+  3: "⭐⭐⭐ 3 Stars",
+  4: "⭐⭐⭐⭐ 4 Stars",
+  5: "⭐⭐⭐⭐⭐ 5 Stars",
+};
+
+interface Props {
+  dataType?: "complaint" | "feedback";
+}
+
+export default function VariantStatasCard({ dataType = "complaint" }: Props) {
   const {
     data: dashboardData,
     isLoading,
     isError,
     refetch,
-  } = useGetDashboardStatsQuery();
+  } = useGetDashboardStatsQuery({ type: dataType });
+
+  const isFeedback = dataType === "feedback";
 
   const [timeRange, setTimeRange] = React.useState<TimeRange>("90d");
   const [selectedSectorId, setSelectedSectorId] = React.useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null);
+
+  // Reset selections when dataType changes
+  React.useEffect(() => {
+    setSelectedSectorId("");
+    setSelectedCategoryId(null);
+  }, [dataType]);
 
   // Set default sector when data loads
   React.useEffect(() => {
@@ -76,91 +105,121 @@ export default function VariantStatasCard() {
 
     if (!selectedSector) return [];
 
-    // Get complaints based on selected filters
-    let complaints = [];
+    // Get items based on selected filters
+    let items: any[] = [];
 
     if (selectedCategoryId) {
-      // Get complaints from specific category
       const selectedCategory = selectedSector.complaint_categories.find(
         (cat: any) => cat.category_id === selectedCategoryId
       );
       if (selectedCategory) {
-        complaints = selectedCategory.complaints || [];
+        items = selectedCategory.complaints || [];
       }
     } else {
-      // Get all complaints from all categories in the sector
       selectedSector.complaint_categories.forEach((category: any) => {
         if (category.complaints && category.complaints.length > 0) {
-          complaints = [...complaints, ...category.complaints];
+          items = [...items, ...category.complaints];
         }
       });
     }
 
-    // Calculate counts based on time range and status
-    let resolved = 0;
-    let pending = 0;
-    let rejected = 0;
+    // Filter by time range
+    const filteredItems = items.filter((item: any) =>
+      isWithinRange(item.created_at, timeRange)
+    );
 
-    complaints.forEach((complaint: any) => {
-      if (!isWithinRange(complaint.created_at, timeRange)) return;
+    if (isFeedback) {
+      // --- Feedback mode: group by rating ---
+      const ratingCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
-      const bucket = normalizeStatus(complaint.status);
-      if (bucket === "resolved") resolved++;
-      else if (bucket === "rejected") rejected++;
-      else pending++;
-    });
+      filteredItems.forEach((item: any) => {
+        // status is "rating_1", "rating_2", etc. from backend
+        const ratingMatch = item.status?.match(/rating_(\d)/);
+        const r = ratingMatch ? parseInt(ratingMatch[1]) : 3;
+        if (ratingCounts[r] !== undefined) ratingCounts[r]++;
+      });
 
-    const total = resolved + pending + rejected || 1;
+      const total = Object.values(ratingCounts).reduce((a, b) => a + b, 0) || 1;
 
-    // Map to StatCard format
-    return [
-      {
-        id: "1",
-        title: "Resolved Complaints",
-        value: resolved,
-        percent: Math.round((resolved / total) * 100),
-        change: "+0%",
-        color: "hsl(var(--chart-2))",
-        status: "positive",
-      },
-      {
-        id: "2",
-        title: "Pending Complaints",
-        value: pending,
-        percent: Math.round((pending / total) * 100),
-        change: "+0%",
-        color: "hsl(var(--chart-7))",
-        status: "positive",
-      },
-      {
-        id: "3",
-        title: "Rejected Complaints",
-        value: rejected,
-        percent: Math.round((rejected / total) * 100),
-        change: "-0%",
-        color: "hsl(var(--chart-1))",
-        status: "negative",
-      },
-    ];
-  }, [dashboardData, selectedSectorId, selectedCategoryId, timeRange]);
+      return Object.entries(ratingCounts)
+        .map(([rating, count]) => {
+          const r = parseInt(rating);
+          return {
+            id: `rating_${r}`,
+            title: ratingLabels[r],
+            value: count,
+            percent: Math.round((count / total) * 100),
+            change: `${count}`,
+            color: ratingColors[r],
+            status: r >= 4 ? "positive" : r <= 2 ? "negative" : "positive",
+          };
+        })
+        .filter((item) => item.value > 0); // Only show ratings that have data
+    } else {
+      // --- Complaint mode: group by status ---
+      let resolved = 0;
+      let pending = 0;
+      let rejected = 0;
+
+      filteredItems.forEach((item: any) => {
+        const bucket = normalizeStatus(item.status);
+        if (bucket === "resolved") resolved++;
+        else if (bucket === "rejected") rejected++;
+        else pending++;
+      });
+
+      const total = resolved + pending + rejected || 1;
+
+      return [
+        {
+          id: "1",
+          title: "Resolved Complaints",
+          value: resolved,
+          percent: Math.round((resolved / total) * 100),
+          change: "+0%",
+          color: "hsl(var(--chart-2))",
+          status: "positive",
+        },
+        {
+          id: "2",
+          title: "Pending Complaints",
+          value: pending,
+          percent: Math.round((pending / total) * 100),
+          change: "+0%",
+          color: "hsl(var(--chart-7))",
+          status: "positive",
+        },
+        {
+          id: "3",
+          title: "Rejected Complaints",
+          value: rejected,
+          percent: Math.round((rejected / total) * 100),
+          change: "-0%",
+          color: "hsl(var(--chart-1))",
+          status: "negative",
+        },
+      ];
+    }
+  }, [dashboardData, selectedSectorId, selectedCategoryId, timeRange, isFeedback]);
 
   const getTitleByType = () => {
-    if (!dashboardData || !selectedSectorId) return "Complaint Statistics";
+    const label = isFeedback ? "Feedback" : "Complaint";
+    if (!dashboardData || !selectedSectorId) return `${label} Statistics`;
 
     const selectedSector = dashboardData.data.sectors.find(
       (sector: any) => sector.sector_node_id === selectedSectorId
     );
 
-    if (!selectedSector) return "Complaint Statistics";
+    if (!selectedSector) return `${label} Statistics`;
 
-    let title = `${selectedSector.name} Complaint Statistics`;
+    let title = `${selectedSector.name} ${label} Statistics`;
 
     if (selectedCategoryId) {
       const selectedCategory = selectedSector.complaint_categories.find(
         (cat: any) => cat.category_id === selectedCategoryId
       );
       if (selectedCategory) {
-        title = `${selectedCategory.name} Complaint Statistics`;
+        title = `${selectedCategory.name} ${label} Statistics`;
       }
     }
 
@@ -175,51 +234,59 @@ export default function VariantStatasCard() {
     );
     if (!sector) return [];
 
-    let complaints: any[] = [];
+    let items: any[] = [];
 
     if (selectedCategoryId) {
       const selectedCategory = sector.complaint_categories.find(
         (cat: any) => cat.category_id === selectedCategoryId
       );
       if (selectedCategory) {
-        complaints = selectedCategory.complaints || [];
+        items = selectedCategory.complaints || [];
       }
     } else {
       sector.complaint_categories.forEach((category: any) => {
         if (category.complaints && category.complaints.length > 0) {
-          complaints = [...complaints, ...category.complaints];
+          items = [...items, ...category.complaints];
         }
       });
     }
 
     const rows: any[] = [];
 
-    complaints.forEach((complaint: any) => {
-      if (!isWithinRange(complaint.created_at, timeRange)) return;
+    items.forEach((item: any) => {
+      if (!isWithinRange(item.created_at, timeRange)) return;
 
-      const d = new Date(complaint.created_at);
+      const d = new Date(item.created_at);
       const localDate = new Date(
         d.getFullYear(),
         d.getMonth(),
         d.getDate()
       ).toLocaleDateString();
 
-      // Find the category for this complaint
       const category = sector.complaint_categories.find(
-        (cat: any) => cat.complaints?.some((c: any) => c.complaint_id === complaint.complaint_id)
+        (cat: any) => cat.complaints?.some((c: any) => c.complaint_id === item.complaint_id)
       );
 
-      rows.push({
-        Sector: sector.name,
-        Category: category?.name || "N/A",
-        "Ticket Code": complaint.ticketing_code,
-        Status: normalizeStatus(complaint.status),
-        "Created Date": localDate,
-      });
+      if (isFeedback) {
+        rows.push({
+          Sector: sector.name,
+          Rating: category?.name || "N/A",
+          "Full Name": item.ticketing_code,
+          "Created Date": localDate,
+        });
+      } else {
+        rows.push({
+          Sector: sector.name,
+          Category: category?.name || "N/A",
+          "Ticket Code": item.ticketing_code,
+          Status: normalizeStatus(item.status),
+          "Created Date": localDate,
+        });
+      }
     });
 
     return rows;
-  }, [dashboardData, selectedSectorId, selectedCategoryId, timeRange]);
+  }, [dashboardData, selectedSectorId, selectedCategoryId, timeRange, isFeedback]);
 
   // Get categories for the selected sector
   const sectorCategories = React.useMemo(() => {
@@ -251,12 +318,6 @@ export default function VariantStatasCard() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-sm text-gray-500 mb-2">No data available</p>
-            {/* <button
-              onClick={() => refetch()}
-              className="text-sm text-primary hover:underline"
-            >
-              Retry
-            </button> */}
           </div>
         </div>
       </Card>
@@ -297,31 +358,33 @@ export default function VariantStatasCard() {
               Export CSV
             </Button>
 
-            <Select
-              value={selectedSectorId}
-              onValueChange={(value) => {
-                setSelectedSectorId(value);
-                setSelectedCategoryId(null); // Reset category when sector changes
-              }}
-            >
-              <SelectTrigger
-                className="w-full sm:w-[180px] rounded-lg bg-white"
-                aria-label="Select sector"
+            {dashboardData.data.sectors.length > 1 && (
+              <Select
+                value={selectedSectorId}
+                onValueChange={(value) => {
+                  setSelectedSectorId(value);
+                  setSelectedCategoryId(null);
+                }}
               >
-                <SelectValue placeholder="Select sector" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl bg-white">
-                {dashboardData.data.sectors.map((sector: any) => (
-                  <SelectItem
-                    key={sector.sector_node_id}
-                    value={sector.sector_node_id}
-                    className="rounded-lg"
-                  >
-                    {sector.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectTrigger
+                  className="w-full sm:w-[180px] rounded-lg bg-white"
+                  aria-label="Select sector"
+                >
+                  <SelectValue placeholder="Select sector" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl bg-white">
+                  {dashboardData.data.sectors.map((sector: any) => (
+                    <SelectItem
+                      key={sector.sector_node_id}
+                      value={sector.sector_node_id}
+                      className="rounded-lg"
+                    >
+                      {sector.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             {selectedSectorId && sectorCategories.length > 0 && (
               <Select
@@ -332,13 +395,13 @@ export default function VariantStatasCard() {
               >
                 <SelectTrigger
                   className="w-full sm:w-[180px] rounded-lg bg-white"
-                  aria-label="Select category"
+                  aria-label={isFeedback ? "Select rating" : "Select category"}
                 >
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder={isFeedback ? "Select rating" : "Select category"} />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl bg-white">
                   <SelectItem value="all" className="rounded-lg">
-                    All Categories
+                    {isFeedback ? "All Ratings" : "All Categories"}
                   </SelectItem>
                   {sectorCategories.map((category: any) => (
                     <SelectItem
@@ -353,7 +416,7 @@ export default function VariantStatasCard() {
               </Select>
             )}
 
-            <Select value={timeRange} onValueChange={setTimeRange}>
+            <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
               <SelectTrigger
                 className="w-full sm:w-[160px] rounded-lg"
                 aria-label="Select time range"
@@ -376,7 +439,7 @@ export default function VariantStatasCard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(currentStats.length, 5)} gap-6 relative`}>
         {currentStats.map((item, index) => {
           const chartData = [
             { name: item.title, value: 100, fill: "hsl(var(--muted))" },
@@ -502,7 +565,6 @@ export default function VariantStatasCard() {
               {/* Vertical line separator between cards on desktop */}
               {index < currentStats.length - 1 && (
                 <>
-                  {/* For lg screens: after 1st and 2nd items in a 3-column layout */}
                   <div
                     className={`hidden lg:block absolute top-1/2 transform -translate-y-1/2 w-[1px] h-4/5 bg-gray-300`}
                     style={{
@@ -510,7 +572,6 @@ export default function VariantStatasCard() {
                     }}
                   ></div>
 
-                  {/* For md/sm screens: after 1st item in a 2-column layout */}
                   {index === 0 && currentStats.length > 1 && (
                     <div className="hidden sm:block lg:hidden absolute top-1/2 left-1/2 transform -translate-y-1/2 w-[1px] h-4/5 bg-gray-300"></div>
                   )}

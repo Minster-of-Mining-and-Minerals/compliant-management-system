@@ -5,7 +5,7 @@ const {
   sequelize,
 } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
-// const NotificationService = require("../../services/notificationService"); // optional
+const NotificationService = require("../../services/notificationService");
 
 // ------------------------------------------------------
 //  ASSIGN COMPLAINT
@@ -96,6 +96,9 @@ const assignComplaint = async (req, res) => {
       t
     );
     */
+
+    // Trigger Notification
+    await NotificationService.notifyComplaintAssignment(complaint, assignee_id, t);
 
     await t.commit();
 

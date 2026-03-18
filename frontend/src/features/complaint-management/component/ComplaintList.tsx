@@ -40,7 +40,6 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
   )?.user_type_id;
   const { data = [], isLoading, isError } = useGetComplaintsQuery({
     compliant_type_id: userTypeId,
-    sector_node_id
   });
   const [deleteComplaint] = useDeleteComplaintMutation();
   const router = useRouter();

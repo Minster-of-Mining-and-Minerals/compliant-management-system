@@ -46,6 +46,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "department_id",
         as: "assignments",
       });
+
+      // SectorNode has many feedbacks
+      SectorNode.hasMany(models.Feedback, {
+        foreignKey: "sector_node_id",
+        as: "feedbacks",
+      });
     }
   }
 

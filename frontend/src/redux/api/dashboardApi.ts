@@ -17,26 +17,24 @@ export const dashboardApi = baseApi.injectEndpoints({
         method: "GET",
         params: params || {},
       }),
-      // Optional: Add caching/refetching behavior
       providesTags: ["Dashboard"],
-      // Optional: Transform the response if needed
       transformResponse: (response: any) => {
         return {
           success: response.success,
           message: response.message,
           data: response.data || {
             summary: {
-              total_institutes: 0,
-              total_projects: 0,
-              total_issues: 0,
+              total_sectors: 0,
+              total_categories: 0,
+              total_complaints: 0,
             },
-            institutes: [],
+            sectors: [],
           },
         };
       },
     }),
 
-    // Refresh Dashboard Data (if you want a mutation to force refresh)
+    // Refresh Dashboard Data
     refreshDashboardStats: builder.mutation<
       DashboardResponse,
       DashboardQueryParams | void
@@ -53,36 +51,35 @@ export const dashboardApi = baseApi.injectEndpoints({
           message: response.message,
           data: response.data || {
             summary: {
-              total_institutes: 0,
-              total_projects: 0,
-              total_issues: 0,
+              total_sectors: 0,
+              total_categories: 0,
+              total_complaints: 0,
             },
-            institutes: [],
+            sectors: [],
           },
         };
       },
     }),
 
-    // Get Dashboard Summary Only (if you want a separate endpoint)
+    // Get Dashboard Summary Only
     getDashboardSummary: builder.query<DashboardSummary, void>({
       query: () => ({
-        url: "/dashboard/stats/summary", // You'll need to create this endpoint
+        url: "/dashboard/stats/summary",
         method: "GET",
       }),
       providesTags: ["Dashboard"],
       transformResponse: (response: any) => {
         return (
           response.data?.summary || {
-            total_institutes: 0,
-            total_projects: 0,
-            total_issues: 0,
+            total_sectors: 0,
+            total_categories: 0,
+            total_complaints: 0,
           }
         );
       },
     }),
   }),
 
-  // Optional: Override the default tag types
   overrideExisting: false,
 });
 

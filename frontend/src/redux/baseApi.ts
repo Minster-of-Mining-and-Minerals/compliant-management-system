@@ -31,6 +31,7 @@ export const baseApi = createApi({
     "Feedback",
     "Dashboard",
     "Representative",
+    "Notification",
   ],
   endpoints: () => ({}),
 });

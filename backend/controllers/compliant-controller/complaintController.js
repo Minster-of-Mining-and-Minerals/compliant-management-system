@@ -10,12 +10,14 @@ const {
   Attachment,
   sequelize,
   UserType,
+  SectorRepresentative,
 } = require("../../models");
 const { Op } = require("sequelize");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const bcrypt = require("bcrypt");
 const { generateRandomPassword } = require("../../utils/password");
 const { sendEmail } = require("../../utils/sendEmail");
+const NotificationService = require("../../services/notificationService");
 const compliantResolution = require("../../models/compliant-management/compliantResolution");
 
 // =========== Create Complaint ===========
@@ -241,6 +243,9 @@ const createComplaint = async (req, res) => {
       { transaction: t },
     );
 
+    // Trigger Notification
+    await NotificationService.notifyComplaintSubmission(complaint, t);
+
     await t.commit();
 
     return res.status(201).json({
@@ -262,54 +267,65 @@ const createComplaint = async (req, res) => {
 // =========== Get all complaints ===========
 const getComplaints = async (req, res) => {
   try {
+    // ====== 1. Determine User Role and Access Scope ======
     const user_id = req.user?.user_id;
     const { status, sector_node_id, category_id, compliant_type_id, search } =
       req.query;
 
+    const { isAdmin, accessSectorIds } = await getUserAccessSectors(user_id);
+
+    // ====== 2. Build whereClause ======
     const whereClause = {
-      [Op.or]: [
-        { compliant_user_id: { [Op.ne]: user_id } },
-        { compliant_user_id: null },
-      ],
+      [Op.and]: [],
     };
+
+    // Baseline visibility based on roles
+    if (!isAdmin) {
+      const visibilityFilter = {
+        [Op.or]: [
+          { assigned_to_user_id: user_id }, // Always show my assignments
+          {
+            [Op.and]: [
+              { sector_node_id: { [Op.in]: accessSectorIds } },
+              {
+                [Op.or]: [
+                  { compliant_user_id: { [Op.ne]: user_id } },
+                  { compliant_user_id: null },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      whereClause[Op.and].push(visibilityFilter);
+    }
 
     if (status) whereClause.status = status;
     if (compliant_type_id) whereClause.compliant_type_id = compliant_type_id;
     if (category_id) whereClause.category_id = category_id;
 
     /**
-     * Sector subtree filtering (ONLY if sector_node_id is provided)
+     * Optional manual override filtering (if sector_node_id is provided in query)
      */
     if (sector_node_id) {
-      // Validate existence
-      const sectorNode = await SectorNode.findByPk(sector_node_id);
-      if (!sectorNode) {
-        return res.status(404).json({
-          success: false,
-          message: "Sector node not found",
-        });
-      }
+      // Collect descendants for the requested node
+      const requestedIds = [
+        sector_node_id,
+        ...(await getDescendantSectorNodeIds(sector_node_id)),
+      ];
 
-      // Collect all descendants
-      const descendantIds = await getDescendantSectorNodeIds(sector_node_id);
-
-      // Include the node itself
-      const sectorIds = [sector_node_id, ...descendantIds];
-
-      whereClause.sector_node_id = {
-        [Op.in]: sectorIds,
-      };
+      // Note: This is an additive filter. If a sector is requested, 
+      // the complaint must be in that sector AND satisfy the visibilityFilter above.
+      whereClause.sector_node_id = { [Op.in]: requestedIds };
     }
 
     if (search) {
-      whereClause[Op.and] = [
-        {
-          [Op.or]: [
-            { title: { [Op.like]: `%${search}%` } },
-            { description: { [Op.like]: `%${search}%` } },
-          ],
-        },
-      ];
+      whereClause[Op.and].push({
+        [Op.or]: [
+          { ticketing_code: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } },
+        ],
+      });
     }
 
     const complaints = await Complaint.findAll({
@@ -412,6 +428,7 @@ const getComplaintByUserId = async (req, res) => {
 const getComplaintById = async (req, res) => {
   try {
     const { id: complaint_id } = req.params;
+    const user_id = req.user?.user_id;
 
     if (!isUuid(complaint_id)) {
       return res
@@ -490,6 +507,19 @@ const getComplaintById = async (req, res) => {
         .json({ success: false, message: "Complaint not found." });
     }
 
+    // Role-based access check
+    const { isAdmin, accessSectorIds } = await getUserAccessSectors(user_id);
+    const isOwner = complaint.compliant_user_id === user_id;
+    const isAssignee = complaint.assigned_to_user_id === user_id;
+    const isSectorManager = accessSectorIds.includes(complaint.sector_node_id);
+
+    if (!isAdmin && !isOwner && !isAssignee && !isSectorManager) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view this complaint.",
+      });
+    }
+
     return res.status(200).json({
       success: true,
       message: "Complaint fetched successfully.",
@@ -508,6 +538,7 @@ const getComplaintById = async (req, res) => {
 const getComplaintByTicketingNumber = async (req, res) => {
   try {
     const { ticketing_code: ticket_number } = req.params;
+    const user_id = req.user?.user_id;
 
     const complaint = await Complaint.findOne({
       where: { ticketing_code: ticket_number }, // ✅ FIXED
@@ -583,6 +614,19 @@ const getComplaintByTicketingNumber = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Complaint not found.",
+      });
+    }
+
+    // Role-based access check
+    const { isAdmin, accessSectorIds } = await getUserAccessSectors(user_id);
+    const isOwner = complaint.compliant_user_id === user_id;
+    const isAssignee = complaint.assigned_to_user_id === user_id;
+    const isSectorManager = accessSectorIds.includes(complaint.sector_node_id);
+
+    if (!isAdmin && !isOwner && !isAssignee && !isSectorManager) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view this complaint.",
       });
     }
 
@@ -719,18 +763,6 @@ const deleteComplaint = async (req, res) => {
     });
   }
 };
-
-module.exports = {
-  createComplaint,
-  getComplaints,
-  getComplaintById,
-  getComplaintByTicketingNumber,
-  getComplaintByUserId,
-  updateComplaint,
-  acceptComplaint,
-  deleteComplaint,
-};
-
 // Helper function to generate ticket number - FIXED VERSION
 const generateTicket = async () => {
   const crypto = require("crypto");
@@ -780,4 +812,53 @@ const getDescendantSectorNodeIds = async (sectorNodeId, ids = []) => {
   }
 
   return ids;
+};
+
+const getUserAccessSectors = async (user_id) => {
+  const user = await User.findByPk(user_id);
+  if (!user || !user.sector_node_id) return { isAdmin: true, accessSectorIds: [] };
+
+  // Find sectors where user is a HEAD
+  const sectorsWhereHead = await SectorNode.findAll({
+    where: { head_id: user_id },
+    attributes: ["sector_node_id"],
+  });
+
+  // Find sectors where user is an active REPRESENTATIVE with manage rights
+  const now = new Date();
+  const sectorsWhereRep = await SectorRepresentative.findAll({
+    where: {
+      user_id,
+      can_manage: true,
+      is_active: true,
+      valid_from: { [Op.lte]: now },
+      [Op.or]: [{ valid_until: null }, { valid_until: { [Op.gte]: now } }],
+    },
+    attributes: ["sector_node_id"],
+  });
+
+  const manageableBaseIds = [
+    ...sectorsWhereHead.map((s) => s.sector_node_id),
+    ...sectorsWhereRep.map((s) => s.sector_node_id),
+  ];
+
+  // Collect all descendants for these sectors
+  let accessSectorIds = [...manageableBaseIds];
+  for (const baseId of manageableBaseIds) {
+    const descendants = await getDescendantSectorNodeIds(baseId);
+    accessSectorIds.push(...descendants);
+  }
+
+  return { isAdmin: false, accessSectorIds: [...new Set(accessSectorIds)] };
+};
+
+module.exports = {
+  createComplaint,
+  getComplaints,
+  getComplaintById,
+  getComplaintByTicketingNumber,
+  getComplaintByUserId,
+  updateComplaint,
+  acceptComplaint,
+  deleteComplaint,
 };

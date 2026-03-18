@@ -69,6 +69,16 @@ const chartConfig = {
 
 // Helper to get status display name
 const getStatusDisplayName = (status: string): string => {
+  // Feedback rating statuses
+  const ratingMap: Record<string, string> = {
+    rating_1: "⭐ 1 Star",
+    rating_2: "⭐⭐ 2 Stars",
+    rating_3: "⭐⭐⭐ 3 Stars",
+    rating_4: "⭐⭐⭐⭐ 4 Stars",
+    rating_5: "⭐⭐⭐⭐⭐ 5 Stars",
+  };
+  if (ratingMap[status]) return ratingMap[status];
+
   const statusMap: Record<string, string> = {
     pending: "Pending",
     under_review: "Under Review",
@@ -84,8 +94,8 @@ const getStatusDisplayName = (status: string): string => {
 /* =========================
    COMPONENT
    ========================= */
-export function ChartBarMixed() {
-  const { data: dashboardData, isLoading, isError } = useGetDashboardStatsQuery();
+export function ChartBarMixed({ dataType = "complaint" }: { dataType?: "complaint" | "feedback" }) {
+  const { data: dashboardData, isLoading, isError } = useGetDashboardStatsQuery({ type: dataType });
 
   const [selectedSectorId, setSelectedSectorId] = React.useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null);
@@ -233,8 +243,18 @@ export function ChartBarMixed() {
 
   // Get color for each bar based on status
   const getBarFill = (status: string) => {
+    // Rating colors for feedback mode
+    const ratingColors: Record<string, string> = {
+      rating_1: "hsl(0, 100%, 45%)",
+      rating_2: "hsl(25, 100%, 50%)",
+      rating_3: "hsl(45, 100%, 50%)",
+      rating_4: "hsl(90, 60%, 45%)",
+      rating_5: "hsl(120, 100%, 35%)",
+    };
+    if (ratingColors[status]) return ratingColors[status];
+
     const statusConfig = chartConfig[status as keyof typeof chartConfig];
-    return statusConfig?.color || "var(--color-medium)";
+    return (statusConfig as any)?.color || "var(--color-medium)";
   };
 
   // Get icon for each status
@@ -310,9 +330,11 @@ export function ChartBarMixed() {
       {/* Header */}
       <div className="flex flex-col justify-start items-start 3xl:flex-row gap-4 pb-4 mb-4">
         <div className="grid flex-1 gap-1">
-          <h3 className="text-lg font-semibold">Complaints by Status</h3>
+          <h3 className="text-lg font-semibold">{dataType === "feedback" ? "Feedbacks by Rating" : "Complaints by Status"}</h3>
           <p className="text-sm text-muted-foreground">
-            Distribution of complaints by current status
+            {dataType === "feedback"
+              ? "Distribution of feedbacks by rating"
+              : "Distribution of complaints by current status"}
           </p>
         </div>
 
@@ -333,28 +355,30 @@ export function ChartBarMixed() {
           </Button>
 
           {/* Sector Filter */}
-          <Select value={selectedSectorId} onValueChange={(value) => {
-            setSelectedSectorId(value);
-            setSelectedCategoryId(null);
-          }}>
-            <SelectTrigger
-              className="w-full sm:w-[180px] rounded-lg bg-white"
-              aria-label="Select sector"
-            >
-              <SelectValue placeholder="Select sector" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white">
-              {dashboardData.data.sectors.map((sector: any) => (
-                <SelectItem
-                  key={sector.sector_node_id}
-                  value={sector.sector_node_id}
-                  className="rounded-lg"
-                >
-                  {sector.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {dashboardData.data.sectors.length > 1 && (
+            <Select value={selectedSectorId} onValueChange={(value) => {
+              setSelectedSectorId(value);
+              setSelectedCategoryId(null);
+            }}>
+              <SelectTrigger
+                className="w-full sm:w-[180px] rounded-lg bg-white"
+                aria-label="Select sector"
+              >
+                <SelectValue placeholder="Select sector" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl bg-white">
+                {dashboardData.data.sectors.map((sector: any) => (
+                  <SelectItem
+                    key={sector.sector_node_id}
+                    value={sector.sector_node_id}
+                    className="rounded-lg"
+                  >
+                    {sector.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Category Filter */}
           {selectedSectorId && sectorCategories.length > 0 && (

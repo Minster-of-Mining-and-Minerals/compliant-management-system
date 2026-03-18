@@ -8,7 +8,7 @@ const {
   sequelize,
 } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
-// const NotificationService = require("../../services/notificationService"); // optional
+const NotificationService = require("../../services/notificationService");
 
 // ------------------------------------------------------
 //  RESOLVE COMPLAINT
@@ -103,6 +103,9 @@ const resolveComplaint = async (req, res) => {
       },
       { transaction: t },
     );
+
+    // Trigger Notification
+    await NotificationService.notifyComplaintResolution(complaint, t);
 
     // ✅ Commit once all writes succeed
     await t.commit();

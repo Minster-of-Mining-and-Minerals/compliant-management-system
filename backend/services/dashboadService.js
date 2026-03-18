@@ -6,29 +6,34 @@ const {
   Sequelize,
 } = require("../models");
 
-const getSectorComplaintDashboard = async () => {
+const getSectorComplaintDashboard = async (sectorNodeId = null) => {
   try {
-    /**
-     * STEP 1: Root sectors
-     */
-    const rootSectors = await SectorNode.findAll({
-      where: {
-        parent_id: null,
-        is_active: true,
-      },
-      attributes: ["sector_node_id"],
-    });
+    let sectorWhere = { is_active: true };
 
-    const rootSectorIds = rootSectors.map((s) => s.sector_node_id);
+    if (sectorNodeId) {
+      // If a specific sector is requested/assigned to user
+      sectorWhere.sector_node_id = sectorNodeId;
+    } else {
+      /**
+       * STEP 1: Root sectors
+       */
+      const rootSectors = await SectorNode.findAll({
+        where: {
+          parent_id: null,
+          is_active: true,
+        },
+        attributes: ["sector_node_id"],
+      });
+
+      const rootSectorIds = rootSectors.map((s) => s.sector_node_id);
+      sectorWhere.parent_id = rootSectorIds;
+    }
 
     /**
-     * STEP 2: Child sectors + complaints
+     * STEP 2: Sectors + complaints
      */
     const sectors = await SectorNode.findAll({
-      where: {
-        parent_id: rootSectorIds,
-        is_active: true,
-      },
+      where: sectorWhere,
       attributes: [
         "sector_node_id",
         "name",
@@ -145,4 +150,147 @@ const getSectorComplaintDashboard = async () => {
 
 module.exports = {
   getSectorComplaintDashboard,
+  getSectorFeedbackDashboard,
 };
+
+/**
+ * Feedback Dashboard — groups feedbacks by rating (1–5) per sector.
+ * Returns the same shape as complaint dashboard so charts can reuse.
+ */
+async function getSectorFeedbackDashboard(sectorNodeId = null) {
+  try {
+    const { Feedback } = require("../models");
+
+    let sectorWhere = { is_active: true };
+
+    if (sectorNodeId) {
+      sectorWhere.sector_node_id = sectorNodeId;
+    } else {
+      /**
+       * STEP 1: Root sectors
+       */
+      const rootSectors = await SectorNode.findAll({
+        where: { parent_id: null, is_active: true },
+        attributes: ["sector_node_id"],
+      });
+
+      const rootSectorIds = rootSectors.map((s) => s.sector_node_id);
+      sectorWhere.parent_id = rootSectorIds;
+    }
+
+    /**
+     * STEP 2: Sectors + feedbacks
+     */
+    const sectors = await SectorNode.findAll({
+      where: sectorWhere,
+      attributes: [
+        "sector_node_id",
+        "name",
+        "description",
+        "created_at",
+        [
+          Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM feedbacks f
+            WHERE f.sector_node_id = "SectorNode"."sector_node_id"
+              AND f.deleted_at IS NULL
+          )`),
+          "total_feedbacks",
+        ],
+      ],
+      include: [
+        {
+          model: Feedback,
+          as: "feedbacks",
+          required: false,
+          attributes: [
+            "feedback_id",
+            "full_name",
+            "feedback",
+            "rating",
+            "created_at",
+          ],
+        },
+      ],
+      order: [["name", "ASC"]],
+    });
+
+    /**
+     * STEP 3: Transform — group each sector's feedbacks by rating
+     */
+    let totalSectors = 0;
+    let totalRatingGroups = 0;
+    let totalFeedbacks = 0;
+
+    const ratingLabels = {
+      1: "⭐ 1 Star",
+      2: "⭐⭐ 2 Stars",
+      3: "⭐⭐⭐ 3 Stars",
+      4: "⭐⭐⭐⭐ 4 Stars",
+      5: "⭐⭐⭐⭐⭐ 5 Stars",
+    };
+
+    const transformedSectors = sectors.map((sector) => {
+      totalSectors++;
+
+      const ratingMap = {};
+
+      (sector.feedbacks || []).forEach((fb) => {
+        totalFeedbacks++;
+
+        const r = fb.rating || 1;
+        const key = `rating_${r}`;
+
+        if (!ratingMap[key]) {
+          totalRatingGroups++;
+          ratingMap[key] = {
+            category_id: key,
+            name: ratingLabels[r] || `${r} Stars`,
+            description: `Feedbacks with rating ${r}`,
+            total_complaints: 0,
+            complaints: [],
+          };
+        }
+
+        ratingMap[key].total_complaints++;
+
+        // Map to complaint-like shape so charts work
+        ratingMap[key].complaints.push({
+          complaint_id: fb.feedback_id,
+          ticketing_code: fb.full_name,
+          status: `rating_${r}`,
+          created_at: fb.created_at,
+        });
+      });
+
+      return {
+        sector_node_id: sector.sector_node_id,
+        name: sector.name,
+        description: sector.description,
+        created_at: sector.created_at,
+        total_complaints: Number(sector.dataValues.total_feedbacks || 0),
+        complaint_categories: Object.values(ratingMap),
+      };
+    });
+
+    return {
+      success: true,
+      message: "Feedback dashboard statistics fetched successfully.",
+      data: {
+        summary: {
+          total_sectors: totalSectors,
+          total_categories: totalRatingGroups,
+          total_complaints: totalFeedbacks,
+        },
+        sectors: transformedSectors,
+      },
+    };
+  } catch (error) {
+    console.error("Sector feedback dashboard error:", error);
+    return {
+      success: false,
+      message: "Failed to fetch feedback dashboard data",
+      error: error.message,
+    };
+  }
+}

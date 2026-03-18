@@ -11,255 +11,238 @@ import {
     X,
     User,
     Shield,
+    ChevronRight,
 } from "lucide-react";
 import { DropdownItem } from "../ui/DropdownItem";
 import { useSession } from "next-auth/react";
 import { Dropdown } from "../ui/Dropdown";
 
-/* ================= MOCK TYPES ================= */
-
-export type Notification = {
-    notification_id: string;
-    title: string;
-    message: string;
-    type:
-    | "ISSUE_CREATED"
-    | "ISSUE_ASSIGNED"
-    | "ISSUE_RESOLVED"
-    | "ISSUE_REJECTED"
-    | "ISSUE_COMMENTED"
-    | "SYSTEM_ALERT"
-    | "USER_REGISTERED";
-    is_read: boolean;
-    created_at: string;
-};
-
-/* ================= MOCK DATA ================= */
-
-const mockNotifications: Notification[] = [
-    {
-        notification_id: "1",
-        title: "Issue Assigned",
-        message: "A new issue has been assigned to you.",
-        type: "ISSUE_ASSIGNED",
-        is_read: false,
-        created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    },
-    {
-        notification_id: "2",
-        title: "Issue Resolved",
-        message: "The reported issue has been resolved successfully.",
-        type: "ISSUE_RESOLVED",
-        is_read: false,
-        created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    },
-    {
-        notification_id: "3",
-        title: "New Comment",
-        message: "Someone commented on your issue.",
-        type: "ISSUE_COMMENTED",
-        is_read: true,
-        created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    },
-];
+import {
+  useGetMyNotificationsQuery,
+  useMarkAsReadMutation,
+  useMarkAllAsReadMutation,
+} from "@/redux/api/notificationApi";
+import { Notification } from "@/redux/types/notification";
 
 /* ================= CATEGORY MAP ================= */
 
 const CATEGORY_MAP = {
-    ISSUE: [
-        "ISSUE_CREATED",
-        "ISSUE_ASSIGNED",
-        "ISSUE_RESOLVED",
-        "ISSUE_REJECTED",
-        "ISSUE_COMMENTED",
-    ],
-    USER: ["USER_REGISTERED"],
-    SYSTEM: ["SYSTEM_ALERT"],
+  COMPLAINT: [
+    "COMPLAINT_SUBMITTED",
+    "COMPLAINT_ASSIGNED",
+    "COMPLAINT_RESOLVED",
+    "COMPLAINT_ASSIGNMENT_UPDATE",
+    "SUBMISSION_SUCCESS",
+  ],
+  FEEDBACK: ["FEEDBACK_SUBMITTED"],
+  SYSTEM: ["SYSTEM_ALERT"],
 };
+
+import { usePermissions } from "@/hooks/usePermissions";
 
 /* ================= HELPERS ================= */
 
-export const getNotificationIcon = (type: Notification["type"]) => {
-    switch (true) {
-        case CATEGORY_MAP.ISSUE.includes(type):
-            switch (type) {
-                case "ISSUE_ASSIGNED":
-                case "ISSUE_CREATED":
-                    return <Bell className="h-5 w-5 text-blue-500" />;
-                case "ISSUE_RESOLVED":
-                    return <CheckCircle className="h-5 w-5 text-green-500" />;
-                case "ISSUE_REJECTED":
-                    return <AlertCircle className="h-5 w-5 text-red-500" />;
-                case "ISSUE_COMMENTED":
-                    return <MessageSquare className="h-5 w-5 text-purple-500" />;
-                default:
-                    return <Bell className="h-5 w-5 text-gray-500" />;
-            }
-
-        case CATEGORY_MAP.USER.includes(type):
-            return <User className="h-5 w-5 text-indigo-500" />;
-
-        case CATEGORY_MAP.SYSTEM.includes(type):
-            return <Shield className="h-5 w-5 text-gray-700" />;
-
+export const getNotificationIcon = (type: string) => {
+  switch (true) {
+    case CATEGORY_MAP.COMPLAINT.includes(type as any):
+      switch (type) {
+        case "COMPLAINT_ASSIGNED":
+        case "COMPLAINT_SUBMITTED":
+        case "SUBMISSION_SUCCESS":
+          return <Bell className="h-5 w-5 text-blue-500" />;
+        case "COMPLAINT_RESOLVED":
+          return <CheckCircle className="h-5 w-5 text-green-500" />;
+        case "COMPLAINT_ASSIGNMENT_UPDATE":
+           return <AlertCircle className="h-5 w-5 text-orange-500" />;
         default:
-            return <Bell className="h-5 w-5 text-gray-400" />;
-    }
+          return <Bell className="h-5 w-5 text-gray-500" />;
+      }
+
+    case CATEGORY_MAP.FEEDBACK.includes(type as any):
+      return <MessageSquare className="h-5 w-5 text-purple-500" />;
+
+    case CATEGORY_MAP.SYSTEM.includes(type as any):
+      return <Shield className="h-5 w-5 text-gray-700" />;
+
+    default:
+      return <Bell className="h-5 w-5 text-gray-400" />;
+  }
 };
 
 const formatTime = (dateString: string) => {
-    try {
-        return new Date(dateString).toISOString();
-    } catch {
-        return "Recently";
-    }
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+
+    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return date.toLocaleDateString();
+  } catch {
+    return "Recently";
+  }
 };
 
 const truncateText = (text: string, maxLength: number) =>
-    text.length <= maxLength ? text : text.substring(0, maxLength) + "...";
+  text.length <= maxLength ? text : text.substring(0, maxLength) + "...";
 
 /* ================= ITEM ================= */
 
 const NotificationItem = ({
-    notification,
-    onClick,
-    onXClick,
+  notification,
+  onClick,
 }: {
-    notification: Notification;
-    onClick: (n: Notification) => void;
-    onXClick: (n: Notification) => void;
+  notification: Notification;
+  onClick: (n: Notification) => void;
 }) => (
-    <DropdownItem
-        onClick={(e) => {
-            e.stopPropagation();
-            onClick(notification);
-        }}
-        className={`group relative flex gap-3 rounded-lg border p-3 hover:bg-gray-100 ${!notification.is_read ? "bg-blue-50" : "bg-white"
-            }`}
-    >
-        <div className="relative w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-            {getNotificationIcon(notification.type)}
-            {!notification.is_read && (
-                <span className="absolute top-0 right-0 w-3 h-3 bg-blue-500 border-2 border-white rounded-full" />
-            )}
-        </div>
+  <DropdownItem
+    onClick={(e) => {
+      e.stopPropagation();
+      onClick(notification);
+    }}
+    className={`group relative flex gap-3 rounded-lg border p-3 hover:bg-gray-100 ${
+      !notification.is_read ? "bg-blue-50" : "bg-white"
+    }`}
+  >
+    <div className="relative w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+      {getNotificationIcon(notification.type)}
+      {!notification.is_read && (
+        <span className="absolute top-0 right-0 w-3 h-3 bg-blue-500 border-2 border-white rounded-full" />
+      )}
+    </div>
 
-        <div className="flex-1">
-            <div className="flex justify-between">
-                <span className="font-medium truncate">{notification.title}</span>
-                <X
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onXClick(notification);
-                    }}
-                    className="hidden group-hover:block w-4 h-4 text-gray-500 hover:text-red-500 cursor-pointer"
-                />
-            </div>
-            <p className="text-sm text-gray-600">
-                {truncateText(notification.message, 40)}
-            </p>
-            <span className="text-xs text-gray-400">
-                {formatTime(notification.created_at)}
-            </span>
-        </div>
-    </DropdownItem>
+    <div className="flex-1 overflow-hidden">
+      <div className="flex justify-between items-start">
+        <span className="font-semibold text-sm truncate text-gray-900">{notification.title}</span>
+      </div>
+      <p className="text-xs text-gray-600 line-clamp-2 mt-0.5">
+        {notification.message}
+      </p>
+      <span className="text-[10px] text-gray-400 mt-1 block">
+        {formatTime(notification.created_at)}
+      </span>
+    </div>
+  </DropdownItem>
 );
 
 /* ================= DROPDOWN ================= */
 
 export default function NotificationDropdown() {
-    const user = useSession();
-    const router = useRouter();
+  const { data: session } = useSession();
+  const router = useRouter();
+  const { can } = usePermissions();
 
-    const [isOpen, setIsOpen] = useState(false);
-    const [localNotifications, setLocalNotifications] =
-        useState<Notification[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
 
-    /* ================= MOCK LOAD ================= */
+  // Queries & Mutations
+  const { data: notifications = [], isLoading } = useGetMyNotificationsQuery(undefined, {
+    skip: !session,
+    pollingInterval: 30000, // Poll every 30 seconds
+  });
+  const [markAsRead] = useMarkAsReadMutation();
+  const [markAllAsRead] = useMarkAllAsReadMutation();
 
-    useEffect(() => {
-        setLocalNotifications(mockNotifications);
-    }, []);
+  /* ================= HANDLERS ================= */
 
-    /* ================= HANDLERS ================= */
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.is_read) {
+      await markAsRead(notification.notification_id).unwrap();
+    }
 
-    const handleNotificationClick = (notification: Notification) => {
-        setLocalNotifications((prev) =>
-            prev.map((n) =>
-                n.notification_id === notification.notification_id
-                    ? { ...n, is_read: true }
-                    : n
-            )
-        );
-        setIsOpen(false);
-    };
+    // Navigation logic based on entity and permissions
+    if (notification.related_entity_type === "complaint" && notification.related_entity_id) {
+      const baseUrl = can("COMPLAINT:READ_ALL") ? "/compliants" : "/my-complaints";
+      router.push(`${baseUrl}/${notification.related_entity_id}`);
+    } else if (notification.related_entity_type === "feedback") {
+      router.push("/feedbacks");
+    }
+    
+    setIsOpen(false);
+  };
 
-    const handleMarkAllAsRead = () => {
-        setLocalNotifications((prev) =>
-            prev.map((n) => ({ ...n, is_read: true }))
-        );
-    };
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead().unwrap();
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+    }
+  };
 
-    const unreadCount = useMemo(
-        () => localNotifications.filter((n) => !n.is_read).length,
-        [localNotifications]
-    );
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.is_read).length,
+    [notifications]
+  );
 
-    if (!user) return null;
+  if (!session) return null;
 
-    return (
-        <div className="relative">
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative h-10 w-10 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-50 transition-all shadow-sm active:scale-95"
+      >
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm border border-white">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
+        <Bell className="w-5 h-5 text-gray-500" />
+      </button>
+
+      <Dropdown
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        className="absolute right-0 mt-3 w-[360px] bg-white border border-gray-200 rounded-2xl shadow-2xl p-0 z-[100] overflow-hidden animate-in fade-in zoom-in duration-200"
+      >
+        <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50/50">
+          <h5 className="font-bold text-gray-900">Notifications</h5>
+          {unreadCount > 0 && (
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="relative h-11 w-11 rounded-full border flex items-center justify-center"
+              onClick={handleMarkAllAsRead}
+              className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex gap-1 items-center transition-colors"
             >
-                {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[20px] h-5 text-xs bg-orange-500 text-white rounded-full flex items-center justify-center">
-                        {unreadCount}
-                    </span>
-                )}
-                <Bell className="w-5 h-5" />
+              <CheckCheck className="w-3.5 h-3.5" />
+              Mark all as read
             </button>
-
-            <Dropdown
-                isOpen={isOpen}
-                onClose={() => setIsOpen(false)}
-                className="absolute right-0 mt-2 w-[400px] bg-white border rounded-2xl shadow-lg p-3"
-            >
-                <div className="flex justify-between items-center mb-3 border-b pb-2">
-                    <h5 className="font-semibold">Notifications</h5>
-                    {unreadCount > 0 && (
-                        <button
-                            onClick={handleMarkAllAsRead}
-                            className="text-xs text-blue-600 flex gap-1 items-center"
-                        >
-                            <CheckCheck className="w-4 h-4" />
-                            Mark all as read
-                        </button>
-                    )}
-                </div>
-
-                <ul className="flex flex-col gap-1 max-h-[320px] overflow-y-auto">
-                    {localNotifications.map((notification) => (
-                        <NotificationItem
-                            key={notification.notification_id}
-                            notification={notification}
-                            onClick={handleNotificationClick}
-                            onXClick={handleNotificationClick}
-                        />
-                    ))}
-                </ul>
-
-                <DropdownItem
-                    onClick={() => {
-                        setIsOpen(false);
-                        router.push("/notifications");
-                    }}
-                    className="mt-3 text-center border rounded-lg py-2 hover:bg-gray-100"
-                >
-                    View All Notifications
-                </DropdownItem>
-            </Dropdown>
+          )}
         </div>
-    );
+
+        <div className="flex flex-col max-h-[400px] overflow-y-auto custom-scrollbar bg-white">
+          {isLoading ? (
+            <div className="py-12 flex flex-col items-center gap-3 text-gray-400">
+               <div className="h-5 w-5 border-2 border-blue-500 border-t-transparent animate-spin rounded-full"></div>
+               <span className="text-sm">Fetching alerts...</span>
+            </div>
+          ) : notifications.length > 0 ? (
+            <div className="divide-y divide-gray-50">
+              {notifications.slice(0, 10).map((notification) => (
+                <NotificationItem
+                  key={notification.notification_id}
+                  notification={notification}
+                  onClick={handleNotificationClick}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="py-12 text-center text-sm text-gray-400 flex flex-col items-center gap-2">
+              <Bell className="h-8 w-8 opacity-20" />
+              <span>No notifications for now</span>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => {
+            setIsOpen(false);
+            router.push("/notifications");
+          }}
+          className="w-full p-4 text-center border-t border-gray-100 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+        >
+          View all notifications
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </Dropdown>
+    </div>
+  );
 }

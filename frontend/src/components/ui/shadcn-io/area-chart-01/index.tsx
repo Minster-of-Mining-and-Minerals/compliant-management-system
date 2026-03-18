@@ -157,8 +157,8 @@ const chartConfig = {
 /* =========================
    COMPONENT
    ========================= */
-export function ChartAreaInteractive() {
-  const { data: dashboardData, isLoading, isError } = useGetDashboardStatsQuery();
+export function ChartAreaInteractive({ dataType = "complaint" }: { dataType?: "complaint" | "feedback" }) {
+  const { data: dashboardData, isLoading, isError } = useGetDashboardStatsQuery({ type: dataType });
 
   const [selectedSectorId, setSelectedSectorId] = React.useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null);
@@ -420,10 +420,12 @@ export function ChartAreaInteractive() {
       <div className="flex flex-col justify-start items-start 3xl:flex-row gap-4 pb-4 mb-4">
         <div className="grid flex-1 gap-1">
           <h3 className="text-lg font-semibold">
-            Complaints Trend Analysis
+            {dataType === "feedback" ? "Feedback Trend Analysis" : "Complaints Trend Analysis"}
           </h3>
           <p className="text-sm text-muted-foreground">
-            Pending, resolved, and rejected complaints by sector and category
+            {dataType === "feedback"
+              ? "Feedback submissions by sector and rating over time"
+              : "Pending, resolved, and rejected complaints by sector and category"}
           </p>
         </div>
 
@@ -444,29 +446,31 @@ export function ChartAreaInteractive() {
           </Button>
 
           {/* Sector Filter */}
-          <Select value={selectedSectorId} onValueChange={(value) => {
-            setSelectedSectorId(value);
-            setSelectedCategoryId(null);
-            setGroupBy(null); // Reset grouping when sector changes
-          }}>
-            <SelectTrigger
-              className="w-full sm:w-[180px] rounded-lg bg-white"
-              aria-label="Select sector"
-            >
-              <SelectValue placeholder="Select sector" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white">
-              {dashboardData.data.sectors.map((sector: any) => (
-                <SelectItem
-                  key={sector.sector_node_id}
-                  value={sector.sector_node_id}
-                  className="rounded-lg"
-                >
-                  {sector.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {dashboardData?.data?.sectors && dashboardData.data.sectors.length > 1 && (
+            <Select value={selectedSectorId} onValueChange={(value) => {
+              setSelectedSectorId(value);
+              setSelectedCategoryId(null);
+              setGroupBy("month"); // Reset grouping to default when sector changes
+            }}>
+              <SelectTrigger
+                className="w-full sm:w-[180px] rounded-lg bg-white"
+                aria-label="Select sector"
+              >
+                <SelectValue placeholder="Select sector" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl bg-white">
+                {dashboardData.data.sectors.map((sector: any) => (
+                  <SelectItem
+                    key={sector.sector_node_id}
+                    value={sector.sector_node_id}
+                    className="rounded-lg"
+                  >
+                    {sector.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Category Filter */}
           {selectedSectorId && sectorCategories.length > 0 && (
@@ -474,14 +478,14 @@ export function ChartAreaInteractive() {
               value={selectedCategoryId || "all"}
               onValueChange={(value) => {
                 setSelectedCategoryId(value === "all" ? null : value);
-                setGroupBy(null); // Reset grouping when category changes
+                setGroupBy("month"); // Reset grouping when category changes
               }}
             >
               <SelectTrigger
                 className="w-full sm:w-[180px] rounded-lg bg-white"
                 aria-label="Select category"
               >
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent className="rounded-xl bg-white">
                 <SelectItem value="all" className="rounded-lg">

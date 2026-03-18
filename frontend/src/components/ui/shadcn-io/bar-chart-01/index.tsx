@@ -25,8 +25,8 @@ export const description = "Sector complaint counts";
 /* =========================
    COMPONENT
    ========================= */
-export function ChartBarInteractive() {
-  const { data: dashboardData, isLoading, isError } = useGetDashboardStatsQuery();
+export function ChartBarInteractive({ dataType = "complaint" }: { dataType?: "complaint" | "feedback" }) {
+  const { data: dashboardData, isLoading, isError } = useGetDashboardStatsQuery({ type: dataType });
 
   // State for selected year
   const [selectedYear, setSelectedYear] = React.useState<string>("all");
@@ -216,7 +216,7 @@ export function ChartBarInteractive() {
       {/* Header */}
       <div className="flex flex-col items-stretch border-b pb-4 mb-4 sm:flex-row">
         <div className="flex flex-1 flex-col justify-center gap-1">
-          <h3 className="text-lg font-semibold">Sector Complaints</h3>
+          <h3 className="text-lg font-semibold">{dataType === "feedback" ? "Sector Feedbacks" : "Sector Complaints"}</h3>
           <p className="text-sm text-muted-foreground">
             {selectedYear === "all"
               ? "Number of complaints across all sectors"
