@@ -33,6 +33,17 @@ module.exports = {
       { resource: "sector", action: "update" },
       { resource: "sector", action: "delete" },
 
+      // Represenatative Management
+      { resource: "sector_representative", action: "create" },
+      { resource: "sector_representative", action: "read" },
+      { resource: "sector_representative", action: "update" },
+      { resource: "sector_representative", action: "delete" },
+      { resource: "sector_representative", action: "relegate" },
+      { resource: "sector_representative", action: "delegate" },
+      { resource: "sector_head", action: "relegate" },
+      { resource: "sector_head", action: "delegate" },
+      { resource: "sector_head", action: "update" },
+
       // Complaint Management
       { resource: "complaint", action: "create" },
       { resource: "complaint", action: "update" },

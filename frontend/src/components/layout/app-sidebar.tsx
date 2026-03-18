@@ -8,7 +8,7 @@ import { ChevronRight } from "lucide-react";
 import { NAVIGATION } from "@/navigation.config";
 import { canAccessItem } from "@/lib/can-access";
 import { PermissionKey } from "@/lib/permissions";
-import { useSession } from "next-auth/react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 import {
   Sidebar,
@@ -39,10 +39,7 @@ const stripLocale = (pathname: string) => {
 };
 
 export function AppSidebar() {
-  const { data: session } = useSession();
-  const userPermissions = (session?.user?.permissions ??
-    []) as PermissionKey[];
-
+  const { permissions: userPermissions } = usePermissions();
   const pathname = stripLocale(usePathname());
 
   const visibleNav = NAVIGATION.filter((item) =>

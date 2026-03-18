@@ -79,7 +79,6 @@ const login = async (req, res) => {
         user_id: user.user_id,
         email: user.email,
         roles: userRoles.map((r) => r.name),
-        permissions: userRoles.flatMap((r) => r.permissions),
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
@@ -103,7 +102,7 @@ const login = async (req, res) => {
         department: user.department || null,
       },
       roles: userRoles,
-      permissions: userRoles.flatMap((r) => r.permissions),
+      // permissions removed to reduce session payload size
     };
     console.log("to be returned: ", result);
 
@@ -132,4 +131,59 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = { login, logout };
+// Get Current User Permissions
+const getMePermissions = async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+
+    const user = await User.findOne({
+      where: { user_id: userId },
+      include: [
+        {
+          model: Role,
+          as: "roles",
+          through: { attributes: [] },
+          include: [
+            {
+              model: RolePermission,
+              as: "rolePermissions",
+              include: [
+                {
+                  model: Permission,
+                  as: "permission",
+                  attributes: ["permission_id", "resource", "action"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const userRoles = user.roles.map((role) => ({
+      role_id: role.role_id,
+      name: role.name,
+      permissions: role.rolePermissions.map((rp) => ({
+        permission_id: rp.permission_id,
+        resource: rp.permission?.resource,
+        action: rp.permission?.action,
+      })),
+    }));
+
+    const permissions = userRoles.flatMap((r) => r.permissions);
+
+    return res.status(200).json({
+      success: true,
+      data: permissions,
+    });
+  } catch (error) {
+    console.error("Error fetching my permissions:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+module.exports = { login, logout, getMePermissions };

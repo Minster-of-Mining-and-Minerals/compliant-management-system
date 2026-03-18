@@ -24,6 +24,19 @@ const createSectorNodeSchema = Joi.object({
       "any.invalid": "Parent ID must be a valid UUID.",
     }),
 
+  head_id: Joi.string()
+    .allow(null, "")
+    .custom((value, helpers) => {
+      if (value && !isUuid(value)) {
+        return helpers.error("any.invalid");
+      }
+      return value;
+    }, "UUID validation")
+    .messages({
+      "any.invalid": "Head ID must be a valid UUID.",
+    })
+    .optional(),
+
   level: Joi.number().integer().min(1).optional().messages({
     "number.base": "Level must be a number.",
     "number.min": "Level cannot be less than 1.",
@@ -45,6 +58,18 @@ const updateSectorNodeSchema = Joi.object({
     .optional()
     .messages({
       "any.invalid": "Parent ID must be a valid UUID.",
+    }),
+  head_id: Joi.string()
+    .allow(null, "")
+    .custom((value, helpers) => {
+      if (value && !isUuid(value)) {
+        return helpers.error("any.invalid");
+      }
+      return value;
+    }, "UUID validation")
+    .optional()
+    .messages({
+      "any.invalid": "Head ID must be a valid UUID.",
     }),
   level: Joi.number().integer().min(1).optional(),
   is_active: Joi.boolean().optional(),

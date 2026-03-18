@@ -58,8 +58,28 @@ export const getCurrentUser = async () => {
 
 export const checkPermission = async (permissionKey: string) => {
   const session = await auth();
-  if (!session?.user?.permissions) return false;
-  return session.user.permissions.includes(permissionKey);
+  if (!session?.accessToken) return false;
+
+  try {
+    const backendUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/me/permissions`;
+
+    const res = await fetch(backendUrl, {
+        headers: {
+            "Authorization": `Bearer ${session.accessToken}`,
+        },
+        cache: "no-store",
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    if (data?.success && Array.isArray(data.data)) {
+        return data.data.includes(permissionKey);
+    }
+  } catch (error) {
+    console.error("Error fetching permissions in server action:", error);
+  }
+  return false;
 };
 
 export const hasRole = async (roleName: string) => {

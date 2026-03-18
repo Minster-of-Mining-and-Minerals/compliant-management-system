@@ -31,7 +31,6 @@ interface ComplaintFormValues {
 }
 
 const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplaintProps) => {
-    console.log("passed sector: ", sector_node_id)
     const { data: session } = useSession();
     const { data: userTypes = [] } = useGetUserTypesQuery();
     const complaint_type_id = userTypes?.find(
@@ -68,7 +67,20 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
     const [createComplaint, { isLoading: isSubmitting }] =
         useCreateComplaintMutation();
 
+    // Initialize sector from prop when component opens or prop changes
+    useEffect(() => {
+        if (isOpen && sector_node_id && sectors.length > 0) {
+            const selectedSector = sectors.find(
+                (item) => item.sector_node_id === sector_node_id
+            );
 
+            if (selectedSector) {
+                setSectorId(sector_node_id);
+                setDepartments(selectedSector?.children || []);
+                setDepartmentId(""); // Reset department when sector changes
+            }
+        }
+    }, [sector_node_id, sectors, isOpen]);
 
     const handleSectorChange = (value: string) => {
         setSectorId(value);
@@ -94,19 +106,6 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
         }
     }, [complaintCategories, complaintCategoryId]);
 
-    useEffect(() => {
-        if (!sector_node_id || sectors.length === 0) return;
-
-        const selectedSector = sectors.find(
-            (item) => item.sector_node_id === sector_node_id
-        );
-
-        setDepartments(selectedSector?.children || []);
-        setSectorId(sector_node_id); // Optional: set the selected sector
-        setDepartmentId(""); // reset department selection
-    }, [sector_node_id, sectors]);
-
-
     const handleChange = (field: keyof ComplaintFormValues, value: any) => {
         setFormValues((prev) => ({
             ...prev,
@@ -123,6 +122,12 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
         setNameOfPersonConcerned("");
         setRequestedAction("");
         setFormValues({ attachment_id: [] });
+
+        // Reset category to first option
+        if (complaintCategories.length > 0) {
+            setComplaintCategoryId(complaintCategories[0].category_id);
+            setComplaintCategoryName(complaintCategories[0].name);
+        }
     };
 
     const handleClose = () => {
@@ -164,12 +169,11 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                 complaint_type_id,
                 full_name: session?.user?.name || undefined,
                 email: session?.user?.email || undefined,
-                // user_id: session?.user?.id || undefined,
                 phone_number: session?.user?.phone_number || undefined,
 
                 // Required fields
                 category_id: complaintCategoryId,
-                sector_node_id: sector_node_id ?? sectorId,
+                sector_node_id: sectorId, // Always use the state value
                 department_id: departmentId || undefined,
                 description: complaintDescription.trim(),
 
@@ -188,10 +192,6 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
 
             // Reset form and close modal
             resetForm();
-            if (complaintCategories.length > 0) {
-                setComplaintCategoryId(complaintCategories[0].category_id);
-                setComplaintCategoryName(complaintCategories[0].name);
-            }
             onClose();
         } catch (err: any) {
             toast.error(
@@ -278,8 +278,8 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                             />
                         </div>
 
-                        {/* Sector */}
-                        {!sector_node_id && <div className="w-full">
+                        {/* Sector - Always show but disable if sector_node_id is provided */}
+                        <div className="w-full">
                             <label
                                 htmlFor="sector"
                                 className="block text-sm text-golden-dark"
@@ -290,7 +290,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                             <Select
                                 value={sectorId}
                                 onValueChange={handleSectorChange}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !!sector_node_id} // Disable if sector_node_id is provided
                             >
                                 <SelectTrigger className="w-full h-12 mt-1">
                                     <SelectValue placeholder="Select sector" />
@@ -306,7 +306,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </div>}
+                        </div>
 
                         {/* Department */}
                         <div className="w-full">

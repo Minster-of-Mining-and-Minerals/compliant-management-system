@@ -4,8 +4,9 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { PermissionKey, hasPermission } from "@/lib/permissions";
+import { PermissionKey } from "@/lib/permissions";
 import { Loader2 } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface PermissionGuardProps {
     children: React.ReactNode;
@@ -24,20 +25,21 @@ export function PermissionGuard({
     fallback,
     redirectTo = "/dashboard", // Default redirect if no access
 }: PermissionGuardProps) {
-    const { data: session, status } = useSession();
+    const { status } = useSession();
     const router = useRouter();
+    const { permissions: userPermissions, isLoading: isPermissionsLoading, check } = usePermissions();
+
+    const isLoading = status === "loading" || (status === "authenticated" && isPermissionsLoading);
 
     useEffect(() => {
-        // Wait for session to load
-        if (status === "loading") return;
+        // Wait for session and permissions to load
+        if (isLoading) return;
 
         // If not authenticated, let middleware handle it
         if (status === "unauthenticated") return;
 
         // Check permissions
-        const userPermissions = session?.user?.permissions || [];
-
-        const hasAccess = hasPermission(userPermissions, {
+        const hasAccess = check({
             anyPermissions,
             allPermissions,
             onlyPermissions,
@@ -46,10 +48,10 @@ export function PermissionGuard({
         if (!hasAccess) {
             router.push(redirectTo);
         }
-    }, [session, status, anyPermissions, allPermissions, onlyPermissions, redirectTo, router]);
+    }, [isLoading, status, userPermissions, anyPermissions, allPermissions, onlyPermissions, redirectTo, router, check]);
 
     // Show loading state
-    if (status === "loading") {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
@@ -63,8 +65,7 @@ export function PermissionGuard({
     }
 
     // Check permissions for initial render
-    const userPermissions = session?.user?.permissions || [];
-    const hasAccess = hasPermission(userPermissions, {
+    const hasAccess = check({
         anyPermissions,
         allPermissions,
         onlyPermissions,

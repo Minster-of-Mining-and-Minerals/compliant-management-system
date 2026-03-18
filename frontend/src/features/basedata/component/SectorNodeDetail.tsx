@@ -1,25 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetSectorNodeByIdQuery } from "@/redux/api/sectorNodeApi";
 import { useGetSectorRepresentativesQuery } from "@/redux/api/sectorRepresentativeApi";
 import { Badge } from "@/components/ui/badge";
-import { DataTable } from "@/features/template/component/tableList/DataTable";
-import { TableLayout } from "@/features/template/component/tableList/TableLayout";
-import { ColumnDef } from "@tanstack/react-table";
-import { SectorNode } from "@/redux/types/sectorNode";
-import { SectorRepresentative } from "@/redux/types/representative";
 import Loading01 from "@/features/template/component/Loading/Loading01";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash, ArrowLeft, UserPlus } from "lucide-react";
+import { Eye, Edit, Trash, ArrowLeft, UserPlus, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssignRepresentativeModal } from "./AssignRepresentativeModal";
+import SectorRepresentativesTable from "./SectorRepresentative";
+import ChildSectorList from "./ChildSectorList";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useUpdateSectorNodeMutation } from "@/redux/api/sectorNodeApi";
+import { toast } from "sonner";
+import { PermissionGuard } from "@/features/complaint-management/component/PermissionGuard";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SectorNodeDetail() {
   const params = useParams();
   const router = useRouter();
   const id = params?.sectorId as string;
+  const { check } = usePermissions();
 
   const { data: sector, isLoading, isError } = useGetSectorNodeByIdQuery(id, {
     skip: !id,
@@ -30,163 +33,71 @@ export default function SectorNodeDetail() {
     { skip: !id }
   );
 
-  const head = representatives.find(r => r.can_manage);
+  const head = sector?.head;
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [assigningHead, setAssigningHead] = useState(false);
+  const [confirmRemoveHead, setConfirmRemoveHead] = useState(false);
+
+  const [activeTab, setActiveTab] = useState<"children" | "representatives">(
+    "children"
+  );
+
+  const [updateSectorNode, { isLoading: isRemovingHead }] = useUpdateSectorNodeMutation();
+
+  // Check permissions for each tab SECTOR_REPRESENTATIVE
+  const canViewChildren = useMemo(() =>
+    check({ anyPermissions: ["SECTORs:READ"] }),
+    [check]);
+
+  const canViewRepresentatives = useMemo(() =>
+    check({ anyPermissions: ["SECTOR_REPRESENTATIVE:READ"] }),
+    [check]);
+
+  // Determine which tabs to show
+  const tabs = useMemo(() => {
+    const availableTabs = [];
+
+    if (canViewChildren) {
+      availableTabs.push({
+        value: "children",
+        label: `Child Sectors (${sector?.children?.length || 0})`,
+        component: <ChildSectorList />
+      });
+    }
+
+    if (canViewRepresentatives) {
+      availableTabs.push({
+        value: "representatives",
+        label: `Representatives (${representatives.length})`,
+        component: <SectorRepresentativesTable headId={sector?.head_id} />
+      });
+    }
+
+    return availableTabs;
+  }, [canViewChildren, canViewRepresentatives, sector?.children?.length, representatives.length, sector?.head_id]);
+
+  // Set default active tab based on available tabs
+  const defaultTab = tabs.length > 0 ? tabs[0].value : undefined;
+
+  const handleRemoveHead = async () => {
+    try {
+      await updateSectorNode({ id, data: { head_id: null } }).unwrap();
+      toast.success("Sector Head removed successfully");
+      setConfirmRemoveHead(false);
+    } catch (e: any) {
+      toast.error(e?.data?.message || "Failed to remove head");
+    }
+  };
 
   const openAssignModal = (isHead: boolean) => {
     setAssigningHead(isHead);
     setIsModalOpen(true);
   };
 
-  // Pagination for children table
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-
-  // Pagination for reps table
-  const [repPageIndex, setRepPageIndex] = useState(0);
-  const [repPageSize, setRepPageSize] = useState(10);
-
   if (isLoading || repsLoading) return <Loading01 />;
   if (isError || !sector) return <div className="p-8 text-center text-red-500">Error loading sector details or sector not found.</div>;
-
-  const childrenData = sector.children || [];
-  const paginatedChildren = childrenData.slice(
-    pageIndex * pageSize,
-    pageIndex * pageSize + pageSize
-  );
-
-  const paginatedReps = representatives.slice(
-    repPageIndex * repPageSize,
-    repPageIndex * repPageSize + repPageSize
-  );
-
-  const handlePagination = (index: number, size: number) => {
-    setPageIndex(index);
-    setPageSize(size);
-  };
-
-  const handleRepPagination = (index: number, size: number) => {
-    setRepPageIndex(index);
-    setRepPageSize(size);
-  };
-
-  const columns: ColumnDef<SectorNode>[] = [
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => (
-        <span className="font-medium text-primary">
-          {row.getValue("name")}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => (
-        <div className="max-w-[300px] truncate text-muted-foreground">
-          {row.getValue("description") || "—"}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "is_active",
-      header: "Status",
-      cell: ({ row }) => {
-        const isActive = row.getValue("is_active") as boolean;
-        return (
-          <Badge status={isActive ? "active" : "inactive"}>
-            {isActive ? "Active" : "Inactive"}
-          </Badge>
-        );
-      },
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Button
-            onClick={() => router.push(`/basedata/sectors/${row.original.sector_node_id}`)}
-            variant="ghost"
-            size="icon"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
-  const repColumns: ColumnDef<SectorRepresentative>[] = [
-    {
-      id: "full_name",
-      accessorFn: (row) => row.representative?.full_name,
-      header: "Name",
-      cell: ({ row }) => (
-        <span className="font-medium text-primary">
-          {row.original.representative?.full_name || "Unknown"}
-        </span>
-      ),
-    },
-    {
-      id: "email",
-      accessorFn: (row) => row.representative?.email,
-      header: "Email",
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {row.original.representative?.email || "—"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "can_manage",
-      header: "Role",
-      cell: ({ row }) => {
-        const canManage = row.original.can_manage;
-        return (
-          <Badge status={canManage ? "active" : "inactive"}>
-            {canManage ? "Head" : "Representative"}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "is_active",
-      header: "Status",
-      cell: ({ row }) => {
-        const isActive = row.getValue("is_active") as boolean;
-        return (
-          <Badge status={isActive ? "active" : "inactive"}>
-            {isActive ? "Active" : "Inactive"}
-          </Badge>
-        );
-      },
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon">
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
 
   return (
     <div className="bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden font-sans py-6 pb-24 flex flex-col items-start min-h-screen p-4 md:p-8 hover:bg-transparent">
@@ -247,31 +158,45 @@ export default function SectorNodeDetail() {
           </div>
         </div>
 
-        {/* Head Section */}
-        <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <p className="font-semibold text-golden-dark mb-1">Sector Head</p>
-            {head ? (
-              <div className="flex flex-col">
-                <span className="font-medium text-lg text-primary">{head.representative?.full_name || "Unknown User"}</span>
-                <span className="text-sm text-gray-500">{head.representative?.email || "No email available"}</span>
-              </div>
+        {/* Head Section - Only show if user has permission to view/manage heads */}
+        <PermissionGuard requireAny={["SECTOR:UPDATE", "SECTOR_REPRESENTATIVE:CREATE"]}>
+          <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-golden-dark mb-1">Sector Head</p>
+              {head ? (
+                <div className="flex flex-col">
+                  <span className="font-medium text-lg text-primary">{head.full_name || "Unknown User"}</span>
+                  <span className="text-sm text-gray-500">{head.email || "No email available"}</span>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No head assigned for this sector.</p>
+              )}
+            </div>
+            {!head ? (
+              <PermissionGuard requireAll={["SECTOR_REPRESENTATIVE:CREATE"]}>
+                <Button variant="default" className="shrink-0 bg-[#D4AF37] hover:bg-[#B3932F] text-white" onClick={() => openAssignModal(true)}>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Assign Head
+                </Button>
+              </PermissionGuard>
             ) : (
-              <p className="text-gray-500 text-sm">No head assigned for this sector.</p>
+              <div className="flex items-center gap-2">
+                <PermissionGuard requireAll={["SECTOR_REPRESENTATIVE:UPDATE"]}>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => openAssignModal(true)}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Change Head
+                  </Button>
+                </PermissionGuard>
+                <PermissionGuard requireAll={["SECTOR:UPDATE"]}>
+                  <Button variant="outline" size="sm" className="shrink-0 text-red-500 hover:text-red-600 border-red-200 hover:bg-red-50" onClick={() => setConfirmRemoveHead(true)}>
+                    <Trash className="w-4 h-4 mr-2" />
+                    Remove
+                  </Button>
+                </PermissionGuard>
+              </div>
             )}
           </div>
-          {!head ? (
-            <Button variant="default" className="shrink-0 bg-[#D4AF37] hover:bg-[#B3932F] text-white" onClick={() => openAssignModal(true)}>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Assign Head
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" className="shrink-0" onClick={() => openAssignModal(true)}>
-              <Edit className="w-4 h-4 mr-2" />
-              Change Head
-            </Button>
-          )}
-        </div>
+        </PermissionGuard>
 
         {/* Description */}
         <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-5 mb-10">
@@ -281,84 +206,60 @@ export default function SectorNodeDetail() {
           </p>
         </div>
 
-        {/* Children and Representatives Tabs */}
-        <div className="mt-8">
-          <Tabs defaultValue="children" className="w-full">
-            <TabsList className="mb-6 flex space-x-2 bg-slate-100 p-1 rounded-lg w-fit">
-              <TabsTrigger value="children" className="text-base px-6 py-2">
-                Child Sectors ({childrenData.length})
-              </TabsTrigger>
-              <TabsTrigger value="representatives" className="text-base px-6 py-2">
-                Representatives ({representatives.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="children" className="mt-0 outline-none">
-              <div className="border border-[#BFD7EA] rounded-xl overflow-hidden bg-white">
-                {childrenData.length > 0 ? (
-                  <TableLayout
-                    actions={[]}
-                    filters={[]}
-                    filterColumnsPerRow={1}
+        {/* Children and Representatives Tabs - Only show if at least one tab is available */}
+        {tabs.length > 0 ? (
+          <div className="mt-8">
+            <Tabs defaultValue={defaultTab} className="w-full">
+              <TabsList className="mb-6 flex space-x-2 bg-slate-100 p-1 rounded-lg w-fit">
+                {tabs.map((tab) => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="text-base px-6 py-2"
                   >
-                    <DataTable
-                      columns={columns}
-                      data={paginatedChildren}
-                      totalPageCount={Math.ceil(childrenData.length / pageSize)}
-                      handlePagination={handlePagination}
-                      tablePageSize={pageSize}
-                      currentIndex={pageIndex}
-                    />
-                  </TableLayout>
-                ) : (
-                  <div className="p-12 text-center flex flex-col items-center justify-center">
-                    <p className="text-gray-500 mb-2">This sector currently has no child departments.</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
 
-            <TabsContent value="representatives" className="mt-0 outline-none">
-              <div className="border border-[#BFD7EA] rounded-xl overflow-hidden bg-white">
-                {representatives.length > 0 ? (
-                  <TableLayout
-                    actions={[
-                      <Button className="ml-auto" size="sm" onClick={() => openAssignModal(false)}>
-                        <UserPlus className="w-4 h-4 mr-2" /> Add Representative
-                      </Button>]
-                    }
-                    filters={[]}
-                    filterColumnsPerRow={1}
-                  >
-                    <DataTable
-                      columns={repColumns}
-                      data={paginatedReps}
-                      totalPageCount={Math.ceil(representatives.length / repPageSize) || 1}
-                      handlePagination={handleRepPagination}
-                      tablePageSize={repPageSize}
-                      currentIndex={repPageIndex}
-                    />
-                  </TableLayout>
-                ) : (
-                  <div className="p-12 text-center flex flex-col items-center justify-center">
-                    <p className="text-gray-500 mb-2">This sector currently has no representatives.</p>
-                    <Button variant="outline" className="mt-4" onClick={() => openAssignModal(false)}>
-                      <UserPlus className="w-4 h-4 mr-2" /> Add First Representative
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+              {tabs.map((tab) => (
+                <TabsContent key={tab.value} value={tab.value} className="mt-0 outline-none">
+                  {tab.component}
+                </TabsContent>
+              ))}
+            </Tabs>
+          </div>
+        ) : (
+          null
+        )}
 
-        {/* Modals */}
         <AssignRepresentativeModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           sectorNodeId={id}
           isHead={assigningHead}
+          headId={sector?.head_id}
         />
+
+        {/* Remove Head Confirmation Modal */}
+        <Dialog open={confirmRemoveHead} onOpenChange={setConfirmRemoveHead}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Remove Sector Head</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to remove the current Sector Head? This sector will no longer have a designated leader.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={() => setConfirmRemoveHead(false)} disabled={isRemovingHead}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleRemoveHead} disabled={isRemovingHead}>
+                {isRemovingHead ? "Removing..." : "Remove Head"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </div>

@@ -12,8 +12,7 @@ import {
   SelectValue,
   SelectTrigger,
 } from "@/components/ui/select";
-import { hasAnyPermission } from "@/lib/permissions";
-import { useSession } from "next-auth/react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export const TableLayout: React.FC<PageLayoutProps> = ({
   title,
@@ -27,8 +26,7 @@ export const TableLayout: React.FC<PageLayoutProps> = ({
   toggleHierarchyNode,
   setToggleHierarchyNode,
 }) => {
-  const { data: session } = useSession();
-  const userPermissions = session?.user.permissions || [];
+  const { canAny } = usePermissions();
   // Get URL state for search
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -49,7 +47,7 @@ export const TableLayout: React.FC<PageLayoutProps> = ({
     if (!action.permissions || action.permissions.length === 0) {
       return true; // no permission required
     }
-    return hasAnyPermission(userPermissions, action.permissions);
+    return canAny(action.permissions as any);
   });
 
   return (

@@ -41,8 +41,8 @@ const assignRepresentativeSchema = Joi.object({
 // =================== Update Representative Schema ===================
 const updateRepresentativeSchema = Joi.object({
     can_manage: Joi.boolean().optional(),
-    valid_from: Joi.date().optional(),
-    valid_until: Joi.date().optional(),
+    valid_from: Joi.date().optional().allow(null, ""),
+    valid_until: Joi.date().optional().allow(null, ""),
     is_active: Joi.boolean().optional(),
     notes: Joi.string().optional().allow(null, ""),
 });

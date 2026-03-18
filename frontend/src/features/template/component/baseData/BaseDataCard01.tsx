@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Eye, FileText, Users, Car, Building } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { PermissionGuard } from "@/features/complaint-management/component/PermissionGuard";
-import { useSession } from "next-auth/react";
-import { hasAnyPermission, PermissionKey } from "@/lib/permissions";
+import { usePermissions } from "@/hooks/usePermissions";
+import { PermissionKey } from "@/lib/permissions";
 
 const dataCards: DataCardItem[] = [
   {
@@ -32,8 +32,7 @@ const dataCards: DataCardItem[] = [
 
 function BaseDataCard01() {
   const router = useRouter();
-  const { data: session } = useSession();
-  const userPermissions = (session?.user?.permissions ?? []) as PermissionKey[];
+  const { canAny } = usePermissions();
 
   return (
     <div className="flex min-h-[calc(100vh-150px)] rounded-lg flex-col bg-white p-5 ">
@@ -41,7 +40,7 @@ function BaseDataCard01() {
       <p className="text-sm text-muted-foreground">Manage all your base data here</p>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6 ">
         {dataCards
-          .filter((item) => hasAnyPermission(userPermissions, item.permission)) // ✅ Only show if user has at least one permission
+          .filter((item) => canAny(item.permission as PermissionKey[])) // ✅ Only show if user has at least one permission
           .map((item) => {
             const Icon = item.icon;
 

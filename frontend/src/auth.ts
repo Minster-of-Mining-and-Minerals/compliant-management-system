@@ -52,7 +52,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           sector: user.sector,
           department: user.department,
           roles: user.roles,
-          permissions: user?.permissions,
           accessToken: user.accessToken,
         };
       }
@@ -63,18 +62,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token) {
         return {
           ...session,
-          accessToken: token.accessToken,
+          accessToken: token.accessToken as string | undefined,
           user: {
             ...session.user,
             id: token.id as string,
-            role: token.role,
-            phone_number: token.phone_number,
-            profile_image: token.profile_image,
-            is_first_logged_in: token.is_first_logged_in,
-            sector: token.sector,
-            department: token.department,
-            roles: token.roles,
-            permissions: token.permissions,
+            role: token.role as string | null | undefined,
+            phone_number: token.phone_number as string | null | undefined,
+            profile_image: token.profile_image as string | null | undefined,
+            is_first_logged_in: token.is_first_logged_in as boolean | undefined,
+            sector: token.sector as any,
+            department: token.department as any,
+            roles: token.roles as any,
           },
         };
       }
@@ -106,7 +104,6 @@ declare module "next-auth" {
     }>;
     sector?: SectorNode;
     department?: SectorNode;
-    permissions?: string[] | null;
   }
 
   interface Session {
@@ -133,7 +130,6 @@ declare module "next-auth" {
           action: string;
         }>;
       }>;
-      permissions?: string[] | null;
     };
   }
 }
@@ -157,6 +153,5 @@ declare module "next-auth/jwt" {
         key: string;
       }>;
     }>;
-    permissions?: string[] | null;
   }
 }

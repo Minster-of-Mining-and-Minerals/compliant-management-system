@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../../controllers/user-controllers/authController");
+const { authenticateToken } = require("../../middlewares/authMiddleware");
 const {
   validateLogin,
 } = require("../../validators/user-validators/authValidator");
@@ -52,5 +53,19 @@ router.post("/login", validateLogin, authController.login);
  *         description: Logout successful
  */
 router.post("/logout", authController.logout);
+
+/**
+ * @swagger
+ * /api/auth/me/permissions:
+ *   get:
+ *     summary: Get permissions for the currently logged in user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved user permissions
+ */
+router.get("/me/permissions", authenticateToken, authController.getMePermissions);
 
 module.exports = router;

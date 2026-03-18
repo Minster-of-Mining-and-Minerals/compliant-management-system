@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
+import { usePermissions } from "@/hooks/usePermissions";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload,
@@ -74,8 +75,9 @@ export default function ComplaintDetailPage() {
 
 
 
+  const { permissions: userPermissions } = usePermissions();
+
   const userId = session?.user?.id || "";
-  const userPermissions = (session?.user?.permissions ?? []) as PermissionKey[];
 
   useEffect(() => {
     setEscalateComplaint(canEscalate(userId, complaint?.status, complaint));

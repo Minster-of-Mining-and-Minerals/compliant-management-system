@@ -18,47 +18,65 @@ export const normalizePermissions = (
     );
 };
 
+// Helper function to normalize different permission formats
+export const normalizeToPermissionKeys = (
+  permissions?: readonly (PermissionKey | RawPermission)[] | null
+): PermissionKey[] => {
+  if (!permissions || !Array.isArray(permissions)) return [];
+
+  return permissions.map(p => {
+    // If it's already a string (PermissionKey), return it as is
+    if (typeof p === 'string') return p as PermissionKey;
+
+    // If it's a RawPermission object, convert it
+    if (p.resource && p.action) {
+      return `${p.resource!.toUpperCase()}:${p.action!.toUpperCase()}` as PermissionKey;
+    }
+
+    return null;
+  }).filter((p): p is PermissionKey => p !== null);
+};
+
 /**
  * User must have ALL permissions
  */
 export const hasAllPermissions = (
-  rawUserPermissions?: readonly RawPermission[] | null,
+  userPermissions?: readonly (PermissionKey | RawPermission)[] | null,
   required?: readonly PermissionKey[],
 ): boolean => {
   if (!required?.length) return true;
 
-  const userPermissions = normalizePermissions(rawUserPermissions);
-  return required.every((p) => userPermissions.includes(p));
+  const permissionKeys = normalizeToPermissionKeys(userPermissions);
+  return required.every((p) => permissionKeys.includes(p));
 };
 
 /**
  * User must have AT LEAST ONE permission
  */
 export const hasAnyPermission = (
-  rawUserPermissions?: readonly RawPermission[] | null,
+  userPermissions?: readonly (PermissionKey | RawPermission)[] | null,
   required?: readonly PermissionKey[],
 ): boolean => {
   if (!required?.length) return true;
 
-  const userPermissions = normalizePermissions(rawUserPermissions);
-  return required.some((p) => userPermissions.includes(p));
+  const permissionKeys = normalizeToPermissionKeys(userPermissions);
+  return required.some((p) => permissionKeys.includes(p));
 };
 
 /**
  * User must have ONLY these permissions
  */
 export const hasOnlyPermissions = (
-  rawUserPermissions?: readonly RawPermission[] | null,
+  userPermissions?: readonly (PermissionKey | RawPermission)[] | null,
   required?: readonly PermissionKey[],
 ): boolean => {
   if (!required?.length) return false;
 
-  const userPermissions = normalizePermissions(rawUserPermissions);
+  const permissionKeys = normalizeToPermissionKeys(userPermissions);
 
-  if (userPermissions.length !== required.length) return false;
-  return required.every((p) => userPermissions.includes(p));
+  if (permissionKeys.length !== required.length) return false;
+  return required.every((p) => permissionKeys.includes(p));
 };
-
 /**
  * Combined permission checker that handles all three types
  */

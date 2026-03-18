@@ -12,6 +12,15 @@ export const permissionApi = baseApi.injectEndpoints({
       providesTags: ["Permissions"],
     }),
 
+    // GET MY permissions
+    getMyPermissions: builder.query<any[], void>({
+      query: () => "/auth/me/permissions",
+      transformResponse: (response: any): any[] => {
+        return response.data ?? [];
+      },
+      providesTags: ["Permissions"],
+    }),
+
     // ACTIVATE
     activatePermission: builder.mutation<Permission, string>({
       query: (permission_id) => ({
@@ -47,6 +56,7 @@ export const permissionApi = baseApi.injectEndpoints({
 
 export const {
   useGetPermissionsQuery,
+  useGetMyPermissionsQuery,
   useActivatePermissionMutation,
   useDeactivatePermissionMutation,
   useTogglePermissionMutation,

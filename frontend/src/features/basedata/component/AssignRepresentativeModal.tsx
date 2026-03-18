@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect, SelectOption } from "@/components/ui/searchable-select";
-import { useGetUsersQuery } from "@/redux/api/userApi";
+import { useGetUsersQuery, useGetUserTypesQuery } from "@/redux/api/userApi";
 import { useAssignRepresentativeMutation } from "@/redux/api/sectorRepresentativeApi";
+import { useUpdateSectorNodeMutation } from "@/redux/api/sectorNodeApi";
 import { toast } from "sonner";
 
 interface Props {
@@ -11,29 +12,49 @@ interface Props {
   onClose: () => void;
   sectorNodeId: string;
   isHead: boolean;
+  headId?: string | null;
 }
 
-export function AssignRepresentativeModal({ isOpen, onClose, sectorNodeId, isHead }: Props) {
-  const { data: users, isLoading: usersLoading } = useGetUsersQuery({ is_active: true });
-  const [assign, { isLoading: submitting }] = useAssignRepresentativeMutation();
-  
+export function AssignRepresentativeModal({ isOpen, onClose, sectorNodeId, isHead, headId }: Props) {
+  const {
+    data: userTypes = [],
+    isLoading: isLoadingType,
+    isError: typeError,
+    refetch: refetchType,
+  } = useGetUserTypesQuery();
+  const userTypeId = userTypes?.find(
+    (type: any) => type.name === "internal"
+  )?.user_type_id;
+  const { data: users, isLoading: usersLoading } = useGetUsersQuery({ is_active: true, user_type_id: userTypeId });
+  const [assign, { isLoading: isAssigning }] = useAssignRepresentativeMutation();
+  const [updateSectorNode, { isLoading: isUpdatingSector }] = useUpdateSectorNodeMutation();
+  const submitting = isAssigning || isUpdatingSector;
+
   const [selectedUser, setSelectedUser] = useState<SelectOption | null>(null);
-  
-  const userOptions: SelectOption[] = users?.map(u => ({
-    value: u.user_id,
-    label: u.full_name,
-    data: { description: u.email }
-  })) || [];
+
+  const userOptions: SelectOption[] = users
+    ?.filter(u => !headId || u.user_id !== headId || isHead)
+    .map(u => ({
+      value: u.user_id,
+      label: u.full_name,
+      data: { description: u.email }
+    })) || [];
 
   const handleAssign = async () => {
     if (!selectedUser) return;
     try {
-      await assign({
-        sector_node_id: sectorNodeId,
-        user_id: selectedUser.value,
-        can_manage: isHead,
-        valid_from: new Date().toISOString().split('T')[0]
-      }).unwrap();
+      if (isHead) {
+        await updateSectorNode({
+          id: sectorNodeId,
+          data: { head_id: selectedUser.value },
+        }).unwrap();
+      } else {
+        await assign({
+          sector_node_id: sectorNodeId,
+          user_id: selectedUser.value,
+          can_manage: false,
+        }).unwrap();
+      }
       toast.success(isHead ? "Sector head assigned successfully" : "Representative added successfully");
       setSelectedUser(null);
       onClose();
@@ -58,16 +79,16 @@ export function AssignRepresentativeModal({ isOpen, onClose, sectorNodeId, isHea
         </DialogHeader>
         <div className="py-4 space-y-4">
           <div className="space-y-2">
-             <label className="text-sm font-medium">Select User</label>
-             <div className="min-h-[250px] relative">
-               <SearchableSelect
-                  options={userOptions}
-                  value={selectedUser}
-                  onChange={(option) => setSelectedUser(option as SelectOption)}
-                  placeholder={usersLoading ? "Loading users..." : "Search user by name or email..."}
-                  isDisabled={usersLoading || submitting}
-               />
-             </div>
+            <label className="text-sm font-medium">Select User</label>
+            <div className="min-h-[250px] relative">
+              <SearchableSelect
+                options={userOptions}
+                value={selectedUser}
+                onChange={(option) => setSelectedUser(option as SelectOption)}
+                placeholder={usersLoading ? "Loading users..." : "Search user by name or email..."}
+                isDisabled={usersLoading || submitting}
+              />
+            </div>
           </div>
         </div>
         <DialogFooter>

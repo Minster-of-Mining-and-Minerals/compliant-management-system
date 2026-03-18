@@ -1,9 +1,11 @@
 // ==========================
 // Sector Node Entity
 // ==========================
+import { User } from "./user";
 export interface SectorNode {
   sector_node_id: string; // Unique ID
   parent_id?: string | null; // Parent node ID (nullable)
+  head_id?: string | null; // Added head_id
   name: string; // Node name
   description?: string | null; // Optional description
   level: number; // Hierarchy level
@@ -13,6 +15,7 @@ export interface SectorNode {
   deleted_at?: string | null; // Soft delete timestamp
   parent?: SectorNode[];
   children?: SectorNode[]; // Optional children for nested structure
+  head?: User; // Added head
 }
 
 // ==========================
@@ -31,6 +34,7 @@ export interface CreateSectorNodePayload {
 // ==========================
 export interface UpdateSectorNodePayload {
   parent_id?: string | null;
+  head_id?: string | null;
   name?: string;
   description?: string | null;
   level?: number;

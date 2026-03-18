@@ -1,10 +1,16 @@
 // hooks/usePermissions.ts
 import { useSession } from "next-auth/react";
-import { PermissionKey, hasPermission } from "@/lib/permissions";
+import { PermissionKey, hasPermission, normalizePermissions } from "@/lib/permissions";
+import { useGetMyPermissionsQuery } from "@/redux/api/permissionApi";
 
 export function usePermissions() {
-  const { data: session } = useSession();
-  const userPermissions = session?.user?.permissions || [];
+  const { status } = useSession();
+  const { data: generatedPermissions = [], isLoading: isPermissionsLoading } =
+    useGetMyPermissionsQuery(undefined, {
+      skip: status !== "authenticated",
+    });
+
+  const userPermissions = normalizePermissions(generatedPermissions);
 
   const checkPermission = (required: {
     anyPermissions?: PermissionKey[];
@@ -28,6 +34,7 @@ export function usePermissions() {
 
   return {
     permissions: userPermissions,
+    isLoading: status === "loading" || isPermissionsLoading,
     check: checkPermission,
     can,
     canAny,

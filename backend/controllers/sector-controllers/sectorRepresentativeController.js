@@ -343,14 +343,21 @@ const getSectorRepresentatives = async (req, res) => {
         if (include_expired !== "true" && include_inactive !== "true") {
             const now = new Date();
             filteredRepresentatives = representatives.filter(rep => {
-                // If can_manage is true, ignore time validity
-                if (rep.can_manage) return true;
-
-                // Otherwise check time validity
                 const validFrom = new Date(rep.valid_from);
                 const validUntil = rep.valid_until ? new Date(rep.valid_until) : null;
+                const isValid = validFrom <= now && (!validUntil || validUntil >= now);
 
-                return validFrom <= now && (!validUntil || validUntil >= now);
+                // If can_manage is true and expired, revert to normal rep temporarily for response
+                if (rep.can_manage) {
+                    if (!isValid) {
+                        rep.can_manage = false;
+                        rep.valid_until = null;
+                    }
+                    return true;
+                }
+
+                // Otherwise check time validity for standard reps
+                return isValid;
             });
         }
 
@@ -461,46 +468,57 @@ const checkUserAuthority = async (req, res) => {
             });
         }
 
-        // Check if user is representative with authority
+        // Check if user is representative
         const representative = await SectorRepresentative.findOne({
             where: {
                 sector_node_id: sector_id,
                 user_id,
                 is_active: true,
-                [Op.or]: [
-                    { can_manage: true }, // If can_manage is true, ignore validity
-                    {
-                        [Op.and]: [
-                            { can_manage: false },
-                            { valid_from: { [Op.lte]: new Date() } },
-                            {
-                                [Op.or]: [
-                                    { valid_until: null },
-                                    { valid_until: { [Op.gte]: new Date() } }
-                                ]
-                            }
-                        ]
-                    }
-                ]
             },
         });
 
         if (representative) {
-            return res.status(200).json({
-                success: true,
-                message: "User authority checked successfully",
-                data: {
-                    hasAuthority: true,
-                    authorityType: "representative",
-                    details: {
-                        isHead: false,
-                        isRepresentative: true,
-                        canManage: representative.can_manage,
-                        validFrom: representative.valid_from,
-                        validUntil: representative.valid_until,
+            const now = new Date();
+            const validFrom = new Date(representative.valid_from);
+            const validUntil = representative.valid_until ? new Date(representative.valid_until) : null;
+            const isValid = validFrom <= now && (!validUntil || validUntil >= now);
+
+            let isRep = false;
+            let canManage = false;
+
+            if (representative.can_manage) {
+                // For acting heads, valid_until applies to their acting head status
+                if (isValid) {
+                    isRep = true;
+                    canManage = true;
+                } else {
+                    isRep = true; // Still a rep, just no longer an acting head
+                    canManage = false;
+                }
+            } else {
+                // For normal reps, valid_until applies to their entire status
+                if (isValid) {
+                    isRep = true;
+                }
+            }
+
+            if (isRep) {
+                return res.status(200).json({
+                    success: true,
+                    message: "User authority checked successfully",
+                    data: {
+                        hasAuthority: true,
+                        authorityType: "representative",
+                        details: {
+                            isHead: false,
+                            isRepresentative: true,
+                            canManage: canManage,
+                            validFrom: representative.valid_from,
+                            validUntil: canManage ? representative.valid_until : null,
+                        },
                     },
-                },
-            });
+                });
+            }
         }
 
         return res.status(200).json({
@@ -534,24 +552,45 @@ const cleanExpiredRepresentatives = async (req, res) => {
     try {
         const now = new Date();
 
-        // Find representatives that are:
-        // 1. Active
-        // 2. can_manage is false
-        // 3. valid_until is not null and less than current date
-        const expiredRepresentatives = await SectorRepresentative.findAll({
+        // 1. Relegate expired Acting Heads back to standard representatives
+        const expiredActingHeads = await SectorRepresentative.findAll({
             where: {
                 is_active: true,
-                can_manage: false,
-                valid_until: {
-                    [Op.lt]: now,
-                },
+                can_manage: true,
+                valid_until: { [Op.lt]: now },
             },
             transaction: t,
         });
 
-        const expiredCount = expiredRepresentatives.length;
+        if (expiredActingHeads.length > 0) {
+            await SectorRepresentative.update(
+                {
+                    can_manage: false,
+                    valid_until: null,
+                    updated_at: now,
+                },
+                {
+                    where: {
+                        representative_id: expiredActingHeads.map(rep => rep.representative_id),
+                    },
+                    transaction: t,
+                }
+            );
+        }
 
-        if (expiredCount > 0) {
+        // 2. Disable expired normal Representatives
+        const expiredReps = await SectorRepresentative.findAll({
+            where: {
+                is_active: true,
+                can_manage: false,
+                valid_until: { [Op.lt]: now },
+            },
+            transaction: t,
+        });
+
+        let cleanedCount = expiredActingHeads.length + expiredReps.length;
+
+        if (expiredReps.length > 0) {
             await SectorRepresentative.update(
                 {
                     is_active: false,
@@ -559,7 +598,7 @@ const cleanExpiredRepresentatives = async (req, res) => {
                 },
                 {
                     where: {
-                        representative_id: expiredRepresentatives.map(rep => rep.representative_id),
+                        representative_id: expiredReps.map(rep => rep.representative_id),
                     },
                     transaction: t,
                 }
@@ -570,9 +609,9 @@ const cleanExpiredRepresentatives = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: `Cleaned up ${expiredCount} expired representative assignments`,
+            message: `Cleaned up ${cleanedCount} expired representative assignments`,
             data: {
-                cleaned_count: expiredCount,
+                cleaned_count: cleanedCount,
             },
         });
     } catch (error) {

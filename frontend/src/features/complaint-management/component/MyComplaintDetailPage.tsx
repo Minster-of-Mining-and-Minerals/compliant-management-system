@@ -32,14 +32,10 @@ import {
   canResolve,
 } from "@/utils/taskHelper";
 import { toast } from "sonner";
-import DetailHeader from "@/components/common/DetailHeader";
-import PageMeta from "@/components/common/PageMeta";
 import CompliantHistoryLog from "./CompliantHistoryLog";
 import TimelineOpener from "./TimelineOpener";
 import FileViewer from "@/components/common/FileView";
 import { formatStatus } from "@/utils/statusFormatter";
-import ResolutionPreview from "./ResolutionPreview";
-import AssignmentPreview from "./AssignmentPreview";
 import {
   useAcceptCompliantMutation,
   useGetComplaintByIdQuery,
@@ -183,50 +179,6 @@ export default function MyComplaintDetailPage() {
       minute: "2-digit",
     });
   };
-
-  // Action buttons configuration with permissions
-  // const actionButtons = [
-  //   {
-  //     key: "mark_as_inprogress",
-  //     label: "Mark as In Progress",
-  //     desc: markComplaint
-  //       ? 'Start working on this complaint. It will update the status to "In progress"'
-  //       : "Cannot mark in progress - complaint is already in progress or you have escalated it",
-  //     color: "#c2b56cff",
-  //     bg: "#E7F3FF",
-  //     border: "#BFD7EA",
-  //     enabled: markComplaint,
-  //     onClick: () => {
-  //       if (markComplaint) {
-  //         handleMarkAsInProgress();
-  //       }
-  //     },
-  //   },
-  //   {
-  //     key: "resolve",
-  //     label: "Resolve Complaint",
-  //     desc: resolveComplaint
-  //       ? "You have fixed the complaint. Provide resolution detail to close the complaint."
-  //       : "Cannot resolve - only the user who last accepted this complaint can resolve it",
-  //     color: "#1E516A",
-  //     bg: "#E7F3FF",
-  //     border: "#BFD7EA",
-  //     enabled: resolveComplaint,
-  //     onClick: () => resolveComplaint && handleActions("resolve"),
-  //   },
-  //   {
-  //     key: "assign",
-  //     label: "Assign Complaint",
-  //     desc: assignComplaint
-  //       ? "Assign this complaint to the next responsible user in the workflow."
-  //       : "Cannot assign - complaint is not in progress or assignment is not allowed.",
-  //     color: "#1E516A",
-  //     bg: "#E6F3F9",
-  //     border: "#BFD7EA",
-  //     enabled: assignComplaint,
-  //     onClick: () => assignComplaint && handleActions("assign"),
-  //   },
-  // ];
 
   if (isLoading) return <div>Loading...</div>;
   if (isError || !complaint) return <div>Error loading complaint details</div>;
@@ -504,68 +456,6 @@ export default function MyComplaintDetailPage() {
                   </div>
                 </div>
               )}
-
-
-              {/* {complaint?.status !== "resolved" ? (
-                <>
-                  <h3 className="text-[#1E516A] font-semibold text-lg mt-4 mb-3 flex items-center gap-2">
-                    🎯 Select Action
-                  </h3>
-
-                  <div className="flex flex-col md:flex-row gap-4 mb-6">
-                    {actionButtons.map((action) => (
-                      <button
-                        key={action.key}
-                        onClick={() => {
-                          if (action.enabled) setSelectedAction(action.key);
-                          action.onClick();
-                        }}
-                        disabled={!action.enabled}
-                        className={`flex-1 text-left border rounded-lg p-4 transition-all relative ${selectedAction === action.key
-                          ? `border-[${action.border}] bg-[${action.bg}]`
-                          : action.enabled
-                            ? "border-[#D5E3EC] bg-white hover:bg-gray-50 cursor-pointer"
-                            : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
-                          }`}
-                      >
-                        {!action.enabled && (
-                          <div className="absolute top-2 right-2">
-                            <Lock className="w-4 h-4 text-golden-dark" />
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 mb-1">
-                          <div
-                            className={`w-5 h-5 rounded-full flex items-center justify-center ${selectedAction === action.key
-                              ? "bg-golden-dark" // Primary background
-                              : action.enabled
-                                ? "border-2 border-gray-300"
-                                : "border-2 border-gray-200 bg-gray-100"
-                              }`}
-                          >
-                            {selectedAction === action.key && (
-                              <Check className="w-3 h-3 bg-golden text-white" />
-                            )}
-                          </div>
-                          <p
-                            className={`font-semibold ${action.enabled
-                              ? "text-golden-dark"
-                              : "text-gray-500"
-                              }`}
-                          >
-                            {action.label}
-                          </p>
-                        </div>
-                        <p
-                          className={`text-sm ${action.enabled ? "text-gray-600" : "text-gray-400"
-                            }`}
-                        >
-                          {action.desc}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : null} */}
             </div>
           </div>
 

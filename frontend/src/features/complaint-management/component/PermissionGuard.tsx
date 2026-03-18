@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import { useSession } from "next-auth/react";
 import { PermissionKey } from "@/lib/permissions"; // your normalized permission type
-import { hasAllPermissions, hasAnyPermission } from "@/lib/permissions";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface PermissionGuardProps {
     children: React.ReactNode;
@@ -24,18 +23,18 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
     requireAny,
     fallback = null,
 }) => {
-    const { data: session } = useSession();
+    const { check, isLoading } = usePermissions();
 
-    const userPermissions = (session?.user?.permissions ?? []) as PermissionKey[];
+    if (isLoading) return null; // or a loading spinner
 
     let canAccess = true;
 
     if (requireAll && requireAll.length > 0) {
-        canAccess = hasAllPermissions(userPermissions, requireAll);
+        canAccess = check({ allPermissions: requireAll });
     }
 
     if (requireAny && requireAny.length > 0) {
-        canAccess = canAccess && hasAnyPermission(userPermissions, requireAny);
+        canAccess = canAccess && check({ anyPermissions: requireAny });
     }
 
     return <>{canAccess ? children : fallback}</>;
