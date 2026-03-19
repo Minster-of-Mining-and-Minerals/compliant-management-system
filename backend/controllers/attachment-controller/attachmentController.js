@@ -25,7 +25,8 @@ const uploadFiles = async (req, res) => {
 
     for (const file of req.files) {
       const newPath = path.join(uploadDir, file.filename);
-      fs.renameSync(file.path, newPath);
+      fs.copyFileSync(file.path, newPath);
+      fs.unlinkSync(file.path);
 
       // Build the record data
       const recordData = {
