@@ -28,6 +28,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "department_id",
         as: "department",
       });
+      // User belongs to Attachment as profile image
+      User.belongsTo(models.Attachment, {
+        foreignKey: "profile_image_id",
+        as: "profileImage",
+      });
     }
   }
 
@@ -54,7 +59,16 @@ module.exports = (sequelize, DataTypes) => {
           key: "sector_node_id",
         },
       },
+      profile_image_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "attachments",
+          key: "attachment_id",
+        },
+      },
       full_name: {
+
         type: DataTypes.STRING(100),
         allowNull: false,
       },

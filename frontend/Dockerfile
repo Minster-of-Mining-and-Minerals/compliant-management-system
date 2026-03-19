@@ -1,37 +1,34 @@
+# Stage 1: Build
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install dependencies
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
-# Copy all files including hidden ones
+# Copy source files
 COPY . .
 
-# Verify the config file exists
-RUN ls -la next-intl.config.js || echo "next-intl.config.js not found!"
+# Build the application
+# next.config.ts should have output: 'standalone'
+RUN npm run build
 
-# Force build to continue even if errors occur
-RUN npm run build || echo "⚠️ Build completed with ignored errors"
-
-# ==============================
-
-FROM node:20-alpine
+# Stage 2: Runner
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy all built files and configs
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
+# Copy necessary files from builder
+# STANDALONE output contains everything needed to run, including node_modules
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-# Make sure config files are copied
-COPY --from=builder /app/next-intl.config.js ./
-COPY --from=builder /app/next.config.ts ./
-COPY --from=builder /app/messages ./messages
 
+# Expose port
 EXPOSE 3000
 
-CMD ["npm", "run", "start"]
+# Start the application using the standalone server
+CMD ["node", "server.js"]

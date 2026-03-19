@@ -18,6 +18,7 @@ const {
   validateFeedbackStatsQuery,
   validateFeedbackId,
 } = require("../../validators/feedback-validator/feedbackValidator");
+const { authenticateToken } = require("../../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -112,7 +113,7 @@ const {
  *                     max_rating:
  *                       type: integer
  */
-router.get("/", validateFeedbackQuery, getFeedbacks);
+router.get("/", validateFeedbackQuery, authenticateToken, getFeedbacks);
 
 /**
  * @swagger

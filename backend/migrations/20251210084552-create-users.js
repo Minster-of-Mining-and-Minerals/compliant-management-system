@@ -39,6 +39,16 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
+      profile_image_id: {
+        type: Sequelize.UUID,
+        allowNull: true,
+        references: {
+          model: "attachments",
+          key: "attachment_id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
       full_name: {
         type: Sequelize.STRING(100),
         allowNull: false,

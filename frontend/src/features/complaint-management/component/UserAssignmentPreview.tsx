@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import {
     useAssignComplaintMutation,
     useGetAssignmentsByComplaintIdQuery,
-    useGetLatestAssignmentByComplaintIdQuery,
     useRemoveComplaintAssignmentMutation
 } from "@/redux/api/complaintAssignmentApi";
 import { ComplaintAssignment } from "@/redux/types/complaintAssignment";

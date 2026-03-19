@@ -30,11 +30,11 @@ const login = async (req, res) => {
               model: RolePermission,
               as: "rolePermissions",
               include: [
-                {
-                  model: Permission,
-                  as: "permission",
-                  attributes: ["permission_id", "resource", "action"],
-                },
+                // {
+                //   model: Permission,
+                //   as: "permission",
+                //   attributes: ["permission_id", "resource", "action"],
+                // },
               ],
             },
           ],
@@ -66,11 +66,12 @@ const login = async (req, res) => {
     const userRoles = user.roles.map((role) => ({
       role_id: role.role_id,
       name: role.name,
-      permissions: role.rolePermissions.map((rp) => ({
-        permission_id: rp.permission_id,
-        resource: rp.permission?.resource,
-        action: rp.permission?.action,
-      })),
+      permissions: [],
+      // permissions: role.rolePermissions.map((rp) => ({
+      //   permission_id: rp.permission_id,
+      //   resource: rp.permission?.resource,
+      //   action: rp.permission?.action,
+      // })),
     }));
 
     // ===== Generate JWT Token =====

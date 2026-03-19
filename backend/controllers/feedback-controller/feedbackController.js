@@ -2,6 +2,7 @@
 "use strict";
 const { Feedback, SectorNode, sequelize } = require("../../models");
 const NotificationService = require("../../services/notificationService");
+const AccessService = require("../../services/accessService");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const { Op } = require("sequelize");
 
@@ -92,27 +93,50 @@ const getFeedbacks = async (req, res) => {
       sort_order = "DESC",
     } = req.query;
 
-    const whereClause = {};
+    const user_id = req.user?.user_id;
+    const { isAdmin, accessSectorIds } = await AccessService.getUserAccessSectors(user_id);
 
-    if (sector_node_id) whereClause.sector_node_id = sector_node_id;
+    const whereClause = {
+      [Op.and]: [],
+    };
+
+    // Baseline visibility based on roles
+    if (!isAdmin) {
+      whereClause[Op.and].push({
+        sector_node_id: { [Op.in]: accessSectorIds },
+      });
+    }
+
+    if (sector_node_id) {
+      // Collect descendants for the requested node
+      const requestedIds = [
+        sector_node_id,
+        ...(await AccessService.getDescendantSectorNodeIds(sector_node_id)),
+      ];
+      whereClause[Op.and].push({ sector_node_id: { [Op.in]: requestedIds } });
+    }
 
     if (min_rating || max_rating) {
-      whereClause.rating = {};
-      if (min_rating) whereClause.rating[Op.gte] = parseInt(min_rating);
-      if (max_rating) whereClause.rating[Op.lte] = parseInt(max_rating);
+      const ratingFilter = {};
+      if (min_rating) ratingFilter[Op.gte] = parseInt(min_rating);
+      if (max_rating) ratingFilter[Op.lte] = parseInt(max_rating);
+      whereClause.rating = ratingFilter;
     }
 
     if (start_date || end_date) {
-      whereClause.created_at = {};
-      if (start_date) whereClause.created_at[Op.gte] = new Date(start_date);
-      if (end_date) whereClause.created_at[Op.lte] = new Date(end_date);
+      const dateFilter = {};
+      if (start_date) dateFilter[Op.gte] = new Date(start_date);
+      if (end_date) dateFilter[Op.lte] = new Date(end_date);
+      whereClause.created_at = dateFilter;
     }
 
     if (search) {
-      whereClause[Op.or] = [
-        { full_name: { [Op.like]: `%${search}%` } },
-        { feedback: { [Op.like]: `%${search}%` } },
-      ];
+      whereClause[Op.and].push({
+        [Op.or]: [
+          { full_name: { [Op.like]: `%${search}%` } },
+          { feedback: { [Op.like]: `%${search}%` } },
+        ],
+      });
     }
 
     const feedbacks = await Feedback.findAll({
@@ -188,6 +212,18 @@ const getFeedbackById = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Feedback not found",
+      });
+    }
+
+    // Role-based access check
+    const user_id = req.user?.user_id;
+    const { isAdmin, accessSectorIds } = await AccessService.getUserAccessSectors(user_id);
+    const isSectorManager = accessSectorIds.includes(feedback.sector_node_id);
+
+    if (!isAdmin && !isSectorManager) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view this feedback.",
       });
     }
 
@@ -335,9 +371,28 @@ const getFeedbackStatistics = async (req, res) => {
   try {
     const { sector_node_id, start_date, end_date } = req.query;
 
-    const whereClause = {};
+    const user_id = req.user?.user_id;
+    const { isAdmin, accessSectorIds } = await AccessService.getUserAccessSectors(user_id);
 
-    if (sector_node_id) whereClause.sector_node_id = sector_node_id;
+    const whereClause = {
+      [Op.and]: [],
+    };
+
+    // Baseline visibility based on roles
+    if (!isAdmin) {
+      whereClause[Op.and].push({
+        sector_node_id: { [Op.in]: accessSectorIds },
+      });
+    }
+
+    if (sector_node_id) {
+      // Collect descendants for the requested node
+      const requestedIds = [
+        sector_node_id,
+        ...(await AccessService.getDescendantSectorNodeIds(sector_node_id)),
+      ];
+      whereClause[Op.and].push({ sector_node_id: { [Op.in]: requestedIds } });
+    }
 
     if (start_date || end_date) {
       whereClause.created_at = {};
