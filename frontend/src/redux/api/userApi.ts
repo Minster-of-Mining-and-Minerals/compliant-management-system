@@ -13,7 +13,7 @@ export const userApi = baseApi.injectEndpoints({
      * --------------------------- */
     getUsers: builder.query<
       User[],
-      { sector_node_id?: string; user_type_id?: string; is_active?: boolean; search?: string } | void
+      { sector_node_id?: string; department_id?: string; user_type_id?: string; is_active?: boolean; search?: string } | void
     >({
       query: (params) =>
         params ? { url: "/users", params } : { url: "/users" },

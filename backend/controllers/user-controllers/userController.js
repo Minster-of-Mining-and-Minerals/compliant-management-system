@@ -330,6 +330,7 @@ const getUsers = async (req, res) => {
     const {
       // institute_id,
       sector_node_id,
+      department_id,
       user_type_id,
       is_active,
       search, // optional: for name/email search
@@ -342,6 +343,7 @@ const getUsers = async (req, res) => {
     // if (institute_id) whereClause.institute_id = institute_id;
     if (user_type_id) whereClause.user_type_id = user_type_id;
     if (sector_node_id) whereClause.sector_node_id = sector_node_id;
+    if (department_id) whereClause.department_id = department_id;
     if (is_active !== undefined) whereClause.is_active = is_active === "true";
 
     if (search) {
@@ -364,6 +366,11 @@ const getUsers = async (req, res) => {
         {
           model: SectorNode,
           as: "sectorNode",
+          attributes: ["sector_node_id", "name"],
+        },
+        {
+          model: SectorNode,
+          as: "department",
           attributes: ["sector_node_id", "name"],
         },
       ],

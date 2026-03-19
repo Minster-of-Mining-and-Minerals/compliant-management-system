@@ -26,13 +26,19 @@ export default function UserAssignmentPreview({
     const { data: session } = useSession();
     // console.log("session", session);
     const sector_node_id = session?.user?.sector?.sector_node_id || "";
+    const department_id = session?.user?.department?.sector_node_id || "";
+
+    const queryParams = {
+        ...(sector_node_id && { sector_node_id }),
+        ...(department_id && { department_id }),
+    };
 
     const {
         data: usersResponse,
         isLoading: isLoadingUsers,
         isError,
     } = useGetUsersQuery(
-        sector_node_id ? { sector_node_id } : undefined
+        Object.keys(queryParams).length ? queryParams : undefined
     );
 
     // Get latest assignment for this complaint
