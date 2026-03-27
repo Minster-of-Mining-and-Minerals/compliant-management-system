@@ -113,7 +113,7 @@ const AttachmentViewerModal = ({ isOpen, onClose, selectedFile }: AttachmentView
   if (!isOpen || !selectedFile) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-8">
+    <div className="fixed  inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-8">
       <div className="bg-white rounded-lg shadow-2xl w-full h-full max-w-[100vw] flex flex-col overflow-hidden relative">
         <div className="flex items-center justify-between p-4 sm:p-6 border-b shrink-0 bg-white">
           <h2 className="text-lg font-semibold w-1/2 flex-1 mr-4" title={selectedFile.name}>
@@ -206,7 +206,7 @@ const ComplaintTrackPage = () => {
     : [];
 
   return (
-    <main className="min-h-screen px-6 lg:px-20 pt-28 pb-16 bg-slate-50">
+    <main className="min-h-screen flex items-center  w-full flex-col px-6 lg:px-20 pt-28 pb-16 bg-slate-50">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Track Your Complaint</h1>
@@ -217,7 +217,7 @@ const ComplaintTrackPage = () => {
 
       <div className="flex gap-10">
         {/* Tracking Input */}
-        <div className="max-w-xl min-w-96 h-fit bg-white rounded-md shadow p-6 mb-10">
+        <div className=" min-w-96 h-fit bg-white rounded-md shadow p-6 mb-10">
           <label className="text-sm font-medium">Tracking ID</label>
           <Input
             value={trackingId}
@@ -225,7 +225,6 @@ const ComplaintTrackPage = () => {
             placeholder="TICK-XXXX"
             className="mt-1 h-11"
           />
-
           <Button
             onClick={handleTrack}
             disabled={isLoading}
@@ -233,7 +232,6 @@ const ComplaintTrackPage = () => {
           >
             {isLoading ? "Checking..." : "Track Complaint"}
           </Button>
-
           {error && (
             <p className="mt-3 text-sm text-red-600">
               Complaint not found
@@ -369,7 +367,7 @@ const ComplaintTrackPage = () => {
             )}
           </div>
         ) : ticketNumber ? (
-          <p className="text-red-600 mt-6">Complaint not found</p>
+          <p className="text-red-600 mt-6"> </p>
         ) : null}
       </div>
 
