@@ -23,13 +23,15 @@ const FeedbackPage = () => {
   const [rating, setRating] = useState<number>(0);
   const t = useTranslations("Feedback");
 
-  // RTK Queries
-  const { data = [], isLoading: sectorsLoading, isError: sectorsError } = useGetSectorNodesQuery();
+  // RTK Queries - Fix: Extract data from response
+  const { data: sectorNodesResponse = {}, isLoading: sectorsLoading, isError: sectorsError } = useGetSectorNodesQuery();
+  const sectorNodesData = sectorNodesResponse?.data || [];
+
   const [createFeedback, { isLoading: isSubmitting }] = useCreateFeedbackMutation();
 
-  // Filter sectors
-  const root = data.filter((item) => item.parent_id === null);
-  const sectors = root.flatMap((root) => root.children || []);
+  // Filter sectors - Fix: Use sectorNodesData instead of data
+  const root = sectorNodesData.filter((item) => item.parent_id === null);
+  const sectors = root.flatMap((rootItem) => rootItem.children || []);
 
   const handleSectorChange = (value: string) => {
     setSectorId(value);
@@ -60,6 +62,7 @@ const FeedbackPage = () => {
 
       const result = await createFeedback(feedbackData).unwrap();
       toast.success(t("toast.success.submitted"));
+
       // Reset form
       setSectorId("");
       setFullName("");

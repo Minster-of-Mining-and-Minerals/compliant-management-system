@@ -55,14 +55,22 @@ const ComplaintPage = () => {
 
   const t = useTranslations("ComplaintPage");
 
-  const { data = [] } = useGetSectorNodesQuery();
-  const root = data.filter((item) => item.parent_id === null);
-  const sectors = root.flatMap((root) => root.children || []);
+  // Fix: Extract the data array from the sector nodes response
+  const { data: sectorNodesResponse = {} } = useGetSectorNodesQuery();
+  const sectorNodesData = sectorNodesResponse?.data || [];
+  console.log("sector nodes", sectorNodesData);
 
-  const { data: complaintCategories = [] } = useGetComplaintCategoriesQuery({
+  const root = sectorNodesData.filter((item) => item.parent_id === null);
+  const sectors = root.flatMap((rootItem) => rootItem.children || []);
+  console.log("sectors", sectors);
+
+  // Fix: Extract the data array from the categories response
+  const { data: complaintCategoriesResponse = {} } = useGetComplaintCategoriesQuery({
     is_active: true,
     type: "external",
   });
+  const complaintCategories = complaintCategoriesResponse?.data || [];
+  console.log("categories", complaintCategories);
 
   const [createComplaint, { isLoading: isSubmitting }] =
     useCreateComplaintMutation();
@@ -71,7 +79,7 @@ const ComplaintPage = () => {
     setSectorId(value);
     setDepartmentId("");
     setSectorName("");
-    const selectedSector = data.find((item) => item.sector_node_id === value);
+    const selectedSector = sectorNodesData.find((item) => item.sector_node_id === value);
     setDepartments(selectedSector?.children || []);
   };
 
@@ -86,7 +94,9 @@ const ComplaintPage = () => {
   const handlePersonalInfoToggle = () => {
     setIsTogglingPersonalInfo(true);
     setIsPersonalInfoOpen((prev) => !prev);
-    setIsTogglingPersonalInfo(false);
+    setTimeout(() => {
+      setIsTogglingPersonalInfo(false);
+    }, 200);
   };
 
   useEffect(() => {
@@ -118,6 +128,7 @@ const ComplaintPage = () => {
     setRequestedAction("");
     setFormValues({ attachment_id: [] });
   };
+
   // ----------------- SUBMIT HANDLER -----------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,8 +170,7 @@ const ComplaintPage = () => {
           }
           : null;
 
-      // Prepare attachment_ids as string (comma-separated filenames or IDs)
-      // Note: You'll need to handle file upload to server first to get attachment IDs
+      // Prepare attachment_ids
       const attachment_ids =
         formValues.attachment_id.length > 0
           ? formValues.attachment_id
@@ -175,7 +185,7 @@ const ComplaintPage = () => {
         // Required fields
         category_id: complaintCategoryId,
         sector_node_id: sectorId,
-        department_id: departmentId,
+        department_id: departmentId && departmentId !== "none" ? departmentId : undefined,
         description: complaintDescription.trim(),
 
         // Optional fields
@@ -187,32 +197,25 @@ const ComplaintPage = () => {
 
         // File attachments (if any)
         attachment_ids: attachment_ids,
-
-        // Optional fields for future implementation
-        // captcha_token: "", // Implement later
-        // ip_address: "", // Will come from server-side
       };
 
-      console.log(t("toast.success.submitted"));
-      toast.success(t("toast.success.submitted"));
+      console.log("Submitting payload:", payload);
 
       const result = await createComplaint(payload).unwrap();
 
-
       setTicketNumber(result?.ticketing_code);
       setShowTicketModal(true);
-      // setSectorName(result?.sector_name);
 
       toast.success(t("toast.success.submitted"));
       ResetForm();
-      // Reset all form fields
-      ResetForm();
+
       // Reset category to default
       if (complaintCategories.length > 0) {
         setComplaintCategoryId(complaintCategories[0].category_id);
         setComplaintCategoryName(complaintCategories[0].name);
       }
     } catch (err: any) {
+      console.error("Submission error:", err);
       toast.error(
         err?.data?.message || err?.message || t("toast.error.unexpected"),
       );
@@ -407,7 +410,7 @@ const ComplaintPage = () => {
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        {complaintCategories?.map((category) => (
+                        {complaintCategories.map((category) => (
                           <SelectItem
                             key={category.category_id}
                             value={category.category_id}
@@ -479,7 +482,6 @@ const ComplaintPage = () => {
                       {t("details.department", {
                         category: complaintCategoryName,
                       })}
-                      {/* <span className="text-red-500"> *</span> */}
                     </label>
                     <Select
                       value={departmentId}
@@ -494,6 +496,7 @@ const ComplaintPage = () => {
                         />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">No specific department</SelectItem>
                         {departments.map((dept) => (
                           <SelectItem
                             key={dept.sector_node_id}
@@ -642,7 +645,6 @@ const ComplaintPage = () => {
             </div>
           </div>
         </div>
-
       </main>
       <TicketSuccessModal
         open={showTicketModal}

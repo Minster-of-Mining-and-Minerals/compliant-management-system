@@ -25,14 +25,15 @@ export function AssignRepresentativeModal({ isOpen, onClose, sectorNodeId, isHea
   const userTypeId = userTypes?.find(
     (type: any) => type.name === "internal"
   )?.user_type_id;
-  const { data: users, isLoading: usersLoading } = useGetUsersQuery({ is_active: true, user_type_id: userTypeId });
+  const { data: users, isLoading: usersLoading } = useGetUsersQuery({ is_active: true, user_type_id: userTypeId, page: 1, limit: 1000 });
   const [assign, { isLoading: isAssigning }] = useAssignRepresentativeMutation();
   const [updateSectorNode, { isLoading: isUpdatingSector }] = useUpdateSectorNodeMutation();
   const submitting = isAssigning || isUpdatingSector;
 
   const [selectedUser, setSelectedUser] = useState<SelectOption | null>(null);
 
-  const userOptions: SelectOption[] = users
+
+  const userOptions: SelectOption[] = users?.data
     ?.filter(u => !headId || u.user_id !== headId || isHead)
     .map(u => ({
       value: u.user_id,

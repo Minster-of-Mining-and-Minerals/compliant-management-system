@@ -28,7 +28,6 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUploadAttachmentsMutation } from "@/redux/api/attachementApi";
 import { useGetProfileQuery, useUpdateProfileMutation } from "@/redux/api/profileApi";
-// jsngfs dg sdgnjsdng
 
 
 const profileFormSchema = z

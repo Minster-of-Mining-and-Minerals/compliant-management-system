@@ -77,22 +77,51 @@ const createSectorNode = async (req, res) => {
  */
 const getSectorNodes = async (req, res) => {
   try {
-    const { is_active, search } = req.query;
+    const { is_active, search, page = 1, limit = 10, hierarchy } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const limitInt = parseInt(limit);
     const whereClause = {};
 
     if (is_active !== undefined) {
       whereClause.is_active = is_active === "true";
     }
 
+    let finalWhere = whereClause;
     if (search) {
-      whereClause[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } },
-      ];
+      const searchWhere = {
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } },
+        ],
+      };
+      
+      if (hierarchy === "true") {
+        const AccessService = require("../../services/accessService");
+        // Find all matching nodes first
+        const matchingNodes = await SectorNode.findAll({
+          where: { ...whereClause, ...searchWhere },
+          attributes: ["sector_node_id", "parent_id"],
+        });
+
+        // Collect all ancestors for matches to preserve hierarchy context
+        const allIds = new Set();
+        for (const node of matchingNodes) {
+          allIds.add(node.sector_node_id);
+          const ancestors = await AccessService.getAncestorSectorNodeIds(node.sector_node_id);
+          ancestors.forEach(id => allIds.add(id));
+        }
+
+        finalWhere = {
+          sector_node_id: { [Op.in]: Array.from(allIds) }
+        };
+      } else {
+        finalWhere = { ...whereClause, ...searchWhere };
+      }
     }
 
-    const nodes = await SectorNode.findAll({
-      where: whereClause,
+    const { count, rows: nodes } = await SectorNode.findAndCountAll({
+      where: finalWhere,
+      distinct: true,
       include: [
         {
           model: SectorNode,
@@ -109,12 +138,20 @@ const getSectorNodes = async (req, res) => {
         },
       ],
       order: [["created_at", "ASC"]],
+      limit: limitInt,
+      offset: offset,
     });
 
     return res.status(200).json({
       success: true,
       message: "Sector nodes fetched successfully",
       data: nodes,
+      meta: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limitInt),
+        currentPage: parseInt(page),
+        itemsPerPage: limitInt,
+      },
     });
   } catch (error) {
     console.error("Error fetching sector nodes:", error);
@@ -142,8 +179,8 @@ const getSectorsWithFlatChildren = async (req, res) => {
 
     if (search) {
       whereClause[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } },
+        { name: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
       ];
     }
 

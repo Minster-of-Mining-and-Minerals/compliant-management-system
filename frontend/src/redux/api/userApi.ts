@@ -6,18 +6,19 @@ import {
   ToggleUserStatusPayload,
 } from "../types/user";
 
+import { PaginatedResponse, PaginationParams } from "../types/common";
+
 export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** ---------------------------
      * GET ALL USERS
      * --------------------------- */
     getUsers: builder.query<
-      User[],
-      { sector_node_id?: string; department_id?: string; user_type_id?: string; is_active?: boolean; search?: string } | void
+      PaginatedResponse<User>,
+      PaginationParams | void
     >({
       query: (params) =>
         params ? { url: "/users", params } : { url: "/users" },
-      transformResponse: (response: any): User[] => response.data ?? [],
       providesTags: ["User"],
     }),
 
@@ -136,6 +137,20 @@ export const userApi = baseApi.injectEndpoints({
         cache: "no-cache",
       }),
     }),
+
+    /** ---------------------------
+     * CHANGE PASSWORD
+     * --------------------------- */
+    changePassword: builder.mutation<
+      { success: boolean; message: string },
+      { current_password: string; new_password: string; confirm_password: string; confirm_change: boolean }
+    >({
+      query: (body) => ({
+        url: "/change-password",
+        method: "PUT",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -151,4 +166,5 @@ export const {
   useGetUserTypesQuery,
   useGetUserPositionsQuery,
   useExportUsersMutation,
+  useChangePasswordMutation,
 } = userApi;

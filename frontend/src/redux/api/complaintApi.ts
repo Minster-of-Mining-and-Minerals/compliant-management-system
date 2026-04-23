@@ -5,6 +5,7 @@ import {
   CreateComplaintPayload,
   UpdateComplaintPayload,
 } from "../types/complaint";
+import { PaginatedResponse, PaginationParams } from "../types/common";
 
 export const complaintApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -12,19 +13,18 @@ export const complaintApi = baseApi.injectEndpoints({
      * GET ALL COMPLAINTS
      * --------------------------- */
     getComplaints: builder.query<
-      Complaint[],
-      {
+      PaginatedResponse<Complaint>,
+      (PaginationParams & {
         status?: string;
         sector_node_id?: string;
         compliant_type_id?: string;
         category_id?: string;
         search?: string;
         user_id?: string;
-      } | void
+      }) | void
     >({
       query: (params) =>
         params ? { url: "/complaints", params } : { url: "/complaints" },
-      transformResponse: (response: any): Complaint[] => response.data ?? [],
       providesTags: ["Complaint"],
     }),
 
@@ -49,9 +49,14 @@ export const complaintApi = baseApi.injectEndpoints({
     /** ---------------------------
      * GET COMPLAINT BY USER ID
      * --------------------------- */
-    getComplaintByUserId: builder.query<Complaint[], string>({
-      query: (id) => `/complaints/user?user_id=${id}`,
-      transformResponse: (response: any): Complaint[] => response.data ?? [],
+    getComplaintByUserId: builder.query<
+      PaginatedResponse<Complaint>,
+      { id: string; search?: string; status?: string } & PaginationParams
+    >({
+      query: ({ id, ...params }) => ({
+        url: `/complaints/user`,
+        params: { user_id: id, ...params },
+      }),
       providesTags: ["Complaint"],
     }),
 

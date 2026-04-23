@@ -271,8 +271,11 @@ const getComplaints = async (req, res) => {
   try {
     // ====== 1. Determine User Role and Access Scope ======
     const user_id = req.user?.user_id;
-    const { status, sector_node_id, category_id, compliant_type_id, search } =
+    const { status, sector_node_id, category_id, compliant_type_id, search, page = 1, limit = 10 } =
       req.query;
+    
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const limitInt = parseInt(limit);
 
     const { isAdmin, accessSectorIds } = await AccessService.getUserAccessSectors(user_id);
 
@@ -352,14 +355,19 @@ const getComplaints = async (req, res) => {
     if (search) {
       whereClause[Op.and].push({
         [Op.or]: [
-          { ticketing_code: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } },
+          { ticketing_code: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } },
+          { "$user.full_name$": { [Op.iLike]: `%${search}%` } },
+          { "$category.name$": { [Op.iLike]: `%${search}%` } },
+          { "$assignedSector.name$": { [Op.iLike]: `%${search}%` } },
         ],
       });
     }
 
-    const complaints = await Complaint.findAll({
+    const { count, rows: complaints } = await Complaint.findAndCountAll({
       where: whereClause,
+      subQuery: false,
+      distinct: true,
       include: [
         {
           model: UserType,
@@ -384,12 +392,20 @@ const getComplaints = async (req, res) => {
         },
       ],
       order: [["created_at", "DESC"]],
+      limit: limitInt,
+      offset: offset,
     });
 
     return res.status(200).json({
       success: true,
       message: "Complaints fetched successfully.",
       data: complaints,
+      meta: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limitInt),
+        currentPage: parseInt(page),
+        itemsPerPage: limitInt,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -412,8 +428,29 @@ const getComplaintByUserId = async (req, res) => {
         .json({ success: false, message: "Invalid user ID." });
     }
 
-    const complaints = await Complaint.findAll({
-      where: { compliant_user_id },
+    const { page = 1, limit = 10, status, search } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const limitInt = parseInt(limit);
+
+    const whereClause = {
+      [Op.and]: [{ compliant_user_id }],
+    };
+    if (status) whereClause[Op.and].push({ status });
+    if (search) {
+      whereClause[Op.and].push({
+        [Op.or]: [
+          { ticketing_code: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } },
+          { "$category.name$": { [Op.iLike]: `%${search}%` } },
+          { "$assignedSector.name$": { [Op.iLike]: `%${search}%` } },
+        ],
+      });
+    }
+
+    const { count, rows: complaints } = await Complaint.findAndCountAll({
+      where: whereClause,
+      subQuery: false,
+      distinct: true,
       include: [
         {
           model: User,
@@ -437,12 +474,20 @@ const getComplaintByUserId = async (req, res) => {
         },
       ],
       order: [["created_at", "DESC"]],
+      limit: limitInt,
+      offset: offset,
     });
 
     return res.status(200).json({
       success: true,
       message: "Complaints fetched successfully.",
       data: complaints,
+      meta: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limitInt),
+        currentPage: parseInt(page),
+        itemsPerPage: limitInt,
+      },
     });
   } catch (error) {
     console.error(error);

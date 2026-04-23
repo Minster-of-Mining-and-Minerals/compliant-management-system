@@ -19,6 +19,8 @@ import { Complaint } from "@/redux/types/complaint";
 import { formatStatus } from "@/utils/statusFormatter";
 import { useSession } from "next-auth/react";
 import CreateMyComplaint from "@/components/common/modals/CreateMyComplaint";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 /* ----------------------------------
    COMPONENT
@@ -27,26 +29,45 @@ export default function MyComplaintTable() {
   const { data: session } = useSession();
   const user_sector = session?.user.sector?.sector_node_id || "";
   const user_id = session?.user?.id || "";
-  const { data = [], isLoading, isError } = useGetComplaintByUserIdQuery(
-    user_id,
-    {
-      skip: !user_id,
-    }
-  );
-  const [deleteComplaint] = useDeleteComplaintMutation();
-  const router = useRouter();
+
   /* Pagination */
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [isModalOpen, setModalOpen] = useState(false);
 
+  /* Filters */
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
+
+  const { data: response, isLoading, isError } = useGetComplaintByUserIdQuery(
+    {
+        id: user_id,
+        page: pageIndex + 1,
+        limit: pageSize,
+        status: statusFilter,
+        search: searchQuery,
+    },
+    {
+      skip: !user_id,
+    }
+  );
+
+  // Reset page index when search changes
+  useEffect(() => {
+    setPageIndex(0);
+  }, [searchQuery]);
+  const data = response?.data ?? [];
+  const totalPages = response?.meta?.totalPages ?? 0;
+
+  const [deleteComplaint] = useDeleteComplaintMutation();
+  const router = useRouter();
+
   const handlePagination = (index: number, size: number) => {
     setPageIndex(index);
     setPageSize(size);
   };
-
-  /* Filters */
-  const [statusFilter, setStatusFilter] = useState("");
 
   const filters: FilterField[] = [
     {
@@ -153,18 +174,6 @@ export default function MyComplaintTable() {
     },
   ];
 
-  /* Client-side filtering */
-  const filteredData = data.filter((item) => {
-    if (statusFilter) return item.status === statusFilter;
-    return true;
-  });
-
-  /* Pagination slice */
-  const paginatedData = filteredData.slice(
-    pageIndex * pageSize,
-    pageIndex * pageSize + pageSize,
-  );
-
   return (
     <>
       <TableLayout
@@ -174,8 +183,8 @@ export default function MyComplaintTable() {
       >
         <DataTable
           columns={columns}
-          data={paginatedData}
-          totalPageCount={Math.ceil(filteredData.length / pageSize)}
+          data={data}
+          totalPageCount={totalPages}
           handlePagination={handlePagination}
           tablePageSize={pageSize}
           currentIndex={pageIndex}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable } from "@/features/template/component/tableList/DataTable";
 import { TableLayout } from "@/features/template/component/tableList/TableLayout";
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Trash } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import type { FilterField, ActionButton } from "@/types/tableLayout";
 import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
@@ -16,36 +17,57 @@ import HierarchyD3Tree from "./SectorHierarchy";
 import { CreateSectorModal } from "@/components/common/modals/CreateSectorModal";
 import { useRouter } from "next/navigation";
 
-
-
 export default function SectorsTable() {
   const [toggleHierarchyView, setToggleHierarchyView] = useState(false);
   const router = useRouter();
-  const {
-    data = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useGetSectorNodesQuery();
+
   // Pagination states
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("");
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
+
+  // Reset page index when search changes
+  useEffect(() => {
+    setPageIndex(0);
+  }, [searchQuery]);
+
   const handlePagination = (index: number, size: number) => {
     setPageIndex(index);
     setPageSize(size);
   };
+
+  // Determine is_active param for API
+  let is_active_param: boolean | undefined = undefined;
+  if (statusFilter === "active") is_active_param = true;
+  if (statusFilter === "inactive") is_active_param = false;
+
+  const {
+    data: response,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetSectorNodesQuery({
+    page: pageIndex + 1,
+    limit: toggleHierarchyView ? 1000 : pageSize, // Fetch all for tree view, otherwise paginate
+    is_active: is_active_param,
+    search: searchQuery,
+    hierarchy: toggleHierarchyView ? true : undefined,
+  });
+
+  const nodes = response?.data ?? [];
+  const totalPages = response?.meta?.totalPages ?? 0;
+
   const columns: ColumnDef<SectorNode>[] = [
     {
       accessorKey: "name",
       header: "Name",
       cell: ({ row }) => (
-        console.log(row.original.name, "row.original.name"),
-        (
-          <span className="font-medium text-primary">
-            {row.getValue("name")}
-          </span>
-        )
+        <span className="font-medium text-primary">
+          {row.getValue("name")}
+        </span>
       ),
     },
     {
@@ -85,7 +107,6 @@ export default function SectorsTable() {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
-
           <Button onClick={
             () => {
               router.push(`/basedata/sectors/${row.original.sector_node_id}`);
@@ -103,8 +124,6 @@ export default function SectorsTable() {
       ),
     },
   ];
-  // Filters
-  const [statusFilter, setStatusFilter] = useState("");
 
   const filters: FilterField[] = [
     {
@@ -121,7 +140,6 @@ export default function SectorsTable() {
     },
   ];
 
-  // Actions
   const actions: ActionButton[] = [
     {
       label: "New Sector",
@@ -132,13 +150,6 @@ export default function SectorsTable() {
     },
   ];
 
-  // Apply filters locally (client-side)
-  const filteredData = data.filter((role) => {
-    if (statusFilter === "active") return role.is_active === true;
-    if (statusFilter === "inactive") return role.is_active === false;
-    return true;
-  });
-
   if (isLoading) {
     return <Loading01 />;
   }
@@ -146,12 +157,6 @@ export default function SectorsTable() {
     return <div>Error loading sectors</div>;
   }
 
-  // Pagination slice
-  const paginatedData = filteredData.slice(
-    pageIndex * pageSize,
-    pageIndex * pageSize + pageSize
-  );
-  console.log(paginatedData, "paginatedData");
   return (
     <>
       <TableLayout
@@ -165,14 +170,14 @@ export default function SectorsTable() {
         {!toggleHierarchyView ? (
           <DataTable
             columns={columns}
-            data={paginatedData}
-            totalPageCount={Math.ceil(filteredData.length / pageSize)}
+            data={nodes}
+            totalPageCount={totalPages}
             handlePagination={handlePagination}
             tablePageSize={pageSize}
             currentIndex={pageIndex}
           />
         ) : (
-          <HierarchyD3Tree data={data} />
+          <HierarchyD3Tree data={nodes} />
         )}
       </TableLayout>
       <CreateSectorModal

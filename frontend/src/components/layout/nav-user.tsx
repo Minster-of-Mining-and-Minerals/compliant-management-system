@@ -41,12 +41,15 @@ export function NavUser({ user }: NavUserProps) {
   const handleProfile = () => {
     router.push("/profile");
   }
+  const profileImageUrl = user.avatar
+    ? `${process.env.NEXT_PUBLIC_FILE_URL}/${user.avatar.replace(/\\/g, "/")}`
+    : "";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-lg p-2 hover:bg-accent focus:outline-none  ">
-          <Avatar className="h-8 w-8 rounded-lg">
-            <AvatarImage src={user.avatar} alt={user.name} />
+          <Avatar className="h-8 w-8 rounded-full">
+            <AvatarImage src={profileImageUrl} alt={user.name} />
             <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
           </Avatar>
           {/* Hide name/email on mobile, show on md and up */}

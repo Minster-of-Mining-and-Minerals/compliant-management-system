@@ -63,7 +63,9 @@ const createComplaintCategory = async (req, res) => {
  */
 const getComplaintCategories = async (req, res) => {
   try {
-    const { is_active, search, type } = req.query;
+    const { is_active, search, type, page = 1, limit = 10 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const limitInt = parseInt(limit);
     const whereClause = {};
 
     if (is_active !== undefined) {
@@ -76,14 +78,19 @@ const getComplaintCategories = async (req, res) => {
 
     if (search) {
       whereClause[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } },
+        { name: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
+        sequelize.where(
+          sequelize.cast(sequelize.col("ComplaintCategory.type"), "TEXT"),
+          { [Op.iLike]: `%${search}%` }
+        ),
       ];
     }
 
-    const categories = await ComplaintCategory.findAll({
+    const { count, rows: categories } = await ComplaintCategory.findAndCountAll({
       where: whereClause,
-      order: [["created_at", "ASC"]],
+      distinct: true,
+      order: [["created_at", "DESC"]],
       include: [
         {
           model: Complaint,
@@ -91,12 +98,20 @@ const getComplaintCategories = async (req, res) => {
           attributes: ["category_id"],
         },
       ],
+      limit: limitInt,
+      offset: offset,
     });
 
     return res.status(200).json({
       success: true,
       message: "Complaint categories fetched successfully",
       data: categories,
+      meta: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limitInt),
+        currentPage: parseInt(page),
+        itemsPerPage: limitInt,
+      },
     });
   } catch (error) {
     console.error("Error fetching complaint categories:", error);

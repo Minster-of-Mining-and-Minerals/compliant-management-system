@@ -24,13 +24,14 @@ interface CreateMyComplaintProps {
     isOpen: boolean;
     onClose: () => void;
     sector_node_id?: string;
+    department_id?: string; // Added this prop
 }
 
 interface ComplaintFormValues {
     attachment_id: File[];
 }
 
-const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplaintProps) => {
+const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: CreateMyComplaintProps) => {
     const { data: session } = useSession();
     const { data: userTypes = [] } = useGetUserTypesQuery();
     const complaint_type_id = userTypes?.find(
@@ -39,13 +40,17 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
 
     const [sectorId, setSectorId] = useState("");
     const [departments, setDepartments] = useState<SectorNode[]>([]);
-    const [departmentId, setDepartmentId] = useState("");
+    const [departmentId, setDepartmentId] = useState("none");
     const [complaintDescription, setComplaintDescription] = useState("");
     const [complaintCategoryId, setComplaintCategoryId] = useState("");
     const [complaintCategoryName, setComplaintCategoryName] = useState("");
     const [formValues, setFormValues] = useState<ComplaintFormValues>({
         attachment_id: [],
     });
+
+    console.log("departments: ", departments)
+    console.log("sectorId:", sectorId);
+    console.log("departmentId:", departmentId);
 
     // Additional Fields
     const [incidentDate, setIncidentDate] = useState("");
@@ -59,6 +64,10 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
         children: item.children || [],
     }));
 
+    // Compute selected items for display - Move here AFTER sectors is defined
+    const selectedSector = sectors.find(s => s.sector_node_id === sectorId);
+    const selectedDepartment = departments.find(d => d.sector_node_id === departmentId);
+
     const { data: complaintCategories = [] } = useGetComplaintCategoriesQuery({
         is_active: true,
         type: "internal",
@@ -70,21 +79,32 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
     // Initialize sector from prop when component opens or prop changes
     useEffect(() => {
         if (isOpen && sector_node_id && sectors.length > 0) {
-            const selectedSector = sectors.find(
+            const foundSector = sectors.find(
                 (item) => item.sector_node_id === sector_node_id
             );
 
-            if (selectedSector) {
+            if (foundSector) {
                 setSectorId(sector_node_id);
-                setDepartments(selectedSector?.children || []);
-                setDepartmentId(""); // Reset department when sector changes
+                const sectorDepartments = foundSector?.children || [];
+                setDepartments(sectorDepartments);
+
+                // Only set the department from prop if:
+                // 1. A department_id prop is provided AND it exists in this sector
+                // 2. OR we are currently in the default 'none' state and initializing
+                if (department_id && sectorDepartments.some(dept => dept.sector_node_id === department_id)) {
+                    setDepartmentId(department_id);
+                } else if (departmentId === "none" || !departmentId) {
+                    // Only default to none if we haven't selected anything yet
+                    // This prevents overwriting manual selections when 'sectors' data refreshes
+                    setDepartmentId("none");
+                }
             }
         }
-    }, [sector_node_id, sectors, isOpen]);
+    }, [sector_node_id, department_id, sectors, isOpen]);
 
     const handleSectorChange = (value: string) => {
         setSectorId(value);
-        setDepartmentId("");
+        setDepartmentId("none");
         const selectedSector = sectors.find(
             (item) => item.sector_node_id === value
         );
@@ -115,7 +135,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
 
     const resetForm = () => {
         setSectorId("");
-        setDepartmentId("");
+        setDepartmentId("none");
         setDepartments([]);
         setComplaintDescription("");
         setIncidentDate("");
@@ -174,7 +194,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                 // Required fields
                 category_id: complaintCategoryId,
                 sector_node_id: sectorId, // Always use the state value
-                department_id: departmentId || undefined,
+                department_id: (departmentId && departmentId !== "none") ? departmentId : undefined,
                 description: complaintDescription.trim(),
 
                 // Optional fields
@@ -225,7 +245,8 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                 <form onSubmit={handleSubmit}>
                     <div className="flex justify-between items-center mb-4">
                         <h1 className="block text-primary font-semibold text-lg">
-
+                            {selectedSector?.name} 
+                            {selectedDepartment?.name && ` - ${selectedDepartment.name}`}
                         </h1>
                         <div className="min-w-40">
                             <label
@@ -315,6 +336,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                                 className="block text-sm text-golden-dark"
                             >
                                 Department
+                                <span className="text-gray-500 text-xs"> (Optional)</span>
                             </label>
                             <Select
                                 value={departmentId}
@@ -325,6 +347,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                                     <SelectValue placeholder="Select department" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="none">No specific department</SelectItem>
                                     {departments.map((dept) => (
                                         <SelectItem
                                             key={dept.sector_node_id}

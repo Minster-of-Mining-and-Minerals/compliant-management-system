@@ -334,9 +334,14 @@ const getUsers = async (req, res) => {
       user_type_id,
       is_active,
       search, // optional: for name/email search
+      page = 1,
+      limit = 10,
     } = req.query;
 
-    console.log("sector_node_id: ", sector_node_id, req.query)
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const limitInt = parseInt(limit);
+
+    // console.log("sector_node_id: ", sector_node_id, req.query)
     // ====== Build filters dynamically ======
     const whereClause = {};
 
@@ -348,15 +353,21 @@ const getUsers = async (req, res) => {
 
     if (search) {
       whereClause[Op.or] = [
-        { full_name: { [Op.like]: `%${search}%` } },
-        { email: { [Op.like]: `%${search}%` } },
-        { phone_number: { [Op.like]: `%${search}%` } },
+        { full_name: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } },
+        { phone_number: { [Op.iLike]: `%${search}%` } },
+        // To search in associated fields, we can use the following pattern:
+        { "$sectorNode.name$": { [Op.iLike]: `%${search}%` } },
+        { "$department.name$": { [Op.iLike]: `%${search}%` } },
+        { "$userType.name$": { [Op.iLike]: `%${search}%` } },
       ];
     }
 
-    // ====== Fetch users with associations ======
-    const users = await User.findAll({
+    // ====== Fetch users with associations and count ======
+    const { count, rows: users } = await User.findAndCountAll({
       where: whereClause,
+      subQuery: false, // Required when filtering by associated models with limit/offset
+      distinct: true,
       include: [
         {
           model: UserType,
@@ -375,12 +386,20 @@ const getUsers = async (req, res) => {
         },
       ],
       order: [["created_at", "DESC"]],
+      limit: limitInt,
+      offset: offset,
     });
 
     return res.status(200).json({
       success: true,
       message: "Users fetched successfully.",
       data: users,
+      meta: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limitInt),
+        currentPage: parseInt(page),
+        itemsPerPage: limitInt,
+      },
     });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -391,6 +410,7 @@ const getUsers = async (req, res) => {
     });
   }
 };
+
 
 const getUserById = async (req, res) => {
   try {

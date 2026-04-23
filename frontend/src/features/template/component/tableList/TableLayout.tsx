@@ -33,15 +33,28 @@ export const TableLayout: React.FC<PageLayoutProps> = ({
 
   const searchQuery = searchParams.get("search") || "";
 
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("search", value);
-      params.set("page", "1"); // reset page
-      router.push(`${window.location.pathname}?${params.toString()}`);
-    },
-    [searchParams, router]
-  );
+  const [localSearch, setLocalSearch] = React.useState(searchQuery);
+
+  React.useEffect(() => {
+    setLocalSearch(searchQuery);
+  }, [searchQuery]);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== searchQuery) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("search", localSearch);
+        params.set("page", "1");
+        router.push(`${window.location.pathname}?${params.toString()}`);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, searchQuery, searchParams, router]);
+
+  const handleSearchChange = (value: string) => {
+    setLocalSearch(value);
+  };
 
   const filteredActions = actions.filter((action) => {
     if (!action.permissions || action.permissions.length === 0) {
@@ -96,7 +109,7 @@ export const TableLayout: React.FC<PageLayoutProps> = ({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search..."
-                value={searchQuery}
+                value={localSearch}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10 w-64"
               />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable } from "@/features/template/component/tableList/DataTable";
 import { TableLayout } from "@/features/template/component/tableList/TableLayout";
 import { ColumnDef } from "@tanstack/react-table";
@@ -9,14 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Download, Plus, Eye, Edit, Trash, Users } from "lucide-react";
 
 import type { FilterField, ActionButton } from "@/types/tableLayout";
-import {
-    useExportUsersMutation,
-    useGetUsersQuery,
-    useGetUserTypesQuery,
-} from "@/redux/api/userApi";
+import { useExportUsersMutation, useGetUsersQuery, useGetUserTypesQuery } from "@/redux/api/userApi";
 import { User } from "@/redux/types/user";
 import { CreateUserModal } from "@/components/common/modals/CreateUserModal";
 import { formatStatus } from "@/utils/statusFormatter";
+import { useSearchParams } from "next/navigation";
 
 const columns: ColumnDef<User>[] = [
     {
@@ -82,17 +79,34 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
     const userTypeId = userTypes?.find(
         (type: any) => type.name === "external"
     )?.user_type_id;
-    const {
-        data = [],
-        isLoading,
-        isError,
-        refetch,
-    } = useGetUsersQuery({ user_type_id: userTypeId });
-    const [exportUsers, { isLoading: exportLoading }] = useExportUsersMutation();
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get("search") || "";
 
     // Pagination states
     const [pageIndex, setPageIndex] = useState(0);
     const [pageSize, setPageSize] = useState(10);
+
+    const {
+        data: response,
+        isLoading,
+        isError,
+        refetch,
+    } = useGetUsersQuery({
+        user_type_id: userTypeId,
+        page: pageIndex + 1,
+        limit: pageSize,
+        search: searchQuery,
+    });
+
+    const users = response?.data ?? [];
+    const totalPages = response?.meta?.totalPages ?? 0;
+    const [exportUsers, { isLoading: exportLoading }] = useExportUsersMutation();
+
+    // Reset page index when search changes
+    useEffect(() => {
+        setPageIndex(0);
+    }, [searchQuery]);
+
     const [isModalOpen, setModalOpen] = useState(false);
     const handlePagination = (index: number, size: number) => {
         setPageIndex(index);
@@ -152,18 +166,13 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
         // },
     ];
 
-    // Apply filters locally (client-side)
-    const filteredData = data.filter((role) => {
+    // Apply filters locally
+    const filteredData = users.filter((role) => {
         if (statusFilter === "active") return role.is_active === true;
         if (statusFilter === "inactive") return role.is_active === false;
         return true;
     });
 
-    // Pagination slice
-    const paginatedData = filteredData.slice(
-        pageIndex * pageSize,
-        pageIndex * pageSize + pageSize
-    );
     return (
         <>
             <TableLayout
@@ -174,8 +183,8 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
             >
                 <DataTable
                     columns={columns}
-                    data={paginatedData}
-                    totalPageCount={Math.ceil(filteredData.length / pageSize)}
+                    data={filteredData}
+                    totalPageCount={totalPages}
                     handlePagination={handlePagination}
                     tablePageSize={pageSize}
                     currentIndex={pageIndex}

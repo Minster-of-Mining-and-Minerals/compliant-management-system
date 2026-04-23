@@ -1,5 +1,5 @@
-// Enhanced version with response wrappers
 import { baseApi } from "../baseApi";
+import { PaginationParams } from "../types/common";
 import {
   ComplaintCategory,
   CreateComplaintCategoryPayload,
@@ -31,20 +31,23 @@ export const complaintCategoryApi = baseApi.injectEndpoints({
      * GET ALL COMPLAINT CATEGORIES
      * --------------------------- */
     getComplaintCategories: builder.query<
-      ComplaintCategory[],
-      { is_active?: boolean; type?: string; search?: string } | undefined
+      { data: ComplaintCategory[]; meta: any },
+      PaginationParams & { is_active?: boolean; type?: string; search?: string } | undefined
     >({
       query: (params) => ({
         url: "/complaint-categories",
         params: params || undefined,
       }),
       transformResponse: (
-        response: ApiResponse<ComplaintCategory[]>,
-      ): ComplaintCategory[] => response.data ?? [],
+        response: any,
+      ) => ({
+        data: response.data ?? [],
+        meta: response.meta,
+      }),
       providesTags: (result) =>
-        result
+        result?.data
           ? [
-              ...result.map(({ category_id }) => ({
+              ...result.data.map(({ category_id }) => ({
                 type: "ComplaintCategory" as const,
                 id: category_id,
               })),

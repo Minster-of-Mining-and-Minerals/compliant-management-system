@@ -56,28 +56,24 @@ export function DataTable<TData, TValue>({
 		getPaginationRowModel: getPaginationRowModel(),
 		manualPagination: true,
 		pageCount: totalPageCount,
-		initialState: {
-			pagination: {
-				pageIndex: currentIndex,
-				pageSize: tablePageSize,
-			},
-		},
 		state: {
 			pagination: {
 				pageIndex: currentIndex,
 				pageSize: tablePageSize,
 			},
 		},
+		onPaginationChange: (updater) => {
+			if (typeof updater === "function") {
+				const newState = updater({
+					pageIndex: currentIndex,
+					pageSize: tablePageSize,
+				});
+				handlePagination(newState.pageIndex, newState.pageSize);
+			} else {
+				handlePagination(updater.pageIndex, updater.pageSize);
+			}
+		},
 	});
-
-	useEffect(() => {
-		const { pageIndex, pageSize } = table.getState().pagination;
-		handlePagination(pageIndex, pageSize);
-	}, [
-		table.getState().pagination.pageIndex,
-		table.getState().pagination.pageSize,
-		handlePagination,
-	]);
 
 	return (
 		<div className="overflow-auto w-full">

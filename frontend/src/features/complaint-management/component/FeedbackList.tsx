@@ -17,7 +17,8 @@ import { Feedback } from "@/redux/types/feedback";
 import { Star } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 /* ----------------------------------
    TABLE COLUMNS
@@ -142,31 +143,41 @@ export default function FeedbackTable() {
         min_rating: "",
         max_rating: "",
         sector_node_id: "",
-        search: "",
     });
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get("search") || "";
+
+    /* Pagination */
+    const [pageIndex, setPageIndex] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
+
+    // Reset page index when search changes
+    useEffect(() => {
+        setPageIndex(0);
+    }, [searchQuery]);
+
     // RTK Queries
     const { data: feedbacksData, isLoading, isError, refetch } = useGetFeedbacksQuery({
         min_rating: filters.min_rating || undefined,
         max_rating: filters.max_rating || undefined,
         sector_node_id: filters.sector_node_id || undefined,
-        search: filters.search || undefined,
+        search: searchQuery || undefined,
+        page: pageIndex + 1,
+        limit: pageSize,
     });
 
     const [deleteFeedback] = useDeleteFeedbackMutation();
 
     // Extract data and statistics
     const feedbacks = feedbacksData?.data || [];
+    const meta = feedbacksData?.meta;
     const statistics = feedbacksData?.statistics || {
         total_count: 0,
         average_rating: "0.00",
         min_rating: 0,
         max_rating: 0,
     };
-
-    /* Pagination */
-    const [pageIndex, setPageIndex] = useState(0);
-    const [pageSize, setPageSize] = useState(10);
 
     const handlePagination = (index: number, size: number) => {
         setPageIndex(index);
@@ -204,14 +215,6 @@ export default function FeedbackTable() {
                 { label: "4 stars", value: "4" },
                 { label: "5 stars", value: "5" },
             ],
-        },
-        {
-            key: "search",
-            label: "Search",
-            type: "text",
-            placeholder: "Search by name or feedback...",
-            value: filters.search,
-            onChange: (value) => setFilters(prev => ({ ...prev, search: value })),
         },
     ];
 
@@ -302,12 +305,6 @@ export default function FeedbackTable() {
         </div>
     );
 
-    /* Pagination slice */
-    const paginatedData = feedbacks.slice(
-        pageIndex * pageSize,
-        pageIndex * pageSize + pageSize
-    );
-
     return (
         <div>
             <StatsDisplay />
@@ -318,8 +315,8 @@ export default function FeedbackTable() {
             >
                 <DataTable
                     columns={updatedColumns}
-                    data={paginatedData}
-                    totalPageCount={Math.ceil(feedbacks.length / pageSize)}
+                    data={feedbacks}
+                    totalPageCount={meta?.totalPages || 0}
                     handlePagination={handlePagination}
                     tablePageSize={pageSize}
                     currentIndex={pageIndex}

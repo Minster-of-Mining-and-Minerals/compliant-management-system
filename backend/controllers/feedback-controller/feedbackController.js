@@ -91,31 +91,41 @@ const getFeedbacks = async (req, res) => {
       search,
       sort_by = "created_at",
       sort_order = "DESC",
+      page = 1,
+      limit = 10,
     } = req.query;
 
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const limitInt = parseInt(limit);
+
     const user_id = req.user?.user_id;
-    const { isAdmin, accessSectorIds } = await AccessService.getUserAccessSectors(user_id);
+    const { isAdmin, accessSectorIds } =
+      await AccessService.getUserAccessSectors(user_id);
 
     const whereClause = {
       [Op.and]: [],
     };
 
-    // Baseline visibility based on roles
+    // 🔹 Role-based filtering
     if (!isAdmin) {
       whereClause[Op.and].push({
         sector_node_id: { [Op.in]: accessSectorIds },
       });
     }
 
+    // 🔹 Sector + descendants filtering
     if (sector_node_id) {
-      // Collect descendants for the requested node
       const requestedIds = [
         sector_node_id,
         ...(await AccessService.getDescendantSectorNodeIds(sector_node_id)),
       ];
-      whereClause[Op.and].push({ sector_node_id: { [Op.in]: requestedIds } });
+
+      whereClause[Op.and].push({
+        sector_node_id: { [Op.in]: requestedIds },
+      });
     }
 
+    // 🔹 Rating filter
     if (min_rating || max_rating) {
       const ratingFilter = {};
       if (min_rating) ratingFilter[Op.gte] = parseInt(min_rating);
@@ -123,6 +133,7 @@ const getFeedbacks = async (req, res) => {
       whereClause.rating = ratingFilter;
     }
 
+    // 🔹 Date filter
     if (start_date || end_date) {
       const dateFilter = {};
       if (start_date) dateFilter[Op.gte] = new Date(start_date);
@@ -130,31 +141,52 @@ const getFeedbacks = async (req, res) => {
       whereClause.created_at = dateFilter;
     }
 
+    // 🔹 Search filter (FIXED)
     if (search) {
       whereClause[Op.and].push({
         [Op.or]: [
-          { full_name: { [Op.like]: `%${search}%` } },
-          { feedback: { [Op.like]: `%${search}%` } },
+          { full_name: { [Op.iLike]: `%${search}%` } },
+          { feedback: { [Op.iLike]: `%${search}%` } },
+          sequelize.where(
+            sequelize.col("sectorNode.name"),
+            { [Op.iLike]: `%${search}%` }
+          ),
         ],
       });
     }
 
-    const feedbacks = await Feedback.findAll({
+    // 🔹 Include config (IMPORTANT FIX)
+    const includeConfig = [
+      {
+        model: SectorNode,
+        as: "sectorNode",
+        attributes: ["sector_node_id", "name"],
+        required: !!search, // 🔥 ensures JOIN when searching
+      },
+    ];
+
+    // 🔹 Main query
+    const { count, rows: feedbacks } = await Feedback.findAndCountAll({
+      where: whereClause,
+      include: includeConfig,
+      distinct: true,
+      order: [[sort_by, sort_order]],
+      limit: limitInt,
+      offset: offset,
+      paranoid: true,
+    });
+
+    // 🔹 Statistics query (FIXED)
+    const statistics = await Feedback.findOne({
       where: whereClause,
       include: [
         {
           model: SectorNode,
           as: "sectorNode",
-          attributes: ["sector_node_id", "name"],
+          attributes: [],
+          required: !!search,
         },
       ],
-      order: [[sort_by, sort_order]],
-      paranoid: true,
-    });
-
-    // Calculate statistics
-    const statistics = await Feedback.findOne({
-      where: whereClause,
       attributes: [
         [sequelize.fn("COUNT", sequelize.col("feedback_id")), "total_count"],
         [sequelize.fn("AVG", sequelize.col("rating")), "average_rating"],
@@ -168,11 +200,17 @@ const getFeedbacks = async (req, res) => {
       success: true,
       message: "Feedbacks fetched successfully",
       data: feedbacks,
+      meta: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limitInt),
+        currentPage: parseInt(page),
+        itemsPerPage: limitInt,
+      },
       statistics: {
-        total_count: parseInt(statistics.total_count) || 0,
-        average_rating: parseFloat(statistics.average_rating || 0).toFixed(2),
-        min_rating: parseInt(statistics.min_rating) || 0,
-        max_rating: parseInt(statistics.max_rating) || 0,
+        total_count: parseInt(statistics?.total_count) || 0,
+        average_rating: parseFloat(statistics?.average_rating || 0).toFixed(2),
+        min_rating: parseInt(statistics?.min_rating) || 0,
+        max_rating: parseInt(statistics?.max_rating) || 0,
       },
     });
   } catch (error) {
@@ -184,6 +222,130 @@ const getFeedbacks = async (req, res) => {
     });
   }
 };
+// const getFeedbacks = async (req, res) => {
+//   try {
+//     const {
+//       sector_node_id,
+//       min_rating,
+//       max_rating,
+//       start_date,
+//       end_date,
+//       search,
+//       sort_by = "created_at",
+//       sort_order = "DESC",
+//       page = 1,
+//       limit = 10,
+//     } = req.query;
+
+//     const offset = (parseInt(page) - 1) * parseInt(limit);
+//     const limitInt = parseInt(limit);
+
+//     const user_id = req.user?.user_id;
+//     const { isAdmin, accessSectorIds } = await AccessService.getUserAccessSectors(user_id);
+
+//     const whereClause = {
+//       [Op.and]: [],
+//     };
+
+//     // Baseline visibility based on roles
+//     if (!isAdmin) {
+//       whereClause[Op.and].push({
+//         sector_node_id: { [Op.in]: accessSectorIds },
+//       });
+//     }
+
+//     if (sector_node_id) {
+//       // Collect descendants for the requested node
+//       const requestedIds = [
+//         sector_node_id,
+//         ...(await AccessService.getDescendantSectorNodeIds(sector_node_id)),
+//       ];
+//       whereClause[Op.and].push({ sector_node_id: { [Op.in]: requestedIds } });
+//     }
+
+//     if (min_rating || max_rating) {
+//       const ratingFilter = {};
+//       if (min_rating) ratingFilter[Op.gte] = parseInt(min_rating);
+//       if (max_rating) ratingFilter[Op.lte] = parseInt(max_rating);
+//       whereClause.rating = ratingFilter;
+//     }
+
+//     if (start_date || end_date) {
+//       const dateFilter = {};
+//       if (start_date) dateFilter[Op.gte] = new Date(start_date);
+//       if (end_date) dateFilter[Op.lte] = new Date(end_date);
+//       whereClause.created_at = dateFilter;
+//     }
+
+//     if (search) {
+//       whereClause[Op.and].push({
+//         [Op.or]: [
+//           { full_name: { [Op.iLike]: `%${search}%` } },
+//           { feedback: { [Op.iLike]: `%${search}%` } },
+//           // { "$sectorNode.name$": { [Op.iLike]: `%${search}%` } },
+//           sequelize.where(
+//             sequelize.col("sectorNode.name"),
+//             { [Op.iLike]: `%${search}%` }
+//           ),
+//         ],
+//       });
+//     }
+
+//     const { count, rows: feedbacks } = await Feedback.findAndCountAll({
+//       where: whereClause,
+//       subQuery: false,
+//       distinct: true,
+//       include: [
+//         {
+//           model: SectorNode,
+//           as: "sectorNode",
+//           attributes: ["sector_node_id", "name"],
+//         },
+//       ],
+//       order: [[sort_by, sort_order]],
+//       limit: limitInt,
+//       offset: offset,
+//       paranoid: true,
+//     });
+
+//     // Calculate statistics
+//     const statistics = await Feedback.findOne({
+//       where: whereClause,
+//       attributes: [
+//         [sequelize.fn("COUNT", sequelize.col("feedback_id")), "total_count"],
+//         [sequelize.fn("AVG", sequelize.col("rating")), "average_rating"],
+//         [sequelize.fn("MIN", sequelize.col("rating")), "min_rating"],
+//         [sequelize.fn("MAX", sequelize.col("rating")), "max_rating"],
+//       ],
+//       raw: true,
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Feedbacks fetched successfully",
+//       data: feedbacks,
+//       meta: {
+//         totalItems: count,
+//         totalPages: Math.ceil(count / limitInt),
+//         currentPage: parseInt(page),
+//         itemsPerPage: limitInt,
+//       },
+//       statistics: {
+//         total_count: parseInt(statistics.total_count) || 0,
+//         average_rating: parseFloat(statistics.average_rating || 0).toFixed(2),
+//         min_rating: parseInt(statistics.min_rating) || 0,
+//         max_rating: parseInt(statistics.max_rating) || 0,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching feedbacks:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch feedbacks",
+//       error: error.message,
+//     });
+//   }
+// };
 
 // =========== Get feedback by ID ===========
 const getFeedbackById = async (req, res) => {

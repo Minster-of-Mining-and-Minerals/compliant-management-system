@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, FileText, Download, X } from "lucide-react";
+import { Eye, FileText, Download, X, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getFileUrl, getFileType } from "@/utils/fileUrl";
 import { useGetComplaintByTicketingCodeQuery } from "@/redux/api/complaintApi";
 import { useRouter, useSearchParams } from "next/navigation";
+
 /* ================= TYPES ================= */
 
 type ComplaintStatus = "pending" | "in_progress" | "resolved";
@@ -120,11 +121,6 @@ const AttachmentViewerModal = ({ isOpen, onClose, selectedFile }: AttachmentView
             {shortenFileName(selectedFile.name, 40)}
           </h2>
           <div className="flex items-center gap-2 shrink-0">
-            {/* <a href={selectedFile.url} download target="_blank" rel="noreferrer">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Download className="w-4 h-4" /> <span className="hidden sm:inline">Download</span>
-              </Button>
-            </a> */}
             <Button variant="ghost" size="sm" onClick={onClose} className="rounded-full h-10 w-10 p-0">
               <span className="sr-only">Close</span>
               <X className="w-8 h-8" />
@@ -177,66 +173,79 @@ const ComplaintTrackPage = () => {
       setTrackingId(ticketNumber);
     }
   }, [ticketNumber]);
+
   const { data, isLoading, error } =
     useGetComplaintByTicketingCodeQuery(ticketNumber ?? "", {
       skip: !ticketNumber,
     });
 
   const complaint: Complaint | null = data || null;
-  console.log(complaint, "complaint")
+
   const handleTrack = () => {
     if (!trackingId.trim()) return;
-
-    router.push(
-      `/en/track-complaint?ticketNumber=${trackingId.trim()}`
-    );
+    router.push(`/en/track-complaint?ticketNumber=${trackingId.trim()}`);
   };
-  const complaintFiles = complaint
-    ? [
-      ...(complaint.attachments?.map((a) => a.attachment) || []),
-      ...(complaint.resolution?.flatMap((r) =>
-        r.attachments?.map((a) => a.attachment) || []
-      ) || []),
-    ].map((file) => ({
-      url: getFileUrl(file.file_path),
-      name: file.file_name,
-      uploadedAt: file.created_at,
-      type: getFileType(file.file_name),
-    }))
-    : [];
+
+  const getFiles = (attachments: AttachmentWrapper[] = []) => {
+    return attachments.map((a) => ({
+      url: getFileUrl(a.attachment.file_path),
+      name: a.attachment.file_name,
+      uploadedAt: a.attachment.created_at,
+      type: getFileType(a.attachment.file_name),
+    }));
+  };
+
+  const FileCard = ({ file, onClick }: { file: any; onClick: () => void }) => (
+    <div
+      onClick={onClick}
+      className="border rounded-lg p-3 hover:bg-blue-50 flex items-center gap-3 cursor-pointer bg-white transition-colors"
+    >
+      <FileText className="w-5 h-5 text-blue-500" />
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-sm truncate" title={file.name}>
+          {shortenFileName(file.name)}
+        </p>
+        <p className="text-xs text-gray-500">
+          {file.uploadedAt && new Date(file.uploadedAt).toLocaleDateString()}
+        </p>
+      </div>
+      <Eye className="w-4 h-4 text-blue-600" />
+    </div>
+  );
 
   return (
     <main className="min-h-screen px-6 lg:px-20 pt-28 pb-16 bg-slate-50">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">Track Your Complaint</h1>
-        <p className="text-sm text-gray-600">
-          Enter your tracking number to view complaint status
+        <h1 className="text-3xl font-bold text-slate-900">Track Your Complaint</h1>
+        <p className="text-slate-600 mt-2">
+          Enter your tracking number to view current status and resolution details.
         </p>
       </div>
 
-      <div className="flex gap-10">
+      <div className="flex flex-col lg:flex-row gap-8">
         {/* Tracking Input */}
-        <div className="max-w-xl min-w-96 h-fit bg-white rounded-md shadow p-6 mb-10">
-          <label className="text-sm font-medium">Tracking ID</label>
+        <div className="w-full lg:w-96 shrink-0 h-fit bg-white rounded-xl shadow-sm border p-6">
+          <label className="text-sm font-semibold text-slate-700">Tracking ID</label>
           <Input
             value={trackingId}
             onChange={(e) => setTrackingId(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
             placeholder="TICK-XXXX"
-            className="mt-1 h-11"
+            className="mt-2 h-11 border-slate-200 focus:ring-blue-500"
           />
 
           <Button
             onClick={handleTrack}
             disabled={isLoading}
-            className="mt-4 w-full"
+            className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white h-11"
           >
             {isLoading ? "Checking..." : "Track Complaint"}
           </Button>
 
           {error && (
-            <p className="mt-3 text-sm text-red-600">
-              Complaint not found
+            <p className="mt-3 text-sm text-red-600 font-medium">
+              Complaint not found. Please check your ticket number.
             </p>
           )}
         </div>
@@ -245,132 +254,190 @@ const ComplaintTrackPage = () => {
         {isLoading ? (
           <ComplaintSkeleton />
         ) : complaint ? (
-          <div className="bg-white w-full border rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold">Complaint Detail</h2>
-                <p className="text-gray-500">
-                  Ticket #{complaint.ticketing_code}
-                </p>
+          <div className="flex-1 space-y-6">
+            {/* Status & Header Section */}
+            <div className="bg-white border rounded-xl p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Complaint Details</h2>
+                  <p className="text-slate-500 font-medium">
+                    Ticket #{complaint.ticketing_code}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${getStatusStyle(
+                      complaint.status
+                    )}`}
+                  >
+                    {formatStatus(complaint.status)}
+                  </span>
+                </div>
               </div>
-              <span
-                className={`px-3 py-1 rounded-md text-sm flex justify-center items-center ${getStatusStyle(
-                  complaint.status
-                )}`}
-              >
-                {formatStatus(complaint.status)}
-              </span>
+
+              {/* Basic Info Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-6 border-y border-slate-100 mb-6">
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sector</p>
+                  <p className="text-slate-700 font-medium">{complaint.assignedSector?.name || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Category</p>
+                  <p className="text-slate-700 font-medium">{complaint.category?.name || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Reported</p>
+                  <p className="text-slate-700 font-medium">
+                    {new Date(complaint.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Time</p>
+                  <p className="text-slate-700 font-medium">
+                    {new Date(complaint.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Submission Content */}
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-slate-50 border border-slate-100 p-5 rounded-xl">
+                    <h4 className="text-sm font-bold text-slate-900 mb-2">Description</h4>
+                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+                      {complaint.description || "No description provided."}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-100 p-5 rounded-xl">
+                    <h4 className="text-sm font-bold text-slate-900 mb-2">Requested Action</h4>
+                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+                      {complaint.request || "No specific action requested."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Submission Attachments */}
+                {complaint.attachments && complaint.attachments.length > 0 && (
+                  <div className="pt-4">
+                    <h4 className="text-sm font-bold text-slate-900 mb-3">Submission Attachments</h4>
+                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {getFiles(complaint.attachments).map((file, i) => (
+                        <FileCard
+                          key={i}
+                          file={file}
+                          onClick={() => {
+                            setSelectedFile(file);
+                            setIsViewerOpen(true);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Info Grid */}
-            <div className="grid md:grid-cols-4 gap-4 text-sm mb-6">
-              <div>
-                <p className="font-semibold">Sector</p>
-                <p>{complaint.assignedSector?.name || "-"}</p>
-              </div>
-              <div>
-                <p className="font-semibold">Category</p>
-                <p>{complaint.category?.name || "-"}</p>
-              </div>
-              <div>
-                <p className="font-semibold">Reported</p>
-                <p>
-                  {new Date(complaint.created_at).toLocaleString()}
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold">Status</p>
-                <p>{formatStatus(complaint.status)}</p>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-slate-50 p-4 rounded">
-                <p className="font-semibold mb-1">Description</p>
-                <p>{complaint.description}</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded">
-                <p className="font-semibold mb-1">Requested Action</p>
-                <p>{complaint.request}</p>
-              </div>
-            </div>
-
-            {/* Resolution */}
-            {complaint.resolution?.length > 0 && (
-              <div className="bg-green-50 p-4 rounded mb-6">
-                <h4 className="font-semibold mb-2">Resolution</h4>
-                <p className="mb-2">
-                  {complaint.resolution[0].reason}
-                </p>
-                <p className="text-xs text-gray-600">
-                  Resolved at:{" "}
-                  {new Date(
-                    complaint.resolution[0].resolved_at
-                  ).toLocaleString()}
-                </p>
-              </div>
-            )}
-
-            {/* Attachments */}
-            {complaintFiles.length > 0 && (
-              <>
-                <h4 className="font-semibold mb-3">Attachments</h4>
-                <div className="grid md:grid-cols-3 gap-3">
-                  {complaintFiles.map((file, i) => (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        setSelectedFile(file);
-                        setIsViewerOpen(true);
-                      }}
-                      className="border rounded-lg p-3 hover:bg-blue-50 flex items-center gap-3 cursor-pointer"
-                    >
-                      <FileText className="w-5 h-5 text-red-500" />
-                      <div className="flex-1">
-                        <p className="font-medium text-sm truncate" title={file.name}>
-                          {shortenFileName(file.name)}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {file.uploadedAt &&
-                            new Date(
-                              file.uploadedAt
-                            ).toLocaleDateString()}
-                        </p>
+            {/* Resolution Section */}
+            {complaint.resolution && complaint.resolution.length > 0 && (
+              <div className="bg-white border border-green-100 rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-green-50/50 px-6 py-4 border-b border-green-100 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <h3 className="text-lg font-bold text-green-900">Resolution Details</h3>
+                </div>
+                
+                <div className="p-6 space-y-6">
+                  {complaint.resolution.map((res, idx) => (
+                    <div key={res.resolution_id} className={idx > 0 ? "pt-6 border-t border-slate-100" : ""}>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="bg-slate-50 border px-4 py-3 rounded-xl flex-1 mr-4">
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Resolution Summary</h4>
+                          <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">{res.reason}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Resolved At</p>
+                          <p className="text-slate-700 text-sm font-medium">
+                            {new Date(res.resolved_at).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                      <Eye className="w-4 h-4 text-blue-600" />
+
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold">
+                          {res.resolver?.full_name?.charAt(0) || "R"}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Resolver</p>
+                          <p className="text-slate-700 text-sm font-semibold">{res.resolver?.full_name || "Official Responder"}</p>
+                        </div>
+                      </div>
+
+                      {/* Resolution Attachments */}
+                      {res.attachments && res.attachments.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Resolution Attachments</h4>
+                          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                            {getFiles(res.attachments).map((file, i) => (
+                              <FileCard
+                                key={i}
+                                file={file}
+                                onClick={() => {
+                                  setSelectedFile(file);
+                                  setIsViewerOpen(true);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
 
-            {/* Complainer Info */}
+            {/* Complainer Info Section */}
             {!complaint.is_anonymous && complaint.user && (
-              <div className="bg-slate-50 p-4 rounded mt-6">
-                <h4 className="font-semibold mb-3">
-                  Complainer Information
-                </h4>
-                <div className="grid md:grid-cols-3 gap-4 text-sm">
+              <div className="bg-white border rounded-xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Complainer Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div>
-                    <p className="font-medium">Name</p>
-                    <p>{complaint.user.full_name}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</p>
+                    <p className="text-slate-700 font-medium">{complaint.user.full_name}</p>
                   </div>
                   <div>
-                    <p className="font-medium">Phone</p>
-                    <p>{complaint.user.phone_number}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Phone Number</p>
+                    <p className="text-slate-700 font-medium">{complaint.user.phone_number || "Not provided"}</p>
                   </div>
                   <div>
-                    <p className="font-medium">Email</p>
-                    <p>{complaint.user.email}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</p>
+                    <p className="text-slate-700 font-medium">{complaint.user.email || "Not provided"}</p>
                   </div>
                 </div>
+              </div>
+            )}
+            
+            {complaint.is_anonymous && (
+              <div className="bg-slate-100/50 border border-dashed rounded-xl p-6 text-center">
+                <p className="text-slate-500 text-sm italic">This complaint was submitted anonymously.</p>
               </div>
             )}
           </div>
         ) : ticketNumber ? (
-          <p className="text-red-600 mt-6">Complaint not found</p>
-        ) : null}
+          <div className="flex-1 bg-white border border-red-100 rounded-xl p-12 text-center shadow-sm">
+            <X className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-slate-900">Complaint Not Found</h3>
+            <p className="text-slate-500 mt-2">
+              We couldn't find any complaint with ticket number <span className="font-bold">"{ticketNumber}"</span>.
+              Please check the ID and try again.
+            </p>
+          </div>
+        ) : (
+          <div className="flex-1 bg-blue-50/50 border border-dashed border-blue-200 rounded-xl p-12 text-center">
+             <FileText className="w-12 h-12 text-blue-400 mx-auto mb-4 opacity-50" />
+             <h3 className="text-lg font-semibold text-blue-900">Start Tracking</h3>
+             <p className="text-blue-700/60 mt-1">Enter your ticket number on the left to see your complaint details.</p>
+          </div>
+        )}
       </div>
 
       {/* Attachment Viewer Modal Component */}
@@ -389,24 +456,22 @@ export default ComplaintTrackPage;
 
 const ComplaintSkeleton = () => {
   return (
-    <div className="bg-white w-full border rounded-xl p-6 shadow-sm animate-pulse">
-      <div className="h-6 w-48 bg-gray-200 rounded mb-6" />
-      <div className="grid md:grid-cols-4 gap-4 mb-6">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="space-y-2">
-            <div className="h-4 w-20 bg-gray-200 rounded" />
-            <div className="h-4 w-full bg-gray-200 rounded" />
-          </div>
-        ))}
-      </div>
-      <div className="grid md:grid-cols-2 gap-4">
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="space-y-2 bg-slate-50 p-4 rounded">
-            <div className="h-4 w-32 bg-gray-200 rounded" />
-            <div className="h-3 w-full bg-gray-200 rounded" />
-            <div className="h-3 w-5/6 bg-gray-200 rounded" />
-          </div>
-        ))}
+    <div className="flex-1 space-y-6">
+      <div className="bg-white border rounded-xl p-6 shadow-sm animate-pulse">
+        <div className="h-8 w-48 bg-slate-100 rounded mb-6" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-6 border-y border-slate-50 mb-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-3 w-16 bg-slate-50 rounded" />
+              <div className="h-4 w-full bg-slate-50 rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-32 bg-slate-50 rounded-xl" />
+          ))}
+        </div>
       </div>
     </div>
   );

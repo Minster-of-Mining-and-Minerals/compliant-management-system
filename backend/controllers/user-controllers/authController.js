@@ -187,4 +187,41 @@ const getMePermissions = async (req, res) => {
   }
 };
 
-module.exports = { login, logout, getMePermissions };
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.user_id;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Incorrect current password" });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update user
+    await user.update({
+      password: hashedPassword,
+      is_first_logged_in: false,
+      password_changed_at: new Date(),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+module.exports = { login, logout, getMePermissions, changePassword };

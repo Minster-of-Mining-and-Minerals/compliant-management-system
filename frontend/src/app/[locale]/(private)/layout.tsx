@@ -1,9 +1,12 @@
 "use client";
-import { usePathname } from "next/navigation";
+
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Header } from "@/components/layout/header";
-// import { AppSidebar } from "@/components/layout/test";
+import { useSession } from "next-auth/react";
+import Loading01 from "@/features/template/component/Loading/Loading01";
 
 export default function PrivateLayout({
   children,
@@ -11,19 +14,31 @@ export default function PrivateLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
-  // Convert "/user/new" → ["User", "New"]
-  const breadcrumb = pathname
-    .split("/")
-    .filter(Boolean)
-    .map((item) => item.charAt(0).toUpperCase() + item.slice(1));
+  const isFirstLogin = session?.user?.is_first_logged_in;
+  const isChangePasswordPage = pathname.includes("/change-password");
 
-  // If only "/dashboard" → show just "Dashboard"
-  const title = breadcrumb.join(" / ");
+  useEffect(() => {
+    if (status === "authenticated" && isFirstLogin && !isChangePasswordPage) {
+      router.push("/change-password");
+    }
+  }, [status, isFirstLogin, isChangePasswordPage, router]);
+
+  if (status === "loading") {
+    return <Loading01 />;
+  }
+
+  // If first login and not on change password page, show loading while redirecting
+  if (isFirstLogin && !isChangePasswordPage) {
+    return <Loading01 />;
+  }
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      {/* Only show sidebar if they have completed first login */}
+      {!isFirstLogin && <AppSidebar />}
       <SidebarInset>
         <Header title={""} />
         <div className="p-6">{children}</div>

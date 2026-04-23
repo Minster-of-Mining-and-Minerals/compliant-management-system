@@ -22,6 +22,25 @@ const getDescendantSectorNodeIds = async (sectorNodeId, ids = []) => {
 };
 
 /**
+ * Recursively gets all ancestor sector node IDs for a given sector node up to the root.
+ * @param {string} sectorNodeId - The ID of the sector node.
+ * @param {string[]} ids - Initial accumulator for IDs.
+ * @returns {Promise<string[]>} - A list of all ancestor IDs.
+ */
+const getAncestorSectorNodeIds = async (sectorNodeId, ids = []) => {
+  const node = await SectorNode.findByPk(sectorNodeId, {
+    attributes: ["parent_id"],
+  });
+
+  if (node && node.parent_id) {
+    ids.push(node.parent_id);
+    await getAncestorSectorNodeIds(node.parent_id, ids);
+  }
+
+  return ids;
+};
+
+/**
  * Determines the administrative and sector-based access scope for a given user.
  * @param {string} user_id - The ID of the user.
  * @returns {Promise<{isAdmin: boolean, accessSectorIds: string[]}>}
@@ -67,5 +86,6 @@ const getUserAccessSectors = async (user_id) => {
 
 module.exports = {
   getDescendantSectorNodeIds,
+  getAncestorSectorNodeIds,
   getUserAccessSectors,
 };

@@ -18,8 +18,8 @@ import { Complaint } from "@/redux/types/complaint";
 import { formatStatus } from "@/utils/statusFormatter";
 import { useGetUserTypesQuery } from "@/redux/api/userApi";
 import { useSession } from "next-auth/react";
-
-
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export interface ComplaintTableProps {
   sideActions?: ActionButton[];
@@ -29,32 +29,52 @@ export interface ComplaintTableProps {
    COMPONENT
 ----------------------------------- */
 export default function ComplaintTable({ sideActions, userType = "internal" }: ComplaintTableProps) {
-
   const { data: session } = useSession();
   const sector_node_id = session?.user?.sector?.sector_node_id || "";
+  
   const {
     data: userTypes = [],
   } = useGetUserTypesQuery();
+  
   const userTypeId = userTypes?.find(
     (type: any) => type.name === userType
   )?.user_type_id;
-  const { data = [], isLoading, isError } = useGetComplaintsQuery({
-    compliant_type_id: userTypeId,
-  });
-  const [deleteComplaint] = useDeleteComplaintMutation();
-  const router = useRouter();
+
   /* Pagination */
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [isModalOpen, setModalOpen] = useState(false);
+  
+  /* Filters */
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
+
+  const { data: response, isLoading, isError } = useGetComplaintsQuery({
+    compliant_type_id: userTypeId,
+    status: statusFilter,
+    page: pageIndex + 1,
+    limit: pageSize,
+    search: searchQuery,
+  }, {
+    skip: !userTypeId,
+  });
+
+  // Reset page index when search changes
+  useEffect(() => {
+    setPageIndex(0);
+  }, [searchQuery]);
+
+  const data = response?.data ?? [];
+  const totalPages = response?.meta?.totalPages ?? 0;
+
+  const [deleteComplaint] = useDeleteComplaintMutation();
+  const router = useRouter();
 
   const handlePagination = (index: number, size: number) => {
     setPageIndex(index);
     setPageSize(size);
   };
-
-  /* Filters */
-  const [statusFilter, setStatusFilter] = useState("");
 
   const filters: FilterField[] = [
     {
@@ -153,18 +173,6 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
   /* Actions (top buttons) */
   const actions: ActionButton[] = [];
 
-  /* Client-side filtering */
-  const filteredData = data.filter((item) => {
-    if (statusFilter) return item.status === statusFilter;
-    return true;
-  });
-
-  /* Pagination slice */
-  const paginatedData = filteredData.slice(
-    pageIndex * pageSize,
-    pageIndex * pageSize + pageSize,
-  );
-
   return (
     <TableLayout
       actions={actions}
@@ -174,8 +182,8 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
     >
       <DataTable
         columns={columns}
-        data={paginatedData}
-        totalPageCount={Math.ceil(filteredData.length / pageSize)}
+        data={data}
+        totalPageCount={totalPages}
         handlePagination={handlePagination}
         tablePageSize={pageSize}
         currentIndex={pageIndex}

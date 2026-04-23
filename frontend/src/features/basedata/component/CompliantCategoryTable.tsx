@@ -16,9 +16,10 @@ import {
 } from "@/redux/api/complaintCategoryApi";
 import { ComplaintCategory } from "@/redux/types/complaintCategory";
 import Loading01 from "@/features/template/component/Loading/Loading01";
-// import { CreateComplaintCategoryModal } from "@/components/common/modals/CreateComplaintCategoryModal";
 import { formatDate } from "@/utils/formatDate";
 import { CreateComplaintCategoryModal } from "@/components/common/modals/CreateComplaintCategoryModal";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export const columns: ColumnDef<ComplaintCategory>[] = [
     {
@@ -89,32 +90,26 @@ export const columns: ColumnDef<ComplaintCategory>[] = [
         header: "Actions",
         cell: ({ row }) => {
             const category = row.original;
-            const [isViewModalOpen, setViewModalOpen] = useState(false);
-            const [isEditModalOpen, setEditModalOpen] = useState(false);
-
+            // Modals are usually handled at the table level or via a separate state to avoid duplicate modals in DOM
             return (
-                <>
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setViewModalOpen(true)}
-                            title="View Details"
-                        >
-                            <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setEditModalOpen(true)}
-                            title="Edit Category"
-                        >
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                        <StatusToggleButton category={category} />
-                        <DeleteButton category={category} />
-                    </div>
-                </>
+                <div className="flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        title="View Details"
+                    >
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Edit Category"
+                    >
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                    <StatusToggleButton category={category} />
+                    <DeleteButton category={category} />
+                </div>
             );
         },
     },
@@ -196,15 +191,6 @@ const DeleteButton = ({ category }: { category: ComplaintCategory }) => {
 
 
 export default function ComplaintCategoryTable() {
-    const {
-        data = [],
-        isLoading,
-        isError,
-        refetch,
-    } = useGetComplaintCategoriesQuery(undefined);
-
-    // const { toast } = useToast();
-
     // Pagination states
     const [pageIndex, setPageIndex] = useState(0);
     const [pageSize, setPageSize] = useState(10);
@@ -212,7 +198,33 @@ export default function ComplaintCategoryTable() {
 
     // Filter states
     const [statusFilter, setStatusFilter] = useState("");
-    const [searchFilter, setSearchFilter] = useState("");
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get("search") || "";
+
+    // Reset page index when search changes
+    useEffect(() => {
+        setPageIndex(0);
+    }, [searchQuery]);
+
+    // Determine params for API
+    let is_active_param: boolean | undefined = undefined;
+    if (statusFilter === "active") is_active_param = true;
+    if (statusFilter === "inactive") is_active_param = false;
+
+    const {
+        data: response,
+        isLoading,
+        isError,
+        refetch,
+    } = useGetComplaintCategoriesQuery({
+        page: pageIndex + 1,
+        limit: pageSize,
+        is_active: is_active_param,
+        search: searchQuery || undefined,
+    });
+
+    const categories = response?.data || [];
+    const totalPages = response?.meta?.totalPages || 0;
 
     const handlePagination = (index: number, size: number) => {
         setPageIndex(index);
@@ -245,29 +257,6 @@ export default function ComplaintCategoryTable() {
         },
     ];
 
-    // Apply filters locally (client-side)
-    const filteredData = data.filter((category) => {
-        // Status filter
-        if (statusFilter === "active" && !category.is_active) return false;
-        if (statusFilter === "inactive" && category.is_active) return false;
-
-        // Search filter
-        if (searchFilter) {
-            const searchLower = searchFilter.toLowerCase();
-            return (
-                category.name.toLowerCase().includes(searchLower) ||
-                (category.description?.toLowerCase() || "").includes(searchLower)
-            );
-        }
-
-        return true;
-    });
-
-    // Sort by created_at descending (newest first)
-    const sortedData = [...filteredData].sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-
     if (isLoading) {
         return <Loading01 />;
     }
@@ -286,12 +275,6 @@ export default function ComplaintCategoryTable() {
         );
     }
 
-    // Pagination slice
-    const paginatedData = sortedData.slice(
-        pageIndex * pageSize,
-        pageIndex * pageSize + pageSize
-    );
-
     return (
         <>
             <TableLayout
@@ -303,8 +286,8 @@ export default function ComplaintCategoryTable() {
             >
                 <DataTable
                     columns={columns}
-                    data={paginatedData}
-                    totalPageCount={Math.ceil(sortedData.length / pageSize)}
+                    data={categories}
+                    totalPageCount={totalPages}
                     handlePagination={handlePagination}
                     tablePageSize={pageSize}
                     currentIndex={pageIndex}

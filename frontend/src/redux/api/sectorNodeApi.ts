@@ -1,4 +1,5 @@
 import { baseApi } from "../baseApi";
+import { PaginationParams } from "../types/common";
 import {
   CreateSectorNodePayload,
   SectorNode,
@@ -13,12 +14,15 @@ export const sectorNodeApi = baseApi.injectEndpoints({
      * GET ALL SECTOR NODES
      * --------------------------- */
     getSectorNodes: builder.query<
-      SectorNode[],
-      { is_active?: boolean; search?: string } | void
+      { data: SectorNode[]; meta: any },
+      PaginationParams & { is_active?: boolean; search?: string; hierarchy?: boolean } | void
     >({
       query: (params) =>
         params ? { url: "/sector-nodes", params } : { url: "/sector-nodes" },
-      transformResponse: (response: any): SectorNode[] => response.data ?? [],
+      transformResponse: (response: any) => ({
+        data: response.data ?? [],
+        meta: response.meta,
+      }),
       providesTags: ["SectorNode"],
     }),
 
@@ -27,7 +31,7 @@ export const sectorNodeApi = baseApi.injectEndpoints({
      * --------------------------- */
     getSectorNodesWithFlatChildren: builder.query<
       SectorNode[],
-      { is_active?: boolean; search?: string } | void
+      { is_active?: boolean; search?: string; hierarchy?: boolean } | void
     >({
       query: (params) =>
         params

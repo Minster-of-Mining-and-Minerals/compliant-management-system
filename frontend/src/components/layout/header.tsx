@@ -7,6 +7,7 @@ import { Bell } from "lucide-react";
 import { useSession } from "next-auth/react";
 import NotificationDropdown from "./NotificationDropdown";
 import HeaderBreadcrumb from "../common/HeaderBreadcrumb";
+import { useGetProfileQuery } from "@/redux/api/profileApi";
 
 interface HeaderProps {
   title?: string;
@@ -17,11 +18,13 @@ interface HeaderProps {
 export function Header({ title }: HeaderProps) {
   const notificationCount = 3; // Replace with actual notification count
   const { data: session } = useSession();
+  const { data: profileResponse, isLoading: isLoadingProfile } = useGetProfileQuery();
   const userData = {
     name: session?.user?.name ?? "User",
     email: session?.user?.email ?? "",
-    avatar: session?.user?.profile_image ?? undefined,
+    avatar: profileResponse?.data?.profileImage?.file_path ?? undefined,
   };
+  console.log(profileResponse);
 
   return (
     <header className="flex z-30 sticky shadow-md top-2 border h-16 shrink-0 items-center gap-2 px-4 rounded-xl bg-sidebar text-sidebar-foreground m-2 mb-0">

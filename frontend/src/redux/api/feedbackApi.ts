@@ -1,16 +1,29 @@
-// api/feedbackApi.js
 import { baseApi } from "../baseApi";
+import { PaginationParams } from "../types/common";
 
 export const feedbackApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** ---------------------------
      * GET ALL FEEDBACKS WITH FILTERING
      * --------------------------- */
-    getFeedbacks: builder.query({
+    getFeedbacks: builder.query<
+      any,
+      PaginationParams & {
+        sector_node_id?: string;
+        min_rating?: string;
+        max_rating?: string;
+        start_date?: string;
+        end_date?: string;
+        search?: string;
+        sort_by?: string;
+        sort_order?: string;
+      }
+    >({
       query: (params) =>
         params ? { url: "/feedbacks", params } : { url: "/feedbacks" },
-      transformResponse: (response) => ({
+      transformResponse: (response: any) => ({
         data: response.data ?? [],
+        meta: response.meta,
         statistics: response.statistics ?? {
           total_count: 0,
           average_rating: "0.00",
