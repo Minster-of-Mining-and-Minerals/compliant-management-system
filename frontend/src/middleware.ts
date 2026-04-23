@@ -59,10 +59,11 @@ export default function middleware(req: NextRequest) {
   // console.log("  Is public route:", isPublicRoute);
 
   // 🔐 Rule 1: If logged in and trying to access login page, redirect to dashboard
-  if (isAuthRoute && hasSessionToken) {
-    // console.log("  Redirecting authenticated user to dashboard");
-    return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
-  }
+  // Removed to prevent infinite redirect loops when cookies exist but session is invalid.
+  // The login page itself will handle redirection if a valid session is found.
+  // if (isAuthRoute && hasSessionToken) {
+  //   return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
+  // }
 
   // 🔒 Rule 2: If NOT logged in and trying to access protected route, redirect to login
   if (!isPublicRoute && !hasSessionToken) {

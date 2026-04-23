@@ -8,6 +8,8 @@ import { Header } from "@/components/layout/header";
 import { useSession } from "next-auth/react";
 import Loading01 from "@/features/template/component/Loading/Loading01";
 
+import { performLogout } from "@/utils/logout";
+
 export default function PrivateLayout({
   children,
 }: {
@@ -21,12 +23,15 @@ export default function PrivateLayout({
   const isChangePasswordPage = pathname.includes("/change-password");
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      performLogout();
+    }
     if (status === "authenticated" && isFirstLogin && !isChangePasswordPage) {
       router.push("/change-password");
     }
   }, [status, isFirstLogin, isChangePasswordPage, router]);
 
-  if (status === "loading") {
+  if (status === "loading" || status === "unauthenticated") {
     return <Loading01 />;
   }
 

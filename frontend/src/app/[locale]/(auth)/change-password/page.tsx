@@ -17,8 +17,9 @@ import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import { useChangePasswordMutation } from "@/redux/api/userApi";
 import { useRouter } from "@/i18n/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Lock, ArrowLeftIcon, EyeIcon, EyeOffIcon, AlertCircle } from "lucide-react";
+import { performLogout } from "@/utils/logout";
 
 const passwordSchema = z.object({
   current_password: z.string().min(1, "Current password is required"),
@@ -56,7 +57,7 @@ export default function ChangePasswordPage() {
       }).unwrap();
 
       toast.success("Password changed successfully! Please log in with your new password.");
-      await signOut({ callbackUrl: "/login" });
+      await performLogout();
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to change password");
     }

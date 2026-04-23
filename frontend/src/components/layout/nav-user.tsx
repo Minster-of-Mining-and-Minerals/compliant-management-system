@@ -15,6 +15,8 @@ import { signOut } from "@/auth";
 import { logout } from "@/actions/user";
 import { useRouter } from "next/navigation";
 
+import { performLogout } from "@/utils/logout";
+
 interface NavUserProps {
   user: {
     name: string;
@@ -34,8 +36,7 @@ export function NavUser({ user }: NavUserProps) {
     .slice(0, 2);
 
   const handleLogout = async () => {
-    await logout()
-    // signOut({ redirectTo: "/login" });
+    await performLogout();
   };
 
   const handleProfile = () => {

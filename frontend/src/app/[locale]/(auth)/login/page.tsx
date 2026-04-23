@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -18,11 +18,17 @@ export default function ExternalLogin() {
   const [authError, setAuthError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { update } = useSession();
+  const { data: session, status, update } = useSession();
 
   const searchParams = useSearchParams();
 
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push(callbackUrl);
+    }
+  }, [status, callbackUrl, router]);
   const [formData, setFormData] = useState({
     email: "",
     password: ""
