@@ -48,7 +48,37 @@ export const authApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ["User"],
     }),
+
+    requestOTP: builder.mutation<{ success: boolean; message: string }, { email: string }>({
+      query: (body) => ({
+        url: "/auth/forgot-password/request-otp",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    verifyOTP: builder.mutation<{ success: boolean; message: string }, { email: string; otp: string }>({
+      query: (body) => ({
+        url: "/auth/forgot-password/verify-otp",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    resetPassword: builder.mutation<{ success: boolean; message: string }, { email: string; otp: string; newPassword: string }>({
+      query: (body) => ({
+        url: "/auth/forgot-password/reset-password",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
-export const { useLoginMutation, useLogoutMutation } = authApi;
+export const { 
+  useLoginMutation, 
+  useLogoutMutation,
+  useRequestOTPMutation,
+  useVerifyOTPMutation,
+  useResetPasswordMutation,
+} = authApi;

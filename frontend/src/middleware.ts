@@ -10,6 +10,7 @@ const publicRoutes = [
   "/feedback",
   "/complaint",
   "/track-complaint",
+  "/forgot-password",
 ];
 const authRoutes = ["/login"];
 

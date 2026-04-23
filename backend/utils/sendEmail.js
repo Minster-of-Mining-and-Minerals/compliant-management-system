@@ -4,20 +4,32 @@ const logger = require("./logger"); // your custom logger
 const sendEmail = async (to, subject, text) => {
   try {
     // Create transporter
-    const transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE || "gmail",
-      host: process.env.EMAIL_HOST || "smtp.gmail.com",
-      port: process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT) : 465,
-      secure: process.env.EMAIL_SECURE === "true" || true, // true for port 465, false for others
+    const transportConfig = {
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
-    });
+    };
+
+    if (process.env.EMAIL_SERVICE === "gmail") {
+      // Use the hardcoded IP address from nslookup to bypass the Node.js DNS 'queryA ETIMEOUT' issue
+      transportConfig.host = "142.251.127.108"; 
+      transportConfig.port = 465;
+      transportConfig.secure = true;
+      transportConfig.tls = {
+        servername: "smtp.gmail.com" // Important: validates the SSL certificate correctly against the IP
+      };
+    } else {
+      transportConfig.host = process.env.EMAIL_HOST || "smtp.gmail.com";
+      transportConfig.port = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT) : 465;
+      transportConfig.secure = process.env.EMAIL_SECURE === "true" || true;
+    }
+
+    const transporter = nodemailer.createTransport(transportConfig);
 
     // Define mail options
     const mailOptions = {
-      from: `"${process.env.APP_NAME || "Notification System"}" <${process.env.EMAIL_USER}>`,
+      from: `"${process.env.APP_NAME || "Compliant Management System"}" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,

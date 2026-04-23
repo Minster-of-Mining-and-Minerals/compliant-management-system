@@ -139,6 +139,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/profile", profileRoute);
 
 app.use("/api/change-password", changePasswordRoutes);
+app.use("/api/auth/forgot-password", require("./routers/user-routes/forgotPasswordRoutes"));
 app.use("/api/permissions", permissionRoute);
 app.use("/api/notifications", notificationRoute);
 

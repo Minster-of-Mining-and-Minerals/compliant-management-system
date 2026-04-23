@@ -114,6 +114,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
+      otp: {
+        type: DataTypes.STRING(10),
+        allowNull: true,
+      },
+      otp_expiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       sequelize,

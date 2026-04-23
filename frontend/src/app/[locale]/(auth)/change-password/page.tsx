@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import { useChangePasswordMutation } from "@/redux/api/userApi";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Lock, ArrowLeftIcon, EyeIcon, EyeOffIcon, AlertCircle } from "lucide-react";
 
@@ -67,7 +67,7 @@ export default function ChangePasswordPage() {
   return (
     <div className="min-h-screen bg-[#F9FBFC] flex items-center justify-center px-4 py-12">
       <div className="w-full relative max-w-6xl min-h-[80vh] shadow-2xl rounded-2xl border border-[#DCE7F1] overflow-hidden flex flex-col lg:flex-row bg-white">
-        
+
         {/* Back Button */}
         <Button
           onClick={() => router.push("/dashboard")}
@@ -85,8 +85,6 @@ export default function ChangePasswordPage() {
               alt="Organization Logo"
               className="h-64 lg:h-96 mx-auto mb-6 p-2"
             />
-            <h2 className="text-2xl font-bold text-golden-dark">Plan Management System</h2>
-            <p className="text-golden-dark/70 mt-2">Ministry of Mining and Minerals</p>
           </div>
         </div>
 
@@ -98,8 +96,8 @@ export default function ChangePasswordPage() {
                 {isFirstLogin ? "Security Update" : "Change Password"}
               </h1>
               <p className="text-sm text-golden-dark/70">
-                {isFirstLogin 
-                  ? "For security reasons, you must change your temporary password before proceeding." 
+                {isFirstLogin
+                  ? "For security reasons, you must change your temporary password before proceeding."
                   : "Update your password to keep your account secure."}
               </p>
             </div>
@@ -123,10 +121,10 @@ export default function ChangePasswordPage() {
                       <FormLabel className="text-golden-dark">Current Password</FormLabel>
                       <div className="relative">
                         <FormControl>
-                          <Input 
-                            type={showPasswords ? "text" : "password"} 
-                            placeholder="••••••••" 
-                            {...field} 
+                          <Input
+                            type={showPasswords ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...field}
                             className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
                           />
                         </FormControl>
@@ -151,10 +149,10 @@ export default function ChangePasswordPage() {
                       <FormLabel className="text-golden-dark">New Password</FormLabel>
                       <div className="relative">
                         <FormControl>
-                          <Input 
-                            type={showPasswords ? "text" : "password"} 
-                            placeholder="••••••••" 
-                            {...field} 
+                          <Input
+                            type={showPasswords ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...field}
                             className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
                           />
                         </FormControl>
@@ -172,10 +170,10 @@ export default function ChangePasswordPage() {
                       <FormLabel className="text-golden-dark">Confirm New Password</FormLabel>
                       <div className="relative">
                         <FormControl>
-                          <Input 
-                            type={showPasswords ? "text" : "password"} 
-                            placeholder="••••••••" 
-                            {...field} 
+                          <Input
+                            type={showPasswords ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...field}
                             className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
                           />
                         </FormControl>
@@ -185,9 +183,9 @@ export default function ChangePasswordPage() {
                   )}
                 />
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-golden-dark hover:bg-golden-dark/90 h-14 text-xl text-white font-semibold rounded-md shadow-md transition-all duration-200 mt-6" 
+                <Button
+                  type="submit"
+                  className="w-full bg-golden-dark hover:bg-golden-dark/90 h-14 text-xl text-white font-semibold rounded-md shadow-md transition-all duration-200 mt-6"
                   disabled={isLoading}
                 >
                   {isLoading ? "Processing..." : "Update & Log Out"}

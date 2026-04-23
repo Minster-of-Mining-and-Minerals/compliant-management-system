@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -9,7 +9,7 @@ import { ArrowLeftIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/auth";
 import { login } from "@/actions/user";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { set } from "react-hook-form";
 
@@ -128,7 +128,7 @@ export default function ExternalLogin() {
 
               {/* Forgot Password */}
               <div className="w-full text-right">
-                <Link href="/forgot-password" className="text-sm text-[#0C4A6E] hover:underline">
+                <Link href="/forgot-password" data-test="forgot-password-link" className="text-sm text-[#0C4A6E] hover:underline font-medium">
                   Forgot Password?
                 </Link>
               </div>

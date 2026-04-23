@@ -3,16 +3,16 @@ const { sendEmail } = require("./utils/sendEmail");
 
 (async () => {
   try {
-    console.log("🔍 Testing email configuration...");
+    console.log("Testing email configuration...");
 
     await sendEmail(
-      process.env.EMAIL_USER, 
-      "✅ Email Configuration Test",
-      "This is a test email from your Issue Tracking System."
+      process.env.EMAIL_USER,
+      "Email",
+      "This email is from MoM Complaints and Compliments Management System."
     );
 
-    console.log("✅ Email sent successfully!");
+    console.log("Email sent successfully!");
   } catch (error) {
-    console.error("❌ Email test failed:", error.message);
+    console.error("Email test failed:", error.message);
   }
 })();
