@@ -119,19 +119,19 @@ const columns: ColumnDef<Feedback>[] = [
 ----------------------------------- */
 const handleView = (feedback: Feedback) => {
     // TODO: Implement view modal or navigation
-    console.log("View feedback:", feedback);
+    // console.log("View feedback:", feedback);
     // You can open a modal here showing full feedback details
 };
 
 const handleEdit = (feedback: Feedback) => {
     // TODO: Implement edit functionality
-    console.log("Edit feedback:", feedback);
+    // console.log("Edit feedback:", feedback);
     // You can open an edit modal or navigate to edit page
 };
 
 const handleDelete = async (id: string) => {
     // TODO: Implement delete confirmation
-    console.log("Delete feedback:", id);
+    // console.log("Delete feedback:", id);
     // You can add a confirmation modal before deleting
 };
 
@@ -229,7 +229,7 @@ export default function FeedbackTable() {
             label: "Export",
             onClick: () => {
                 // TODO: Implement export functionality
-                console.log("Export feedbacks");
+                // console.log("Export feedbacks");
             },
             variant: "outline",
             permissions: ["DATA:EXPORT"],
@@ -242,7 +242,7 @@ export default function FeedbackTable() {
             try {
                 await deleteFeedback(id).unwrap();
                 // Show success message
-                console.log("Feedback deleted successfully");
+                // console.log("Feedback deleted successfully");
                 // You can add toast notification here
             } catch (error) {
                 console.error("Failed to delete feedback:", error);

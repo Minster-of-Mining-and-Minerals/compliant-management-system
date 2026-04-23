@@ -90,7 +90,7 @@ export default function PermissionList() {
   // Process API data
   useEffect(() => {
     if (!isError && !isLoading && apiResponse) {
-      console.log("apiResponse: ", apiResponse);
+      // console.log("apiResponse: ", apiResponse);
       // The API returns { success, message, data }
       // We need to extract the data array
       setPermissions(apiResponse || []);

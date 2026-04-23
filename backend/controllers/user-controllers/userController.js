@@ -227,7 +227,7 @@ const updateUser = async (req, res) => {
 
     // ====== Find user ======
     const user = await User.findByPk(user_id, { transaction: t });
-    console.log("user: ", user, "user_idL ", user_id, req.params);
+    // console.log("user: ", user, "user_idL ", user_id, req.params);
     if (!user) {
       await t.rollback();
       return res.status(404).json({
@@ -416,7 +416,7 @@ const getUserById = async (req, res) => {
   try {
     const { id: user_id } = req.params;
 
-    console.log("user_id: ", user_id);
+    // console.log("user_id: ", user_id);
 
     // ====== Find user with relations ======
     const user = await User.findByPk(user_id, {

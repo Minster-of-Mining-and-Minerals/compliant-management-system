@@ -38,7 +38,7 @@ const allowedTypes = [
 ];
 
 const fileFilter = (req, file, cb) => {
-  console.log("File received:", file.mimetype);
+  // console.log("File received:", file.mimetype);
 
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);

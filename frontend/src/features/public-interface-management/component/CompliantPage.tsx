@@ -58,11 +58,11 @@ const ComplaintPage = () => {
   // Fix: Extract the data array from the sector nodes response
   const { data: sectorNodesResponse = {} } = useGetSectorNodesQuery();
   const sectorNodesData = sectorNodesResponse?.data || [];
-  console.log("sector nodes", sectorNodesData);
+  // console.log("sector nodes", sectorNodesData);
 
   const root = sectorNodesData.filter((item) => item.parent_id === null);
   const sectors = root.flatMap((rootItem) => rootItem.children || []);
-  console.log("sectors", sectors);
+  // console.log("sectors", sectors);
 
   // Fix: Extract the data array from the categories response
   const { data: complaintCategoriesResponse = {} } = useGetComplaintCategoriesQuery({
@@ -70,7 +70,7 @@ const ComplaintPage = () => {
     type: "external",
   });
   const complaintCategories = complaintCategoriesResponse?.data || [];
-  console.log("categories", complaintCategories);
+  // console.log("categories", complaintCategories);
 
   const [createComplaint, { isLoading: isSubmitting }] =
     useCreateComplaintMutation();
@@ -199,7 +199,7 @@ const ComplaintPage = () => {
         attachment_ids: attachment_ids,
       };
 
-      console.log("Submitting payload:", payload);
+      // console.log("Submitting payload:", payload);
 
       const result = await createComplaint(payload).unwrap();
 

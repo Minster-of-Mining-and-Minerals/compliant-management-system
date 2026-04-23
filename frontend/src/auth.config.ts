@@ -23,7 +23,7 @@ export default {
               ? `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`
               : `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`;
 
-          console.log("Auth attempt to:", backendUrl);
+          // console.log("Auth attempt to:", backendUrl);
 
           const res = await fetch(backendUrl, {
             method: "POST",
@@ -33,18 +33,18 @@ export default {
             body: JSON.stringify({ email, password }),
           });
 
-          console.log("Authorize response status:", res.status);
+          // console.log("Authorize response status:", res.status);
 
           if (!res.ok) {
-            console.log("Auth failed with status:", res.status);
+            // console.log("Auth failed with status:", res.status);
             return null;
           }
 
           const data = await res.json();
-          console.log("Auth response data:", data);
+          // console.log("Auth response data:", data);
 
           if (!data?.success) {
-            console.log("Auth response not successful");
+            // console.log("Auth response not successful");
             return null;
           }
 
@@ -53,7 +53,7 @@ export default {
           const token = data.token || data.data?.token;
 
           if (!token) {
-            console.log("No token in response");
+            // console.log("No token in response");
             return null;
           }
 

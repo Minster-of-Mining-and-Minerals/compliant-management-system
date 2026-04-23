@@ -11,7 +11,7 @@ const jwt = require("jsonwebtoken");
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("login called: ", req.body);
+    // console.log("login called: ", req.body);
 
     const user = await User.findOne({
       where: { email },
@@ -105,7 +105,7 @@ const login = async (req, res) => {
       roles: userRoles,
       // permissions removed to reduce session payload size
     };
-    console.log("to be returned: ", result);
+    // console.log("to be returned: ", result);
 
     return res.status(200).json({
       success: true,

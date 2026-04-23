@@ -82,7 +82,7 @@ exports.validateCreateUser = (req, res, next) => {
 };
 
 exports.validateUpdateUser = (req, res, next) => {
-  console.log("validate update user reached");
+  // console.log("validate update user reached");
   const { error } = updateUserSchema.validate(req.body, { abortEarly: true });
   if (error) {
     return res.status(400).json({

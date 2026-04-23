@@ -182,7 +182,7 @@ export default function MyComplaintDetailPage() {
 
   if (isLoading) return <div>Loading...</div>;
   if (isError || !complaint) return <div>Error loading complaint details</div>;
-  console.log("Complaint Data:", complaint);
+  // console.log("Complaint Data:", complaint);
   return (
     <>
       <div className="bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden font-sans  py-6 pb-24 flex flex-col items-start">

@@ -41,7 +41,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   onClose,
 }) => {
   const { data: session, status } = useSession();
-  console.log("session: ", session)
+  // console.log("session: ", session)
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");

@@ -84,9 +84,9 @@ module.exports = {
         );
       } catch (error) {
         if (error.name === "SequelizeUniqueConstraintError") {
-          console.log(
-            `Permission ${perm.resource}:${perm.action} already exists, skipping...`,
-          );
+          // console.log(
+          //   `Permission ${perm.resource}:${perm.action} already exists, skipping...`,
+          // );
           continue;
         }
         throw error;

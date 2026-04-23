@@ -3,7 +3,7 @@ import { getFileType } from "../../utils/fileUrl";
 
 export default function FileViewer({ fileUrl }: { fileUrl: string }) {
   const type = getFileType(fileUrl);
-  console.log("Rendering FileViewer with fileUrl:", fileUrl, "and type:", type);
+  // console.log("Rendering FileViewer with fileUrl:", fileUrl, "and type:", type);
   if (!fileUrl) {
     return (
       <p className="text-gray-600 text-center">

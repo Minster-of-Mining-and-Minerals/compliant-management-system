@@ -123,12 +123,12 @@ export function CreateSectorModal({
     };
 
     // Debug function to check the data
-    const debugData = () => {
-        console.log("Tree data:", tree);
-        console.log("Current level nodes:", currentLevelNodes);
-        console.log("Navigation stack:", navigationStack);
-        console.log("Selected parent:", selectedParentNode);
-    };
+    // const debugData = () => {
+    //     console.log("Tree data:", tree);
+    //     console.log("Current level nodes:", currentLevelNodes);
+    //     console.log("Navigation stack:", navigationStack);
+    //     console.log("Selected parent:", selectedParentNode);
+    // };
     const handleClose = () => {
         setName("");
         setDescription("");
@@ -144,13 +144,13 @@ export function CreateSectorModal({
         }
 
         try {
-            console.log(selectedParentNode, name, description, "creating node payload");
+            // console.log(selectedParentNode, name, description, "creating node payload");
             const response = await createNode({
                 name,
                 description,
                 parent_id: selectedParentNode || parent_sector_node_id || null,
             }).unwrap();
-            console.log(response, "response");
+            // console.log(response, "response");
             if (response) {
                 toast.success("Sector created!");
                 setName("");
@@ -189,14 +189,14 @@ export function CreateSectorModal({
                 </div>
 
                 {/* Debug button - remove in production */}
-                <button
+                {/* <button
                     type="button"
                     onClick={debugData}
                     className="text-xs bg-gray-200 p-1 rounded mb-2"
                     style={{ display: "none" }} // Hidden by default
                 >
                     Debug Data
-                </button>
+                </button> */}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className={`flex gap-10 ${parent_sector_node_id ? '' : ''}`}>

@@ -48,10 +48,6 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
         attachment_id: [],
     });
 
-    console.log("departments: ", departments)
-    console.log("sectorId:", sectorId);
-    console.log("departmentId:", departmentId);
-
     // Additional Fields
     const [incidentDate, setIncidentDate] = useState("");
     const [nameOfPersonConcerned, setNameOfPersonConcerned] = useState("");
