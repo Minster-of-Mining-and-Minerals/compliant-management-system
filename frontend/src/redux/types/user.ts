@@ -49,6 +49,7 @@ export interface User {
   userType?: UserType;
   internalUserType?: InternalUserType;
   sectorNode?: SectorNode;
+  department?: SectorNode;
   roles?: Role[];
 }
 
@@ -70,6 +71,8 @@ export interface UpdateUserPayload {
   user_type_id?: string;
   role_ids?: string[];
   is_active?: boolean;
+  sector_node_id?: string;
+  department_id?: string;
 }
 
 export interface ToggleUserStatusPayload {

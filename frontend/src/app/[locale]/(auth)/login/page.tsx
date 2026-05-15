@@ -45,9 +45,14 @@ export default function ExternalLogin() {
     }
 
     if (result?.success) {
-      await update(); // Force session refresh
-      router.push(callbackUrl || "/dashboard");
+      const newSession: any = await update(); // Force session refresh
+      const isFirstLogin = newSession?.user?.is_first_logged_in;
 
+      if (isFirstLogin) {
+        router.push("/change-password");
+      } else {
+        router.push(callbackUrl || "/dashboard");
+      }
     }
     setIsLoading(false);
   };

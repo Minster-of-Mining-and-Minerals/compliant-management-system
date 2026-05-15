@@ -29,17 +29,13 @@ import {
   canEscalate,
   canInternallyMarkInProgress,
   canInternallyResolve,
-  canMarkInProgress,
-  canResolve,
 } from "@/utils/taskHelper";
 import { toast } from "sonner";
-import DetailHeader from "@/components/common/DetailHeader";
-import PageMeta from "@/components/common/PageMeta";
 import CompliantHistoryLog from "./CompliantHistoryLog";
 import TimelineOpener from "./TimelineOpener";
 import FileViewer from "@/components/common/FileView";
 import { formatStatus } from "@/utils/statusFormatter";
-import ResolutionPreview from "./ResolutionPreview";
+import ResolutionPreview from "./ResolutionPreview"; 
 import AssignmentPreview from "./AssignmentPreview";
 import {
   useAcceptCompliantMutation,

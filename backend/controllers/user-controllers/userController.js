@@ -223,6 +223,8 @@ const updateUser = async (req, res) => {
       phone_number,
       is_active,
       role_ids,
+      sector_node_id,
+      department_id,
     } = req.body;
 
     // ====== Find user ======
@@ -264,6 +266,32 @@ const updateUser = async (req, res) => {
       }
     }
 
+    // ====== Validate sector node ======
+    if (sector_node_id) {
+      const sectorNode = await SectorNode.findByPk(sector_node_id, {
+        transaction: t,
+      });
+      if (!sectorNode) {
+        await t.rollback();
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid sector node." });
+      }
+    }
+
+    // ====== Validate department if provided ======
+    if (department_id) {
+      const department = await SectorNode.findByPk(department_id, {
+        transaction: t,
+      });
+      if (!department) {
+        await t.rollback();
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid department." });
+      }
+    }
+
     // ====== Update user ======
     await user.update(
       {
@@ -272,6 +300,8 @@ const updateUser = async (req, res) => {
         phone_number: phone_number ?? user.phone_number,
         user_type_id: user_type_id ?? user.user_type_id,
         is_active: is_active ?? user.is_active,
+        sector_node_id: sector_node_id ?? user.sector_node_id,
+        department_id: department_id ?? user.department_id,
         updated_at: new Date(),
       },
       { transaction: t },

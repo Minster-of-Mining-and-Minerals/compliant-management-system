@@ -69,14 +69,24 @@ export default function ChangePasswordPage() {
     <div className="min-h-screen bg-[#F9FBFC] flex items-center justify-center px-4 py-12">
       <div className="w-full relative max-w-6xl min-h-[80vh] shadow-2xl rounded-2xl border border-[#DCE7F1] overflow-hidden flex flex-col lg:flex-row bg-white">
 
-        {/* Back Button */}
-        <Button
-          onClick={() => router.push("/dashboard")}
-          className="cursor-pointer shadow-none z-50 bg-transparent hover:bg-slate-100 p-2 top-4 left-4 absolute flex items-center gap-1"
-        >
-          <ArrowLeftIcon className="w-5 h-5 text-golden-dark" />
-          <span className="text-sm text-golden-dark font-medium">Back</span>
-        </Button>
+        {/* Back/Logout Button */}
+        {isFirstLogin ? (
+          <Button
+            onClick={() => performLogout()}
+            className="cursor-pointer shadow-none z-50 bg-transparent hover:bg-red-50 p-2 top-4 left-4 absolute flex items-center gap-1 text-red-600 hover:text-red-700"
+          >
+            <ArrowLeftIcon className="w-5 h-5" />
+            <span className="text-sm font-medium">Logout</span>
+          </Button>
+        ) : (
+          <Button
+            onClick={() => router.push("/dashboard")}
+            className="cursor-pointer shadow-none z-50 bg-transparent hover:bg-slate-100 p-2 top-4 left-4 absolute flex items-center gap-1"
+          >
+            <ArrowLeftIcon className="w-5 h-5 text-golden-dark" />
+            <span className="text-sm text-golden-dark font-medium">Back</span>
+          </Button>
+        )}
 
         {/* Left Section - Logo */}
         <div className="w-full bg-[#F9FBFC] p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-[#DCE7F1]">
