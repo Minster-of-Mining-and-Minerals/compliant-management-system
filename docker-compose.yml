@@ -17,7 +17,7 @@ services:
     container_name: cms_backend
     restart: always
     env_file:
-      - ./backend/.env
+      - ./backend/.env.example
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -37,15 +37,15 @@ services:
     container_name: cms_frontend
     restart: always
     env_file:
-      - ./frontend/.env
+      - ./frontend/.env.example
     environment:
       - NODE_ENV=production
       - AUTH_TRUSTED_HOST=true
-      - NEXT_PUBLIC_API_URL=http://10.0.71.61:8080/api
+      - NEXT_PUBLIC_API_URL=http://localhost:3000/api
       - BACKEND_INTERNAL_URL=http://backend:4000
     depends_on:
       - backend
-    networks:
+    networks: 
       - cms_network
 
   nginx:
