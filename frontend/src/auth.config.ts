@@ -15,12 +15,13 @@ export default {
         const { email, password } = credentials;
 
         try {
-          // 🔥 FIX: Use the correct backend URL for Docker
-          // In Docker, backend service is accessible via service name
-          // For external access, use the IP/domain
+          // 🔥 FIX: Use internal Docker service name so the frontend
+          // container calls the backend directly — not via nginx.
+          // NEXT_PUBLIC_BASE_URL points to the public nginx URL and
+          // should NOT be used for server-side calls inside Docker.
           const backendUrl =
-            process.env.NODE_ENV === "production"
-              ? `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`
+            process.env.BACKEND_INTERNAL_URL
+              ? `${process.env.BACKEND_INTERNAL_URL}/api/auth/login`
               : `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`;
 
           // console.log("Auth attempt to:", backendUrl);
