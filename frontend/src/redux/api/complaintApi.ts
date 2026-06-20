@@ -2,7 +2,9 @@ import { baseApi } from "../baseApi";
 import {
   AcceptCompliantDto,
   Complaint,
+  ConfirmResolutionDto,
   CreateComplaintPayload,
+  RejectResolutionDto,
   UpdateComplaintPayload,
 } from "../types/complaint";
 import { PaginatedResponse, PaginationParams } from "../types/common";
@@ -118,6 +120,36 @@ export const complaintApi = baseApi.injectEndpoints({
         "Complaint",
       ],
     }),
+
+    confirmResolution: builder.mutation<
+      { success: boolean; message: string },
+      ConfirmResolutionDto
+    >({
+      query: (body) => ({
+        url: `/complaints/confirm-resolution`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { complaint_id }) => [
+        { type: "Complaint", id: complaint_id },
+        "Complaint",
+      ],
+    }),
+
+    rejectResolution: builder.mutation<
+      { success: boolean; message: string },
+      RejectResolutionDto
+    >({
+      query: (body) => ({
+        url: `/complaints/reject-resolution`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { complaint_id }) => [
+        { type: "Complaint", id: complaint_id },
+        "Complaint",
+      ],
+    }),
   }),
 });
 
@@ -130,4 +162,6 @@ export const {
   useUpdateComplaintMutation,
   useDeleteComplaintMutation,
   useAcceptCompliantMutation,
+  useConfirmResolutionMutation,
+  useRejectResolutionMutation,
 } = complaintApi;

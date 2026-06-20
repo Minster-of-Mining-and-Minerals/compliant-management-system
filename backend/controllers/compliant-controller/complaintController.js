@@ -20,6 +20,13 @@ const { generateRandomPassword } = require("../../utils/password");
 const { sendEmail } = require("../../utils/sendEmail");
 const NotificationService = require("../../services/notificationService");
 const AccessService = require("../../services/accessService");
+const {
+  canAccept,
+  canConfirmResolution,
+  canRejectResolution,
+  logHistory,
+  canViewComplaint,
+} = require("../../services/complaintWorkflowService");
 const compliantResolution = require("../../models/compliant-management/compliantResolution");
 
 // =========== Create Complaint ===========
@@ -182,7 +189,7 @@ const createComplaint = async (req, res) => {
         department_id: department_id || null,
         description,
         concern_to_user_name,
-        request,
+        request: request || "No specific request provided",
         location: location || null,
         incident_date: incident_date || null,
         status: "pending",
@@ -381,6 +388,11 @@ const getComplaints = async (req, res) => {
         },
         { model: User, as: "assignedTo", attributes: ["user_id", "full_name"] },
         {
+          model: User,
+          as: "acceptedBy",
+          attributes: ["user_id", "full_name", "email"],
+        },
+        {
           model: SectorNode,
           as: "assignedSector",
           attributes: ["sector_node_id", "name"],
@@ -520,6 +532,11 @@ const getComplaintById = async (req, res) => {
         },
         { model: User, as: "assignedTo", attributes: ["user_id", "full_name"] },
         {
+          model: User,
+          as: "acceptedBy",
+          attributes: ["user_id", "full_name", "email"],
+        },
+        {
           model: SectorNode,
           as: "assignedSector",
           attributes: ["sector_node_id", "name"],
@@ -587,23 +604,14 @@ const getComplaintById = async (req, res) => {
         .json({ success: false, message: "Complaint not found." });
     }
 
-    // Role-based access check
-    const { isAdmin, accessSectorIds } = await AccessService.getUserAccessSectors(user_id);
-    const isOwner = complaint.compliant_user_id === user_id;
-    const isAssignee = complaint.assigned_to_user_id === user_id;
-
-    // Check if any sector assigned to the complaint is in the user's access list
-    const assignedSectorIds = [
-      complaint.sector_node_id,
-      complaint.department_id,
-      ...(complaint.departmentAssignments || []).map((a) => a.department_id),
-    ].filter((id) => id != null);
-
-    const isSectorManager = assignedSectorIds.some((id) =>
-      accessSectorIds.includes(id)
+    // Authenticated staff/owner access check (not used for public ticket tracking)
+    const canView = await canViewComplaint(
+      complaint,
+      user_id,
+      req.user?.permissions || [],
     );
 
-    if (!isAdmin && !isOwner && !isAssignee && !isSectorManager) {
+    if (!canView) {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to view this complaint.",
@@ -628,7 +636,6 @@ const getComplaintById = async (req, res) => {
 const getComplaintByTicketingNumber = async (req, res) => {
   try {
     const { ticketing_code: ticket_number } = req.params;
-    const user_id = req.user?.user_id;
 
     const complaint = await Complaint.findOne({
       where: { ticketing_code: ticket_number }, // ✅ FIXED
@@ -641,6 +648,11 @@ const getComplaintByTicketingNumber = async (req, res) => {
         {
           model: User,
           as: "assignedTo",
+          attributes: ["user_id", "full_name"],
+        },
+        {
+          model: User,
+          as: "acceptedBy",
           attributes: ["user_id", "full_name"],
         },
         {
@@ -712,29 +724,7 @@ const getComplaintByTicketingNumber = async (req, res) => {
       });
     }
 
-    // Role-based access check
-    const { isAdmin, accessSectorIds } = await AccessService.getUserAccessSectors(user_id);
-    const isOwner = complaint.compliant_user_id === user_id;
-    const isAssignee = complaint.assigned_to_user_id === user_id;
-
-    // Check if any sector assigned to the complaint is in the user's access list
-    const assignedSectorIds = [
-      complaint.sector_node_id,
-      complaint.department_id,
-      ...(complaint.departmentAssignments || []).map((a) => a.department_id),
-    ].filter((id) => id != null);
-
-    const isSectorManager = assignedSectorIds.some((id) =>
-      accessSectorIds.includes(id)
-    );
-
-    if (!isAdmin && !isOwner && !isAssignee && !isSectorManager) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to view this complaint.",
-      });
-    }
-
+    // Public tracking by ticket code — no auth required
     return res.status(200).json({
       success: true,
       message: "Complaint fetched successfully.",
@@ -756,6 +746,7 @@ const updateComplaint = async (req, res) => {
   try {
     const { id: complaint_id } = req.params;
     const updateData = req.body;
+    const user_id = req.user?.user_id;
 
     const complaint = await Complaint.findByPk(complaint_id, {
       transaction: t,
@@ -767,10 +758,26 @@ const updateComplaint = async (req, res) => {
         .json({ success: false, message: "Complaint not found." });
     }
 
+    const previousStatus = complaint.status;
+
     await complaint.update(
       { ...updateData, updated_at: new Date() },
       { transaction: t },
     );
+
+    if (updateData.status && updateData.status !== previousStatus) {
+      await logHistory(
+        {
+          complaint_id,
+          user_id,
+          action: "updated",
+          status_at_time: updateData.status,
+          notes: `Complaint status changed from ${previousStatus} to ${updateData.status}`,
+        },
+        t,
+      );
+    }
+
     await t.commit();
 
     return res.status(200).json({
@@ -789,7 +796,7 @@ const updateComplaint = async (req, res) => {
   }
 };
 
-// =========== Accept complaint ===========
+// =========== Accept complaint (locks to handler; only from pending) ===========
 const acceptComplaint = async (req, res) => {
   const t = await sequelize.transaction();
   try {
@@ -799,39 +806,149 @@ const acceptComplaint = async (req, res) => {
     const complaint = await Complaint.findByPk(complaint_id, {
       transaction: t,
     });
-    if (!complaint)
+    if (!complaint) {
+      await t.rollback();
       return res.status(404).json({ message: "Complaint not found" });
+    }
 
-    // Update complaint status to 'in_progress'
-    complaint.status = "in_progress"; // <--- status update
-    await complaint.save({ transaction: t });
+    const acceptance = canAccept(complaint);
+    if (!acceptance.allowed) {
+      await t.rollback();
+      return res.status(409).json({
+        success: false,
+        message: acceptance.reason,
+      });
+    }
 
-    // ================================
-    // NEW — CREATE COMPLAINT HISTORY RECORD
-    // ================================
-    await ComplaintHistory.create(
+    await complaint.update(
       {
-        history_id: uuidv4(),
+        status: "in_progress",
+        accepted_by_user_id: user_id,
+        updated_at: new Date(),
+      },
+      { transaction: t },
+    );
+
+    await logHistory(
+      {
         complaint_id,
         user_id,
         action: "accepted",
-        status_at_time: "in_progress", // new status
+        status_at_time: "in_progress",
         notes:
-          "Complaint accepted by handler and status changed to In Progress",
-        created_at: new Date(),
+          "Complaint accepted by handler — locked to this user; status changed to In Progress",
       },
-      { transaction: t },
+      t,
     );
 
     await t.commit();
     return res.json({
       success: true,
-      message: "Complaint status updated to In Progress.",
+      message: "Complaint accepted and locked to you.",
+      data: complaint,
     });
   } catch (error) {
-    await t.rollback();
+    if (!t.finished) await t.rollback();
     console.error("ACCEPT ERROR:", error);
     return res.status(500).json({ message: error.message });
+  }
+};
+
+// =========== Complainant confirms resolution ===========
+const confirmResolution = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { complaint_id } = req.body;
+    const user_id = req.user?.user_id;
+
+    const complaint = await Complaint.findByPk(complaint_id, { transaction: t });
+    if (!complaint) {
+      await t.rollback();
+      return res.status(404).json({ success: false, message: "Complaint not found." });
+    }
+
+    const check = canConfirmResolution(complaint, user_id);
+    if (!check.allowed) {
+      await t.rollback();
+      return res.status(409).json({ success: false, message: check.reason });
+    }
+
+    await complaint.update(
+      { status: "closed", updated_at: new Date() },
+      { transaction: t },
+    );
+
+    await logHistory(
+      {
+        complaint_id,
+        user_id,
+        action: "confirmed",
+        status_at_time: "closed",
+        notes: "Complainant confirmed the resolution; complaint closed",
+      },
+      t,
+    );
+
+    await t.commit();
+    return res.status(200).json({
+      success: true,
+      message: "Resolution confirmed. Thank you for your feedback.",
+      data: complaint,
+    });
+  } catch (error) {
+    if (!t.finished) await t.rollback();
+    console.error(error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// =========== Complainant rejects resolution (reopens for handler) ===========
+const rejectResolution = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { complaint_id, reason } = req.body;
+    const user_id = req.user?.user_id;
+
+    const complaint = await Complaint.findByPk(complaint_id, { transaction: t });
+    if (!complaint) {
+      await t.rollback();
+      return res.status(404).json({ success: false, message: "Complaint not found." });
+    }
+
+    const check = canRejectResolution(complaint, user_id);
+    if (!check.allowed) {
+      await t.rollback();
+      return res.status(409).json({ success: false, message: check.reason });
+    }
+
+    await complaint.update(
+      { status: "in_progress", updated_at: new Date() },
+      { transaction: t },
+    );
+
+    await logHistory(
+      {
+        complaint_id,
+        user_id,
+        action: "reopened",
+        status_at_time: "in_progress",
+        notes: reason
+          ? `Complainant rejected resolution: ${reason}`
+          : "Complainant rejected resolution; complaint reopened",
+      },
+      t,
+    );
+
+    await t.commit();
+    return res.status(200).json({
+      success: true,
+      message: "Resolution rejected. The complaint has been reopened for the handler.",
+      data: complaint,
+    });
+  } catch (error) {
+    if (!t.finished) await t.rollback();
+    console.error(error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -840,6 +957,7 @@ const deleteComplaint = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const { id: complaint_id } = req.params;
+    const user_id = req.user?.user_id;
 
     const complaint = await Complaint.findByPk(complaint_id, {
       transaction: t,
@@ -852,6 +970,18 @@ const deleteComplaint = async (req, res) => {
     }
 
     await complaint.update({ deleted_at: new Date() }, { transaction: t });
+
+    await logHistory(
+      {
+        complaint_id,
+        user_id,
+        action: "deleted",
+        status_at_time: complaint.status,
+        notes: "Complaint soft-deleted",
+      },
+      t,
+    );
+
     await t.commit();
 
     return res.status(200).json({
@@ -915,5 +1045,7 @@ module.exports = {
   getComplaintByUserId,
   updateComplaint,
   acceptComplaint,
+  confirmResolution,
+  rejectResolution,
   deleteComplaint,
 };

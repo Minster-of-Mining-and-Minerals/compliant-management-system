@@ -6,6 +6,10 @@ const {
 } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const NotificationService = require("../../services/notificationService");
+const {
+  canManageAssignment,
+  logHistory,
+} = require("../../services/complaintWorkflowService");
 
 // ------------------------------------------------------
 //  ASSIGN COMPLAINT
@@ -28,6 +32,16 @@ const assignComplaint = async (req, res) => {
     });
     if (!complaint)
       return res.status(404).json({ message: "Complaint not found." });
+
+    const assignmentCheck = canManageAssignment(
+      complaint,
+      assigner_id,
+      req.user.isGlobalAdmin,
+    );
+    if (!assignmentCheck.allowed) {
+      await t.rollback();
+      return res.status(409).json({ message: assignmentCheck.reason });
+    }
 
     // 3. Validate assignee
     const assignee = await User.findByPk(assignee_id, {
@@ -100,6 +114,17 @@ const assignComplaint = async (req, res) => {
     // Trigger Notification
     await NotificationService.notifyComplaintAssignment(complaint, assignee_id, t);
 
+    await logHistory(
+      {
+        complaint_id,
+        user_id: assigner_id,
+        action: "assigned",
+        status_at_time: "assigned",
+        notes: `Complaint assigned to user ${assignee.full_name}`,
+      },
+      t,
+    );
+
     await t.commit();
 
     // 9. Return full assignment
@@ -157,9 +182,22 @@ const removeComplaintAssignment = async (req, res) => {
     await assignment.complaint.update(
       {
         assigned_to_user_id: null,
-        status: "in_progress",
+        status: assignment.complaint.accepted_by_user_id
+          ? "in_progress"
+          : "pending",
       },
       { transaction: t },
+    );
+
+    await logHistory(
+      {
+        complaint_id: assignment.complaint.complaint_id,
+        user_id: removed_by,
+        action: "assignment_removed",
+        status_at_time: "in_progress",
+        notes: "User assignment removed",
+      },
+      t,
     );
 
     await t.commit();

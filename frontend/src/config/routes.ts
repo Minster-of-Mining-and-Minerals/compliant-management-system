@@ -66,9 +66,11 @@ export const routePermissions: RouteConfig[] = [
   },
 ];
 
-// Helper to get permissions for a path
+// Helper to get permissions for a path (strips locale prefix, supports nested routes)
 export function getPermissionsForPath(path: string) {
-  // Handle dynamic routes - you might need more sophisticated matching
-  const route = routePermissions.find((r) => r.path === path);
+  const normalized = path.replace(/^\/(en|am)(?=\/|$)/, "") || "/";
+  const route = routePermissions.find(
+    (r) => normalized === r.path || normalized.startsWith(`${r.path}/`),
+  );
   return route?.permissions;
 }

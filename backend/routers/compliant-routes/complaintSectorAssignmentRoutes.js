@@ -16,7 +16,7 @@ const {
   validateComplaintIdParam,
   validateSectorIdParam,
 } = require("../../validators/compliant-validators/complaintSectorAssignmentValidator");
-const { authenticateToken } = require("../../middlewares/authMiddleware");
+const { authenticateToken, checkPermission } = require("../../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -49,7 +49,13 @@ const { authenticateToken } = require("../../middlewares/authMiddleware");
  *       201:
  *         description: Sector assigned successfully
  */
-router.post("/", validateAssignSector, authenticateToken, assignComplaintToSector);
+router.post(
+  "/",
+  authenticateToken,
+  checkPermission("complaint", "assign"),
+  validateAssignSector,
+  assignComplaintToSector,
+);
 
 /**
  * @swagger
@@ -60,8 +66,9 @@ router.post("/", validateAssignSector, authenticateToken, assignComplaintToSecto
  */
 router.delete(
   "/:assignment_id",
-  validateAssignmentIdParam,
   authenticateToken,
+  checkPermission("complaint", "assign"),
+  validateAssignmentIdParam,
   removeSectorAssignment
 );
 

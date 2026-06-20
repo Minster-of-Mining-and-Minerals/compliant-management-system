@@ -46,9 +46,14 @@ const getAncestorSectorNodeIds = async (sectorNodeId, ids = []) => {
  * @returns {Promise<{isAdmin: boolean, accessSectorIds: string[]}>}
  */
 const getUserAccessSectors = async (user_id) => {
+  if (!user_id) {
+    return { isAdmin: false, accessSectorIds: [] };
+  }
+
   const user = await User.findByPk(user_id);
   // If user has no sector_node_id, they are considered a "global admin" (no sector restriction)
-  if (!user || !user.sector_node_id) return { isAdmin: true, accessSectorIds: [] };
+  if (!user) return { isAdmin: false, accessSectorIds: [] };
+  if (!user.sector_node_id) return { isAdmin: true, accessSectorIds: [] };
 
   // Find sectors where user is a HEAD
   const sectorsWhereHead = await SectorNode.findAll({

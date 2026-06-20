@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { getFileUrl, getFileType } from "@/utils/fileUrl";
 import { useGetComplaintByTicketingCodeQuery } from "@/redux/api/complaintApi";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale } from "next-intl";
 
 /* ================= TYPES ================= */
 
@@ -159,6 +160,7 @@ const AttachmentViewerModal = ({ isOpen, onClose, selectedFile }: AttachmentView
 /* ================= PAGE ================= */
 
 const ComplaintTrackPage = () => {
+  const locale = useLocale();
   const [trackingId, setTrackingId] = useState("");
   const [selectedFile, setSelectedFile] = useState<{ url: string; name: string; type: string } | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -183,7 +185,7 @@ const ComplaintTrackPage = () => {
 
   const handleTrack = () => {
     if (!trackingId.trim()) return;
-    router.push(`/en/track-complaint?ticketNumber=${trackingId.trim()}`);
+    router.push(`/${locale}/track-complaint?ticketNumber=${trackingId.trim()}`);
   };
 
   const getFiles = (attachments: AttachmentWrapper[] = []) => {

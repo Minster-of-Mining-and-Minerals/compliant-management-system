@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const db = require("../models");
+const { loadUserAuthContext } = require("../services/permissionService");
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -15,15 +16,8 @@ const authenticateToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Fetch user with roles and permissions
     const user = await db.User.findByPk(decoded.user_id, {
       attributes: { exclude: ["password"] },
-      // include: [
-      //   // {
-      //   //   model: db.UserType,
-      //   //   as: "userType",
-      //   // },
-      // ],
     });
 
     if (!user || !user.is_active) {
@@ -33,14 +27,15 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    // Extract permissions and roles
-    // const permissions = new Set();
-    // const roles = new Set();
+    const authContext = await loadUserAuthContext(user.user_id);
 
     req.user = {
       user_id: user.user_id,
       email: user.email,
       full_name: user.full_name,
+      permissions: authContext.permissions,
+      roles: authContext.roles,
+      isGlobalAdmin: authContext.isGlobalAdmin,
     };
 
     next();
@@ -69,6 +64,30 @@ const checkPermission = (resource, action) => {
       return res.status(403).json({
         success: false,
         message: `Access denied: Required permission ${requiredPermission}`,
+      });
+    }
+
+    next();
+  };
+};
+
+const checkAnyPermission = (permissionPairs) => {
+  return (req, res, next) => {
+    if (!req.user?.permissions?.length) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied: No permissions found",
+      });
+    }
+
+    const allowed = permissionPairs.some(([resource, action]) =>
+      req.user.permissions.includes(`${resource}:${action}`),
+    );
+
+    if (!allowed) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied: Insufficient permissions",
       });
     }
 
@@ -127,6 +146,7 @@ const requireAnyRole = (roleNames) => {
 module.exports = {
   authenticateToken,
   checkPermission,
+  checkAnyPermission,
   requireRole,
   requireAnyRole,
 };

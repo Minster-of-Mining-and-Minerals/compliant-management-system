@@ -9,6 +9,10 @@ const {
 } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const NotificationService = require("../../services/notificationService");
+const {
+  canResolve,
+  logHistory,
+} = require("../../services/complaintWorkflowService");
 
 // ------------------------------------------------------
 //  RESOLVE COMPLAINT
@@ -25,7 +29,18 @@ const resolveComplaint = async (req, res) => {
       transaction: t,
     });
     if (!complaint) {
+      await t.rollback();
       return res.status(404).json({ message: "Complaint not found." });
+    }
+
+    const resolveCheck = canResolve(
+      complaint,
+      resolved_by,
+      req.user.isGlobalAdmin,
+    );
+    if (!resolveCheck.allowed) {
+      await t.rollback();
+      return res.status(409).json({ message: resolveCheck.reason });
     }
 
     // 2. Check if complaint is already resolved

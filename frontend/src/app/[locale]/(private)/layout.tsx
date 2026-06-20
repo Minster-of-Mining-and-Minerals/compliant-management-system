@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 import Loading01 from "@/features/template/component/Loading/Loading01";
 
 import { performLogout } from "@/utils/logout";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 export default function PrivateLayout({
   children,
@@ -46,7 +47,9 @@ export default function PrivateLayout({
       {!isFirstLogin && <AppSidebar />}
       <SidebarInset>
         <Header title={""} />
-        <div className="p-6">{children}</div>
+        <div className="p-6">
+          <RouteGuard>{children}</RouteGuard>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

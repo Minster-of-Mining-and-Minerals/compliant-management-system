@@ -87,7 +87,9 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
       options: [
         { label: "Pending", value: "pending" },
         { label: "In Progress", value: "in_progress" },
+        { label: "Assigned", value: "assigned" },
         { label: "Resolved", value: "resolved" },
+        { label: "Closed", value: "closed" },
         { label: "Rejected", value: "rejected" },
       ],
     },

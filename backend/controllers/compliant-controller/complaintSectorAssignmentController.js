@@ -7,6 +7,11 @@ const {
 } = require("../../models");
 
 const { v4: uuidv4, validate: isUuid } = require("uuid");
+const NotificationService = require("../../services/notificationService");
+const {
+  canManageAssignment,
+  logHistory,
+} = require("../../services/complaintWorkflowService");
 
 // ------------------------------------------------------
 //  ASSIGN COMPLAINT TO SECTOR
@@ -26,6 +31,16 @@ const assignComplaintToSector = async (req, res) => {
         const complaint = await Complaint.findByPk(complaint_id, { transaction: t });
         if (!complaint)
             return res.status(404).json({ message: "Complaint not found." });
+
+        const assignmentCheck = canManageAssignment(
+            complaint,
+            assigner_id,
+            req.user.isGlobalAdmin,
+        );
+        if (!assignmentCheck.allowed) {
+            await t.rollback();
+            return res.status(409).json({ message: assignmentCheck.reason });
+        }
 
         // 3. Validate sector (department)
         const sector = await SectorNode.findByPk(department_id, {
@@ -72,9 +87,21 @@ const assignComplaintToSector = async (req, res) => {
         await complaint.update(
             {
                 status: "assigned",
+                department_id,
                 updated_at: new Date(),
             },
             { transaction: t }
+        );
+
+        await logHistory(
+            {
+                complaint_id,
+                user_id: assigner_id,
+                action: "sector_assigned",
+                status_at_time: "assigned",
+                notes: `Complaint assigned to department ${sector.name}`,
+            },
+            t,
         );
 
         await t.commit();
@@ -139,10 +166,26 @@ const removeSectorAssignment = async (req, res) => {
 
         if (remaining === 0) {
             await assignment.complaint.update(
-                { status: "in_progress" },
+                {
+                    status: assignment.complaint.accepted_by_user_id
+                        ? "in_progress"
+                        : "pending",
+                    department_id: null,
+                },
                 { transaction: t }
             );
         }
+
+        await logHistory(
+            {
+                complaint_id: assignment.complaint_id,
+                user_id: removed_by,
+                action: "sector_assignment_removed",
+                status_at_time: "in_progress",
+                notes: "Department assignment removed",
+            },
+            t,
+        );
 
         await t.commit();
 

@@ -17,7 +17,7 @@ const {
   validateComplaintIdParam,
   validateUserIdParam,
 } = require("../../validators/compliant-validators/complaintResolutionValidator");
-const { authenticateToken } = require("../../middlewares/authMiddleware");
+const { authenticateToken, checkPermission } = require("../../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -73,7 +73,7 @@ const { authenticateToken } = require("../../middlewares/authMiddleware");
  *       409:
  *         description: Complaint is already resolved or resolution exists
  */
-router.post("/", authenticateToken, validateResolveComplaint, resolveComplaint);
+router.post("/", authenticateToken, checkPermission("complaint", "resolve"), validateResolveComplaint, resolveComplaint);
 
 /**
  * @swagger

@@ -18,7 +18,7 @@ const {
   validateFeedbackStatsQuery,
   validateFeedbackId,
 } = require("../../validators/feedback-validator/feedbackValidator");
-const { authenticateToken } = require("../../middlewares/authMiddleware");
+const { authenticateToken, checkPermission } = require("../../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -113,38 +113,23 @@ const { authenticateToken } = require("../../middlewares/authMiddleware");
  *                     max_rating:
  *                       type: integer
  */
-router.get("/", validateFeedbackQuery, authenticateToken, getFeedbacks);
+router.get("/", validateFeedbackQuery, authenticateToken, checkPermission("feedback", "read"), getFeedbacks);
 
-/**
- * @swagger
- * /feedbacks/{id}:
- *   get:
- *     summary: Get feedback by ID
- *     tags: [Feedbacks]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Feedback ID
- *     responses:
- *       200:
- *         description: Feedback details
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   $ref: '#/components/schemas/Feedback'
- */
-router.get("/:id", validateFeedbackId, getFeedbackById);
+router.get(
+  "/statistics/overview",
+  authenticateToken,
+  checkPermission("feedback", "read"),
+  validateFeedbackStatsQuery,
+  getFeedbackStatistics,
+);
+
+router.get(
+  "/:id",
+  authenticateToken,
+  checkPermission("feedback", "read"),
+  validateFeedbackId,
+  getFeedbackById,
+);
 
 /**
  * @swagger
@@ -225,7 +210,14 @@ router.post("/", validateCreateFeedback, createFeedback);
  *       200:
  *         description: Feedback updated successfully
  */
-router.put("/:id", validateFeedbackId, validateUpdateFeedback, updateFeedback);
+router.put(
+  "/:id",
+  authenticateToken,
+  checkPermission("feedback", "read"),
+  validateFeedbackId,
+  validateUpdateFeedback,
+  updateFeedback,
+);
 
 /**
  * @swagger
@@ -245,130 +237,12 @@ router.put("/:id", validateFeedbackId, validateUpdateFeedback, updateFeedback);
  *       200:
  *         description: Feedback deleted successfully
  */
-router.delete("/:id", validateFeedbackId, deleteFeedback);
-
-/**
- * @swagger
- * /feedbacks/statistics/overview:
- *   get:
- *     summary: Get feedback statistics and overview
- *     tags: [Feedbacks]
- *     parameters:
- *       - in: query
- *         name: sector_node_id
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Filter by sector node ID
- *       - in: query
- *         name: start_date
- *         schema:
- *           type: string
- *           format: date
- *         description: Start date for statistics (YYYY-MM-DD)
- *       - in: query
- *         name: end_date
- *         schema:
- *           type: string
- *           format: date
- *         description: End date for statistics (YYYY-MM-DD)
- *     responses:
- *       200:
- *         description: Feedback statistics
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     rating_distribution:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           rating:
- *                             type: integer
- *                           count:
- *                             type: integer
- *                     daily_stats:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           date:
- *                             type: string
- *                             format: date
- *                           count:
- *                             type: integer
- *                           avg_rating:
- *                             type: number
- *                     sector_stats:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           sector_node_id:
- *                             type: string
- *                           count:
- *                             type: integer
- *                           avg_rating:
- *                             type: number
- */
-router.get(
-  "/statistics/overview",
-  validateFeedbackStatsQuery,
-  getFeedbackStatistics
+router.delete(
+  "/:id",
+  authenticateToken,
+  checkPermission("feedback", "read"),
+  validateFeedbackId,
+  deleteFeedback,
 );
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Feedback:
- *       type: object
- *       properties:
- *         feedback_id:
- *           type: string
- *           format: uuid
- *         sector_node_id:
- *           type: string
- *           format: uuid
- *           nullable: true
- *         full_name:
- *           type: string
- *         feedback:
- *           type: string
- *         rating:
- *           type: integer
- *           minimum: 1
- *           maximum: 5
- *         created_at:
- *           type: string
- *           format: date-time
- *         updated_at:
- *           type: string
- *           format: date-time
- *         sectorNode:
- *           $ref: '#/components/schemas/SectorNode'
- *
- *     SectorNode:
- *       type: object
- *       properties:
- *         sector_node_id:
- *           type: string
- *           format: uuid
- *         name:
- *           type: string
- *         code:
- *           type: string
- *         description:
- *           type: string
- */
 
 module.exports = router;

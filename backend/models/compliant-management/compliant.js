@@ -41,6 +41,22 @@ module.exports = (sequelize, DataTypes) => {
         as: "assignedTo",
       });
 
+      // Handler who accepted / locked the complaint
+      Complaint.belongsTo(models.User, {
+        foreignKey: "accepted_by_user_id",
+        as: "acceptedBy",
+      });
+
+      Complaint.belongsTo(models.User, {
+        foreignKey: "target_user_id",
+        as: "targetUser",
+      });
+
+      Complaint.belongsTo(models.SectorNode, {
+        foreignKey: "filer_sector_node_id",
+        as: "filerSector",
+      });
+
       // Complaint can have many attachments
       Complaint.hasMany(models.ComplaintAttachment, {
         foreignKey: "complaint_id",
@@ -125,6 +141,34 @@ module.exports = (sequelize, DataTypes) => {
         references: {
           model: "users",
           key: "user_id",
+        },
+      },
+      accepted_by_user_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "user_id",
+        },
+      },
+      target_type: {
+        type: DataTypes.ENUM("person", "department"),
+        allowNull: true,
+      },
+      target_user_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "user_id",
+        },
+      },
+      filer_sector_node_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "sector_nodes",
+          key: "sector_node_id",
         },
       },
       concern_to_user_name: {

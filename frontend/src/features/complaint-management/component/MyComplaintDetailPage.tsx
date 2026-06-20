@@ -22,25 +22,19 @@ import {
 // import FileViewer from "../../components/common/FileView";
 import { getFileType, getFileUrl } from "@/utils/fileUrl";
 
-import {
-  canAssign,
-  canConfirm,
-  canEscalate,
-  canInternallyMarkInProgress,
-  canInternallyResolve,
-  canMarkInProgress,
-  canResolve,
-} from "@/utils/taskHelper";
+import { canConfirm, canReject } from "@/utils/taskHelper";
 import { toast } from "sonner";
 import CompliantHistoryLog from "./CompliantHistoryLog";
 import TimelineOpener from "./TimelineOpener";
 import FileViewer from "@/components/common/FileView";
 import { formatStatus } from "@/utils/statusFormatter";
 import {
-  useAcceptCompliantMutation,
+  useConfirmResolutionMutation,
   useGetComplaintByIdQuery,
+  useRejectResolutionMutation,
 } from "@/redux/api/complaintApi";
 import { useBreadcrumbTitleEffect } from "@/hooks/useBreadcrumbTitleEffect";
+import { Button } from "@/components/ui/button";
 type PreviewFile = {
   name: string;
   url: string;
@@ -51,14 +45,12 @@ export default function MyComplaintDetailPage() {
   const { data: session, status } = useSession();
   const params = useParams();
   const id = params?.complaintId as string;
-  const { data: complaint, isLoading, isError } = useGetComplaintByIdQuery(id!);
-  const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const [acceptCompliant, { isLoading: isAccepting }] =
-    useAcceptCompliantMutation();
-  const [escalateComplaint, setEscalateComplaint] = useState(false);
-  const [assignComplaint, setAssignComplaint] = useState(false);
-  const [resolveComplaint, setResolveComplaint] = useState(false);
-  const [markComplaint, setMarkComplaint] = useState(false);
+  const { data: complaint, isLoading, isError, refetch } = useGetComplaintByIdQuery(id!);
+  const [confirmResolution, { isLoading: isConfirming }] =
+    useConfirmResolutionMutation();
+  const [rejectResolution, { isLoading: isRejecting }] =
+    useRejectResolutionMutation();
+  const [rejectReason, setRejectReason] = useState("");
   const [openTimeline, setOpenTimeline] = useState(true);
   const [project_id, setProjectId] = useState("");
   const [internal_node_id, setInternalNodeId] = useState("");
@@ -73,30 +65,9 @@ export default function MyComplaintDetailPage() {
   const [expandedResolutions, setExpandedResolutions] = useState<string[]>([]);
 
   const userId = session?.user?.id || "";
+  const showConfirmActions = canConfirm(userId, complaint?.status ?? "", complaint);
+  const showRejectActions = canReject(userId, complaint?.status ?? "", complaint);
 
-  useEffect(() => {
-    setEscalateComplaint(canEscalate(userId, complaint?.status, complaint));
-  }, [userId, complaint?.status, complaint]);
-
-  useEffect(() => {
-    setAssignComplaint(canAssign(userId, complaint?.status, complaint));
-  }, [userId, complaint?.status, complaint]);
-
-  useEffect(() => {
-    setResolveComplaint(
-      canInternallyResolve(userId, complaint?.status, complaint),
-    );
-  }, [userId, complaint?.status, complaint]);
-
-  useEffect(() => {
-    setMarkComplaint(
-      canInternallyMarkInProgress(userId, complaint?.status, complaint),
-    );
-  }, [userId, complaint?.status, complaint]);
-
-  useEffect(() => {
-    setProjectId(complaint?.project_id);
-  }, [complaint?.project_id, complaint]);
   useBreadcrumbTitleEffect(
     complaint?.ticketing_code,
     complaint?.complaint_id
@@ -151,23 +122,31 @@ export default function MyComplaintDetailPage() {
     setFileViewerState({ files, index });
   const closeFileViewer = () => setFileViewerState(null);
 
-  const handleMarkAsInProgress = async () => {
+  const handleConfirmResolution = async () => {
     if (!id) return;
     try {
-      const res = await acceptCompliant({ complaint_id: id }).unwrap();
-      toast.success(res.message || "Complaint status updated to In Progress!");
+      const res = await confirmResolution({ complaint_id: id }).unwrap();
+      toast.success(res.message || "Resolution confirmed.");
+      refetch();
     } catch (error: any) {
-      toast.error(error?.data?.message || "Error updating complaint status.");
-      console.error(error);
+      toast.error(error?.data?.message || "Could not confirm resolution.");
     }
   };
 
-  const handleActions = async (value: string) => {
-    setOpenTimeline(false);
-    setSelectedAction(value);
+  const handleRejectResolution = async () => {
+    if (!id) return;
+    try {
+      const res = await rejectResolution({
+        complaint_id: id,
+        reason: rejectReason.trim() || undefined,
+      }).unwrap();
+      toast.success(res.message || "Resolution rejected. Complaint reopened.");
+      setRejectReason("");
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Could not reject resolution.");
+    }
   };
-
-
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -195,7 +174,7 @@ export default function MyComplaintDetailPage() {
           className={`w-full min-h-[80vh] mx-auto shadow-md rounded-xl  border-dashed border-[#BFD7EA] p-6 relative overflow-hidden`}
         >
           <div
-            className={`w-full transition-all duration-500 ease-in-out  ${selectedAction || openTimeline ? "lg:pr-[360px]" : ""
+            className={`w-full transition-all duration-500 ease-in-out  ${openTimeline ? "lg:pr-[360px]" : ""
               } `}
           >
             <div className="flex flex-col w-full">
@@ -452,6 +431,48 @@ export default function MyComplaintDetailPage() {
                           </div>
                         );
                       },
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {(showConfirmActions || showRejectActions) && (
+                <div className="mt-6 border border-[#BFD7EA] rounded-xl p-6 bg-white shadow-sm">
+                  <h4 className="font-semibold text-[#1E516A] mb-2">
+                    Resolution feedback
+                  </h4>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Please confirm whether the resolution addressed your complaint,
+                    or reject it to reopen the case for the handler.
+                  </p>
+                  {showRejectActions && (
+                    <textarea
+                      className="w-full border border-[#DCE7F1] rounded-lg p-3 text-sm mb-4"
+                      placeholder="Optional reason if rejecting the resolution..."
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      rows={3}
+                    />
+                  )}
+                  <div className="flex flex-wrap gap-3">
+                    {showConfirmActions && (
+                      <Button
+                        onClick={handleConfirmResolution}
+                        disabled={isConfirming}
+                        className="bg-green-700 hover:bg-green-800"
+                      >
+                        {isConfirming ? "Confirming..." : "Confirm resolution"}
+                      </Button>
+                    )}
+                    {showRejectActions && (
+                      <Button
+                        variant="outline"
+                        onClick={handleRejectResolution}
+                        disabled={isRejecting}
+                        className="border-red-300 text-red-700 hover:bg-red-50"
+                      >
+                        {isRejecting ? "Rejecting..." : "Reject & reopen"}
+                      </Button>
                     )}
                   </div>
                 </div>

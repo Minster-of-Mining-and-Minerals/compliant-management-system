@@ -175,6 +175,75 @@ class NotificationService {
   }
 
   /**
+   * Notify when internal complaint is routed to a person
+   */
+  static async notifyInternalRoutedToPerson(complaint, targetUserId, transaction = null) {
+    const { ticketing_code, complaint_id } = complaint;
+    const target = await User.findByPk(targetUserId, { transaction });
+    if (!target) return;
+
+    await this.createNotification(
+      {
+        recipient_id: target.user_id,
+        recipient_type: "internal",
+        type: "INTERNAL_COMPLAINT_ROUTED_TO_YOU",
+        title: "Internal Complaint Raised Against You",
+        message: `An internal complaint (${ticketing_code}) has been raised against you and requires your attention.`,
+        related_entity_type: "complaint",
+        related_entity_id: complaint_id,
+        email: target.email,
+      },
+      transaction,
+    );
+  }
+
+  /**
+   * Notify department head + reps when internal complaint is routed to a department
+   */
+  static async notifyInternalRoutedToDepartment(complaint, departmentId, transaction = null) {
+    const { ticketing_code, complaint_id } = complaint;
+    const dept = await SectorNode.findByPk(departmentId, { transaction });
+    const recipients = new Map();
+
+    if (dept?.head_id) {
+      const head = await User.findByPk(dept.head_id, { transaction });
+      if (head?.is_active) recipients.set(head.user_id, head);
+    }
+
+    const reps = await SectorRepresentative.findAll({
+      where: { sector_node_id: departmentId, is_active: true },
+      include: [
+        {
+          model: User,
+          as: "representative",
+          where: { is_active: true },
+        },
+      ],
+      transaction,
+    });
+
+    for (const r of reps) {
+      if (r.representative) recipients.set(r.representative.user_id, r.representative);
+    }
+
+    for (const user of recipients.values()) {
+      await this.createNotification(
+        {
+          recipient_id: user.user_id,
+          recipient_type: "internal",
+          type: "INTERNAL_COMPLAINT_ROUTED_TO_DEPT",
+          title: "Internal Complaint for Your Department",
+          message: `An internal complaint (${ticketing_code}) has been raised against department "${dept?.name || "your department"}".`,
+          related_entity_type: "complaint",
+          related_entity_id: complaint_id,
+          email: user.email,
+        },
+        transaction,
+      );
+    }
+  }
+
+  /**
    * Notify on Complaint Assignment
    */
   static async notifyComplaintAssignment(complaint, assigneeId, transaction = null) {

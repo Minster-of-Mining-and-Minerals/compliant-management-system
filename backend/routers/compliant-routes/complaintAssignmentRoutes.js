@@ -15,7 +15,7 @@ const {
   validateComplaintIdParam,
   validateUserIdParam,
 } = require("../../validators/compliant-validators/complaintAssignmentValidator");
-const { authenticateToken } = require("../../middlewares/authMiddleware");
+const { authenticateToken, checkPermission } = require("../../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -67,7 +67,13 @@ const { authenticateToken } = require("../../middlewares/authMiddleware");
  *       409:
  *         description: User is already assigned to this complaint
  */
-router.post("/", validateAssignComplaint, authenticateToken, assignComplaint);
+router.post(
+  "/",
+  authenticateToken,
+  checkPermission("complaint", "assign"),
+  validateAssignComplaint,
+  assignComplaint,
+);
 
 /**
  * @swagger
@@ -104,6 +110,7 @@ router.post("/", validateAssignComplaint, authenticateToken, assignComplaint);
 router.delete(
   "/:assignment_id",
   authenticateToken,
+  checkPermission("complaint", "assign"),
   validateRemoveAssignment,
   removeComplaintAssignment,
 );

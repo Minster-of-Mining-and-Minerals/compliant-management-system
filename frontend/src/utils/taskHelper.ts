@@ -1,294 +1,86 @@
-export const canMarkInProgress = (
-  user_id: string,
+/** Complaint workflow helpers — must stay aligned with backend complaintWorkflowService */
+
+const TERMINAL = new Set(["resolved", "rejected", "closed"]);
+
+const getHandlerId = (object: any): string | null =>
+  object?.accepted_by_user_id ??
+  object?.acceptedBy?.user_id ??
+  null;
+
+const getAssigneeId = (object: any): string | null =>
+  object?.assigned_to_user_id ?? object?.assignedTo?.user_id ?? null;
+
+/** Only pending, unclaimed complaints can be accepted */
+export const canInternallyMarkInProgress = (
+  _user_id: string,
   issueStatus: string,
-  object: any
+  object: any,
 ): boolean => {
-  // Check if status is "in progress"
-  if (
-    issueStatus === "in_progress" ||
-    issueStatus === "resolved" ||
-    issueStatus === "closed"
-  ) {
-    return false;
-  }
-
-  // Check if user_id exists in any escalation
-  if (
-    object?.escalations?.some(
-      (escalation: any) =>
-        escalation.escalated_by === user_id ||
-        escalation.escalator?.user_id === user_id
-    )
-  ) {
-    return false;
-  }
-
+  if (issueStatus !== "pending") return false;
+  if (getHandlerId(object)) return false;
   return true;
 };
 
-export const canResolve = (
+/** Handler who accepted can assign */
+export const canAssign = (
   user_id: string,
   issueStatus: string,
-  object: any
+  object: any,
 ): boolean => {
-  // Check if status is not "in progress"
-  if (issueStatus !== "in_progress") {
-    return false;
-  }
+  if (TERMINAL.has(issueStatus)) return false;
+  const handlerId = getHandlerId(object);
+  if (!handlerId) return false;
+  return handlerId === user_id;
+};
 
-  // Find the last "accepted" action in history
-  const history = object?.history || [];
-
-  // console.log("history:", history);
-
-  // console.log("object:", object);
-  // Filter only "accepted" actions and get the most recent one
-  const acceptedActions = history
-    .filter((item: any) => item.action === "accepted")
-    .sort(
-      (a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  // console.log("acceptedActions:", acceptedActions);
-
-  // If there are no accepted actions, return false
-  if (acceptedActions.length === 0) {
-    return false;
-  }
-
-  // Get the most recent accepted action
-  const lastAccepted = acceptedActions[0];
-
-  // Check if the user_id matches the user who last accepted the issue
-  if (lastAccepted.user_id !== user_id) {
-    return false;
-  }
-
-  // Check if user_id exists in any escalation
-  if (
-    object?.escalations?.some(
-      (escalation: any) =>
-        escalation.escalated_by === user_id ||
-        escalation.escalator?.user_id === user_id
-    )
-  ) {
-    // console.log("escalationobject: ", object?.escalations);
-    return false;
-  }
-
-  return true;
+/** Handler or current assignee can resolve (after accept) */
+export const canInternallyResolve = (
+  user_id: string,
+  issueStatus: string,
+  object: any,
+): boolean => {
+  if (TERMINAL.has(issueStatus)) return false;
+  if (!getHandlerId(object)) return false;
+  if (getHandlerId(object) === user_id) return true;
+  if (getAssigneeId(object) === user_id) return true;
+  return false;
 };
 
 export const canEscalate = (
   user_id: string,
   issueStatus: string,
-  object: any
+  object: any,
 ): boolean => {
-  // Check if status is not "in progress"
-  if (issueStatus !== "in_progress") {
-    return false;
-  }
-
-  // console.log("esc object:", object);
-
-  // Check if user_id exists in any escalation
-  if (
-    object?.escalations?.some(
-      (escalation: any) =>
-        escalation.escalated_by === user_id ||
-        escalation.escalator?.user_id === user_id
-    )
-  ) {
-    return false;
-  }
-
-  //  Filter only "accepted" actions and get the most recent one
-  const history = object?.history || [];
-  const acceptedActions = history
-    .filter((item: any) => item.action === "accepted")
-    .sort(
-      (a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  // console.log("acceptedActions:", acceptedActions);
-
-  // If there are no accepted actions, return false
-  if (acceptedActions.length === 0) {
-    return false;
-  }
-
-  // Get the most recent accepted action
-  const lastAccepted = acceptedActions[0];
-
-  // Check if the user_id matches the user who last accepted the issue
-  if (lastAccepted.user_id !== user_id) {
-    return false;
-  }
-
-  // console.log("esc object?.escalations:", object?.escalations);
-  return true;
+  if (issueStatus !== "in_progress" && issueStatus !== "assigned") return false;
+  return getHandlerId(object) === user_id;
 };
-// reporter
 
 export const canConfirm = (
   user_id: string,
   issueStatus: string,
-  object: any
+  object: any,
 ): boolean => {
-  // Check if status is not "in progress"
-  if (issueStatus !== "resolved") {
-    return false;
-  }
-
-  // console.log("esc object:", object);
-
-  // Check if user_id exists in any escalation
-  if (object?.reporter === user_id || object?.reporter?.user_id === user_id) {
-    return true;
-  }
-
-  return false;
+  if (issueStatus !== "resolved") return false;
+  const reporterId = object?.compliant_user_id ?? object?.user?.user_id;
+  return reporterId === user_id;
 };
 
 export const canReject = (
   user_id: string,
   issueStatus: string,
-  object: any
-): boolean => {
-  // Check if status is not "in progress"
-  if (issueStatus !== "resolved") {
-    return false;
-  }
-
-  // console.log("esc object:", object);
-
-  // Check if user_id exists in any escalation
-  if (object?.reporter === user_id || object?.reporter?.user_id === user_id) {
-    return true;
-  }
-
-  return false;
-};
+  object: any,
+): boolean => canConfirm(user_id, issueStatus, object);
 
 export const canReRaise = (
   user_id: string,
   issueStatus: string,
-  object: any
+  object: any,
 ): boolean => {
-  // Check if status is not "in progress"
-  if (issueStatus !== "closed") {
-    return false;
-  }
-
-  // console.log("esc object:", object);
-
-  // Check if user_id exists in any escalation
-  if (object?.reporter === user_id || object?.reporter?.user_id === user_id) {
-    return true;
-  }
-
-  return false;
+  if (issueStatus !== "closed") return false;
+  const reporterId = object?.compliant_user_id ?? object?.user?.user_id;
+  return reporterId === user_id;
 };
 
-// Internal Controllers
-export const canAssign = (
-  user_id: string,
-  issueStatus: string,
-  object: any
-): boolean => {
-  // Check if status is not "in progress"
-  if (issueStatus === "resolved") {
-    return false;
-  }
-
-  //  Filter only "accepted" actions and get the most recent one
-  const history = object?.history || [];
-  const acceptedActions = history
-    .filter((item: any) => item.action === "accepted")
-    .sort(
-      (a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  // console.log("acceptedActions:", acceptedActions);
-
-  // If there are no accepted actions, return false
-  if (acceptedActions.length === 0) {
-    return false;
-  }
-
-  // Check if user_id exists in any accepted actions
-  if (acceptedActions?.some((action: any) => action.user_id === user_id)) {
-    return true;
-  }
-
-  // console.log("esc object?.escalations:", object?.escalations);
-  return false;
-};
-
-export const canInternallyMarkInProgress = (
-  user_id: string,
-  issueStatus: string,
-  object: any
-): boolean => {
-  // Check if status is "in progress"
-  if (issueStatus === "in_progress" || issueStatus === "resolved") {
-    return false;
-  }
-
-  //  Filter only "accepted" actions and get the most recent one
-  const history = object?.history || [];
-  const acceptedActions = history
-    .filter((item: any) => item.action === "accepted")
-    .sort(
-      (a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  // console.log("acceptedActions:", acceptedActions);
-
-  // Check if user_id exists in any accepted actions
-  if (acceptedActions?.some((action: any) => action.user_id === user_id)) {
-    return false;
-  }
-
-  return true;
-};
-
-export const canInternallyResolve = (
-  user_id: string,
-  issueStatus: string,
-  object: any
-): boolean => {
-  if (issueStatus === "resolved") {
-    return false;
-  }
-
-  // Check if user_id exists in any assignment
-  if (
-    object?.assignments?.some(
-      (assignment: any) => assignment.assigned_by === user_id
-    )
-  ) {
-    return false;
-  }
-
-  //  Filter only "accepted" actions and get the most recent one
-  const history = object?.history || [];
-  const acceptedActions = history
-    .filter((item: any) => item.action === "accepted")
-    .sort(
-      (a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  // console.log("acceptedActions:", acceptedActions);
-
-  // If there are no accepted actions, return false
-  if (acceptedActions.length === 0) {
-    return false;
-  }
-  // Check if user_id exists in any accepted actions
-  if (acceptedActions?.some((action: any) => action.user_id === user_id)) {
-    return true;
-  }
-
-  return false;
-};
+// Legacy exports kept for any remaining references
+export const canMarkInProgress = canInternallyMarkInProgress;
+export const canResolve = canInternallyResolve;
