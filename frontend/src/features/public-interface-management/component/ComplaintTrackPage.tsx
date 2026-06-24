@@ -9,6 +9,7 @@ import { getFileUrl, getFileType } from "@/utils/fileUrl";
 import { useGetComplaintByTicketingCodeQuery } from "@/redux/api/complaintApi";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
+import { formatDate, formatDateTime, formatTime } from "@/utils/date";
 
 /* ================= TYPES ================= */
 
@@ -208,7 +209,7 @@ const ComplaintTrackPage = () => {
           {shortenFileName(file.name)}
         </p>
         <p className="text-xs text-gray-500">
-          {file.uploadedAt && new Date(file.uploadedAt).toLocaleDateString()}
+          {file.uploadedAt && formatDate(file.uploadedAt)}
         </p>
       </div>
       <Eye className="w-4 h-4 text-blue-600" />
@@ -290,13 +291,13 @@ const ComplaintTrackPage = () => {
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Reported</p>
                   <p className="text-slate-700 font-medium">
-                    {new Date(complaint.created_at).toLocaleDateString()}
+                    {formatDate(complaint.created_at)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Time</p>
                   <p className="text-slate-700 font-medium">
-                    {new Date(complaint.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(complaint.created_at)}
                   </p>
                 </div>
               </div>
@@ -358,7 +359,7 @@ const ComplaintTrackPage = () => {
                         <div className="text-right">
                           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Resolved At</p>
                           <p className="text-slate-700 text-sm font-medium">
-                            {new Date(res.resolved_at).toLocaleDateString()}
+                            {formatDate(res.resolved_at)}
                           </p>
                         </div>
                       </div>

@@ -16,7 +16,7 @@ import {
 } from "@/redux/api/complaintCategoryApi";
 import { ComplaintCategory } from "@/redux/types/complaintCategory";
 import Loading01 from "@/features/template/component/Loading/Loading01";
-import { formatDate } from "@/utils/formatDate";
+import { formatDate } from "@/utils/date";
 import { CreateComplaintCategoryModal } from "@/components/common/modals/CreateComplaintCategoryModal";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";

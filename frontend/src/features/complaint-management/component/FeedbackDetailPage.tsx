@@ -4,6 +4,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { useGetFeedbackByIdQuery } from "@/redux/api/feedbackApi";
 import { useParams } from "next/navigation";
 import { BiCommentDetail, BiCommentX, BiSolidStar, BiStar } from "react-icons/bi";
+import { formatDateTime } from "@/utils/date";
 
 const FeedbackDetailPage = () => {
   const params = useParams();
@@ -93,7 +94,7 @@ const FeedbackDetailPage = () => {
             <div>
               <p className="text-xs text-gray-500 uppercase">Submitted At</p>
               <p className="text-sm font-medium text-golden-dark">
-                {new Date(feedback.created_at).toLocaleString()}
+                {formatDateTime(feedback.created_at)}
               </p>
             </div>
           </CardContent>

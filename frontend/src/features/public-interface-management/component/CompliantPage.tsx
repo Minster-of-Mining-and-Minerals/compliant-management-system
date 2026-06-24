@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useCreateComplaintMutation } from "@/redux/api/complaintApi";
 import TicketSuccessModal from "@/components/common/modals/ComplaintSuccess";
+import { todayDateInputValue } from "@/utils/date";
 
 interface ComplaintFormValues {
   attachment_id: File[];
@@ -651,7 +652,7 @@ const ComplaintPage = () => {
         onClose={() => setShowTicketModal(false)}
         ticketNumber={ticketNumber}
         sectorName={sectorName}
-        submittedAt={new Date().toISOString().split("T")[0]}
+        submittedAt={todayDateInputValue()}
       />
     </>
   );

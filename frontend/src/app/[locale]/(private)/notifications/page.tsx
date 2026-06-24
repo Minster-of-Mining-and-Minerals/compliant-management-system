@@ -16,6 +16,11 @@ import {
     useMarkAllAsReadMutation,
 } from "@/redux/api/notificationApi";
 import { Notification } from "@/redux/types/notification";
+import {
+    compareUtcDates,
+    formatDateLabel,
+    formatTime,
+} from "@/utils/date";
 
 /* =========================
    CATEGORY CONFIG
@@ -56,10 +61,6 @@ const getIcon = (type: string) => {
     }
 
     return <Shield className="h-5 w-5 text-[#073954]" />;
-};
-
-const formatDateLabel = (date: Date) => {
-    return date.toLocaleDateString("en-GB");
 };
 
 /* =========================
@@ -125,10 +126,7 @@ const Notifications = () => {
 
                 return categoryMatch && statusMatch;
             })
-            .sort(
-                (a, b) =>
-                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            );
+            .sort((a, b) => compareUtcDates(b.created_at, a.created_at));
     }, [notifications, activeCategory, statusFilter]);
 
     return (
@@ -203,11 +201,11 @@ const Notifications = () => {
                         </div>
                     ) : (
                         filteredNotifications.map((n, index) => {
-                            const currentDate = formatDateLabel(new Date(n.created_at));
+                            const currentDate = formatDateLabel(n.created_at);
                             const prevDate =
                                 index > 0
                                     ? formatDateLabel(
-                                        new Date(filteredNotifications[index - 1].created_at)
+                                        filteredNotifications[index - 1].created_at
                                     )
                                     : null;
 
@@ -274,7 +272,7 @@ const Notifications = () => {
                                                     {n.type.replace(/_/g, " ")}
                                                 </span>
                                                 <span>•</span>
-                                                <span>{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span>{formatTime(n.created_at)}</span>
                                             </div>
                                         </div>
                                     </div>

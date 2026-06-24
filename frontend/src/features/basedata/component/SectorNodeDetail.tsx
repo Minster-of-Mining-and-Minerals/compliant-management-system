@@ -14,7 +14,7 @@ import SectorRepresentativesTable from "./SectorRepresentative";
 import ChildSectorList from "./ChildSectorList";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useUpdateSectorNodeMutation } from "@/redux/api/sectorNodeApi";
-import { toast } from "sonner";
+import { formatDate } from "@/utils/date";
 import { PermissionGuard } from "@/features/complaint-management/component/PermissionGuard";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -138,7 +138,7 @@ export default function SectorNodeDetail() {
           <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-4">
             <p className="font-semibold text-golden-dark text-sm mb-1">Created At</p>
             <p className="text-gray-700 font-medium">
-              {new Date(sector.created_at).toLocaleDateString()}
+              {formatDate(sector.created_at)}
             </p>
           </div>
 

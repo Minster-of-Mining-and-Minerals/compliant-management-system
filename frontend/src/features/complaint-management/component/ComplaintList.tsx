@@ -16,6 +16,7 @@ import {
 } from "@/redux/api/complaintApi";
 import { Complaint } from "@/redux/types/complaint";
 import { formatStatus } from "@/utils/statusFormatter";
+import { formatDate } from "@/utils/date";
 import { useGetUserTypesQuery } from "@/redux/api/userApi";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -180,7 +181,7 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
       accessorKey: "created_at",
       header: "Created",
       cell: ({ row }) =>
-        new Date(row.getValue("created_at")).toLocaleDateString(),
+        formatDate(row.getValue("created_at")),
     },
     {
       id: "actions",

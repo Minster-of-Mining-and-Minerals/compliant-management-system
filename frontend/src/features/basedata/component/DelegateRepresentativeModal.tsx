@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUpdateRepresentativeMutation } from "@/redux/api/sectorRepresentativeApi";
 import { toast } from "sonner";
+import {
+  parseUtcDate,
+  todayDateInputValue,
+  tomorrowDateInputValue,
+  toUtc,
+} from "@/utils/date";
 
 interface Props {
   isOpen: boolean;
@@ -23,11 +29,10 @@ export function DelegateRepresentativeModal({ isOpen, onClose, representativeId 
       return;
     }
     
-    const selectedDate = new Date(validUntil);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (selectedDate <= today) {
+    const selectedDate = parseUtcDate(`${validUntil}T00:00:00.000Z`);
+    const todayStart = parseUtcDate(`${todayDateInputValue()}T00:00:00.000Z`);
+
+    if (!selectedDate || !todayStart || selectedDate.getTime() <= todayStart.getTime()) {
         toast.error("Valid until date must be in the future.");
         return;
     }
@@ -37,7 +42,7 @@ export function DelegateRepresentativeModal({ isOpen, onClose, representativeId 
         id: representativeId,
         body: {
           can_manage: true,
-          valid_until: selectedDate.toISOString(),
+          valid_until: toUtc(selectedDate) ?? undefined,
         },
       }).unwrap();
       toast.success("Representative successfully delegated as Acting Head.");
@@ -69,7 +74,7 @@ export function DelegateRepresentativeModal({ isOpen, onClose, representativeId 
               type="date" 
               value={validUntil}
               onChange={(e) => setValidUntil(e.target.value)}
-              min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+              min={tomorrowDateInputValue()}
               disabled={isLoading}
             />
           </div>

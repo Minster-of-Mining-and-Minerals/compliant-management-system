@@ -8,7 +8,11 @@ const bodyParser = require("body-parser");
 
 dotenv.config();
 
+// Process dates in UTC on the server regardless of host OS timezone
+process.env.TZ = "UTC";
+
 const { swaggerUi, swaggerSpec } = require("./swagger");
+const { dateSerializationMiddleware } = require("./utils/dateSerializer");
 
 // ================== Here Import Routes=================
 
@@ -108,6 +112,9 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 app.use(cors(corsOptions));
+
+// Serialize all API date fields as ISO UTC strings
+app.use(dateSerializationMiddleware);
 
 // ================== Database Connection ==================
 const { sequelize } = require("./models");

@@ -17,6 +17,7 @@ import {
 } from "@/redux/api/complaintApi";
 import { Complaint } from "@/redux/types/complaint";
 import { formatStatus } from "@/utils/statusFormatter";
+import { formatDate } from "@/utils/date";
 import { useSession } from "next-auth/react";
 import CreateMyComplaint from "@/components/common/modals/CreateMyComplaint";
 import { useSearchParams } from "next/navigation";
@@ -139,7 +140,7 @@ export default function MyComplaintTable() {
       accessorKey: "created_at",
       header: "Created",
       cell: ({ row }) =>
-        new Date(row.getValue("created_at")).toLocaleDateString(),
+        formatDate(row.getValue("created_at")),
     },
     {
       id: "actions",

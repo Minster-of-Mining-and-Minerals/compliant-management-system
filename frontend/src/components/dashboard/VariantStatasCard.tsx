@@ -21,27 +21,8 @@ import { Badge } from "../ui/badge";
 import React from "react";
 import { Button } from "../ui/button";
 import { useGetDashboardStatsQuery } from "@/redux/api/dashboardApi";
-import { exportToCSV } from "@/utils/dashboardHelper";
-
-// Helper functions
-export const normalizeStatus = (status: string) => {
-  if (status === "resolved" || status === "closed") return "resolved";
-  if (status === "rejected") return "rejected";
-  return "pending"; // pending, under_review, assigned, in_progress
-};
-
-export const isWithinRange = (date: string, range: "90d" | "30d" | "7d") => {
-  const now = new Date();
-  const created = new Date(date);
-
-  const diffDays = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
-
-  if (range === "7d") return diffDays <= 7;
-  if (range === "30d") return diffDays <= 30;
-  return diffDays <= 90;
-};
-
-export type TimeRange = "90d" | "30d" | "7d";
+import { exportToCSV, normalizeStatus } from "@/utils/dashboardHelper";
+import { formatDate, isWithinRange, type TimeRange } from "@/utils/date";
 
 // Rating colors for feedback mode
 const ratingColors: Record<number, string> = {
@@ -256,12 +237,7 @@ export default function VariantStatasCard({ dataType = "complaint" }: Props) {
     items.forEach((item: any) => {
       if (!isWithinRange(item.created_at, timeRange)) return;
 
-      const d = new Date(item.created_at);
-      const localDate = new Date(
-        d.getFullYear(),
-        d.getMonth(),
-        d.getDate()
-      ).toLocaleDateString();
+      const localDate = formatDate(item.created_at);
 
       const category = sector.complaint_categories.find(
         (cat: any) => cat.complaints?.some((c: any) => c.complaint_id === item.complaint_id)

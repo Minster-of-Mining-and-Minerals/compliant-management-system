@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/utils/date";
 
 export type DetailCardItem = {
   title: string;
@@ -71,11 +72,7 @@ function DetailCard({ item }: { item: DetailCardItem }) {
           <Calendar className="h-4 w-4 text-secondary" />
           <span className="font-medium">Date:</span>
           <span>
-            {item.date.toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
+            {formatDate(item.date)}
           </span>
         </div>
       </CardContent>

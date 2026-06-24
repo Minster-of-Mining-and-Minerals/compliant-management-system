@@ -1,6 +1,7 @@
 "use client";
 
 import { formatStatus } from "@/utils/statusFormatter";
+import { formatDateTime } from "@/utils/date";
 import { motion } from "framer-motion";
 import { ArrowRight, Clock, X } from "lucide-react";
 
@@ -136,7 +137,7 @@ export default function CompliantHistoryLog({ logs, onClose }: LogsPreviewProps)
                                 {/* Timestamp */}
                                 <div className="flex items-center gap-1 text-[10px] text-gray-500 mt-1">
                                     <Clock className="w-3 h-3" />
-                                    {new Date(log.created_at).toLocaleString()}
+                                    {formatDateTime(log.created_at)}
                                 </div>
                             </div>
                         </div>

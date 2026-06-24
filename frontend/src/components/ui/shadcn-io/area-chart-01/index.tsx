@@ -19,53 +19,53 @@ import {
   SelectValue,
 } from "../../select";
 import { Card } from "../../card";
-import { exportToCSV } from "../../../../utils/dashboardHelper";
+import { exportToCSV, normalizeStatus } from "../../../../utils/dashboardHelper";
+import {
+  compareUtcDates,
+  formatDate,
+  formatDateTime,
+  formatDayMonth,
+  formatLongMonthYear,
+  formatMonthYear,
+  getUtcTimestamp,
+  getYearInTimezone,
+  parseUtcDate,
+  toGroupingDayKey,
+  toMonthGroupingKey,
+} from "@/utils/date";
 import { useGetDashboardStatsQuery } from "@/redux/api/dashboardApi";
 import { Button } from "../../button";
 
-// Helper functions
-export const normalizeStatus = (status: string) => {
-  if (status === "resolved" || status === "closed") return "resolved";
-  if (status === "rejected") return "rejected";
-  return "pending"; // pending, under_review, assigned, in_progress
-};
+// Helper to format date for grouping in system timezone
+const getDayKey = (dateString: string) => toGroupingDayKey(dateString);
 
-// Helper to format date for grouping with timezone correction
-const getDayKey = (dateString: string) => {
-  const date = new Date(dateString);
-  // Use local date to avoid timezone issues
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return localDate.toISOString().split('T')[0]; // YYYY-MM-DD
-};
-
-const getMonthKey = (dateString: string) => {
-  const date = new Date(dateString);
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}`;
-};
+const getMonthKey = (dateString: string) => toMonthGroupingKey(dateString);
 
 const getWeekKey = (dateString: string) => {
-  const date = new Date(dateString);
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  const year = localDate.getFullYear();
-
-  // Get week number
-  const firstDayOfYear = new Date(year, 0, 1);
-  const pastDaysOfYear = (localDate.getTime() - firstDayOfYear.getTime()) / 86400000;
-  const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-
-  return `${year}-W${String(weekNumber).padStart(2, '0')}`;
+  const dayKey = toGroupingDayKey(dateString);
+  if (!dayKey) return "";
+  const d = parseUtcDate(`${dayKey}T00:00:00.000Z`);
+  if (!d) return "";
+  const year = getYearInTimezone(d);
+  if (year == null) return "";
+  const jan1 = parseUtcDate(`${year}-01-01T00:00:00.000Z`);
+  if (!jan1) return "";
+  const pastDays = (d.getTime() - jan1.getTime()) / 86400000;
+  const weekNumber = Math.ceil((pastDays + 1) / 7);
+  return `${year}-W${String(weekNumber).padStart(2, "0")}`;
 };
 
-// Helper to determine optimal grouping based on date range
 const determineOptimalGrouping = (dates: string[]): "day" | "week" | "month" => {
   if (dates.length === 0) return "month";
 
-  const dateObjects = dates.map(d => new Date(d)).sort((a, b) => a.getTime() - b.getTime());
-  const oldest = dateObjects[0];
-  const newest = dateObjects[dateObjects.length - 1];
+  const sorted = [...dates].sort(
+    (a, b) => (getUtcTimestamp(a) ?? 0) - (getUtcTimestamp(b) ?? 0),
+  );
+  const oldest = getUtcTimestamp(sorted[0]);
+  const newest = getUtcTimestamp(sorted[sorted.length - 1]);
+  if (oldest == null || newest == null) return "month";
 
-  const diffDays = (newest.getTime() - oldest.getTime()) / (1000 * 60 * 60 * 24);
+  const diffDays = (newest - oldest) / (1000 * 60 * 60 * 24);
 
   if (diffDays <= 30) return "day";
   if (diffDays <= 90) return "week";
@@ -302,47 +302,24 @@ export function ChartAreaInteractive({ dataType = "complaint" }: { dataType?: "c
   }, [chartData, groupBy]);
 
   const formatXAxisTick = (value: string) => {
-    const date = new Date(value);
-
     switch (groupBy) {
       case "day":
-        return `${date.getDate()} ${date.toLocaleDateString('en-US', { month: 'short' })}`;
+        return formatDayMonth(value);
       case "week":
-        const weekEnd = new Date(date);
-        weekEnd.setDate(date.getDate() + 6);
-        const startDay = date.getDate();
-        const endDay = weekEnd.getDate();
-        const month = date.toLocaleDateString('en-US', { month: 'short' });
-        return `${startDay}-${endDay} ${month}`;
-      default: // month
-        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        return formatDayMonth(value);
+      default:
+        return formatMonthYear(value);
     }
   };
 
   const formatTooltipLabel = (value: string) => {
-    const date = new Date(value);
-
     switch (groupBy) {
       case "day":
-        return date.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
+        return formatDateTime(value);
       case "week":
-        const weekEnd = new Date(date);
-        weekEnd.setDate(date.getDate() + 6);
-        return `Week of ${date.toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric'
-        })} - ${weekEnd.toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric'
-        })}`;
-      default: // month
-        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        return `Week of ${formatDate(value)}`;
+      default:
+        return formatLongMonthYear(value);
     }
   };
 

@@ -23,6 +23,7 @@ import {
   useMarkAllAsReadMutation,
 } from "@/redux/api/notificationApi";
 import { Notification } from "@/redux/types/notification";
+import { formatRelativeTime } from "@/utils/date";
 
 /* ================= CATEGORY MAP ================= */
 
@@ -69,21 +70,6 @@ export const getNotificationIcon = (type: string) => {
   }
 };
 
-const formatTime = (dateString: string) => {
-  try {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
-
-    if (diffInMinutes < 1) return "Just now";
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return date.toLocaleDateString();
-  } catch {
-    return "Recently";
-  }
-};
-
 const truncateText = (text: string, maxLength: number) =>
   text.length <= maxLength ? text : text.substring(0, maxLength) + "...";
 
@@ -120,7 +106,7 @@ const NotificationItem = ({
         {notification.message}
       </p>
       <span className="text-[10px] text-gray-400 mt-1 block">
-        {formatTime(notification.created_at)}
+        {formatRelativeTime(notification.created_at)}
       </span>
     </div>
   </DropdownItem>

@@ -8,6 +8,13 @@ const pool = {
   idle: 10000,
 };
 
+const utcDialect = {
+  timezone: "+00:00",
+  dialectOptions: {
+    useUTC: true,
+  },
+};
+
 module.exports = {
   development: {
     username: process.env.DB_USER,
@@ -17,6 +24,7 @@ module.exports = {
     port: process.env.DB_PORT || 5432,
     dialect: process.env.DB_DIALECT || "postgres",
     pool,
+    ...utcDialect,
   },
   test: {
     username: process.env.DB_USER,
@@ -26,6 +34,7 @@ module.exports = {
     port: process.env.DB_PORT || 5432,
     dialect: process.env.DB_DIALECT || "postgres",
     pool,
+    ...utcDialect,
   },
   production: {
     username: process.env.DB_USER,
@@ -35,5 +44,6 @@ module.exports = {
     port: process.env.DB_PORT || 5432,
     dialect: process.env.DB_DIALECT || "postgres",
     pool,
+    ...utcDialect,
   },
 };

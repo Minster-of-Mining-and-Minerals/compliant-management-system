@@ -2,7 +2,8 @@
 
 import { useParams } from "next/navigation"
 import { useGetUserByIdQuery } from "@/redux/api/userApi"
-import { User2Icon } from "lucide-react"
+import { formatDateTime } from "@/utils/date";
+import { User2Icon } from "lucide-react";
 
 const UserViewPage = () => {
     const { userId } = useParams()
@@ -22,7 +23,7 @@ const UserViewPage = () => {
             firstLogin: user.is_first_logged_in,
             userType: user.userType?.name,
             roles: user.roles?.map((role) => role.name),
-            createdAt: new Date(user.created_at).toLocaleString(),
+            createdAt: formatDateTime(user.created_at),
         }
         : null
 

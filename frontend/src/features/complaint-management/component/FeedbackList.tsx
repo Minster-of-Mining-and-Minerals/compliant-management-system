@@ -15,7 +15,7 @@ import {
 } from "@/redux/api/feedbackApi";
 import { Feedback } from "@/redux/types/feedback";
 import { Star } from "lucide-react";
-import { formatDate } from "@/utils/formatDate";
+import { formatDate } from "@/utils/date";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";

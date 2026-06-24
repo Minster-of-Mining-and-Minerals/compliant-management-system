@@ -28,6 +28,7 @@ import CompliantHistoryLog from "./CompliantHistoryLog";
 import TimelineOpener from "./TimelineOpener";
 import FileViewer from "@/components/common/FileView";
 import { formatStatus } from "@/utils/statusFormatter";
+import { formatDate, formatDateTime } from "@/utils/date";
 import {
   useConfirmResolutionMutation,
   useGetComplaintByIdQuery,
@@ -113,7 +114,7 @@ export default function MyComplaintDetailPage() {
             {file.name}
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            {file.type} • {new Date(file.uploadedAt).toLocaleDateString()}
+            {file.type} • {formatDate(file.uploadedAt)}
           </p>
         </div>
         <Eye className="w-4 h-4 text-blue-600 opacity-70 group-hover:opacity-100 transition-opacity" />
@@ -152,16 +153,6 @@ export default function MyComplaintDetailPage() {
   };
 
   // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   if (isLoading) return <div>Loading...</div>;
   if (isError || !complaint) return <div>Error loading complaint details</div>;
   // console.log("Complaint Data:", complaint);
@@ -237,7 +228,7 @@ export default function MyComplaintDetailPage() {
                       Reported Time
                     </p>
                     <p className="text-gray-700 text-sm">
-                      {formatDate(complaint.created_at)}
+                      {formatDateTime(complaint.created_at)}
                     </p>
                   </div>
 
@@ -382,7 +373,7 @@ export default function MyComplaintDetailPage() {
                           >
                             <div className="flex items-start justify-between mb-4">
                               <p className="text-sm text-gray-600 mt-1">
-                                Resolved on {formatDate(resolution.resolved_at)}
+                                Resolved on {formatDateTime(resolution.resolved_at)}
                               </p><span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 {formatStatus(resolution.status) || "Resolved"}
 

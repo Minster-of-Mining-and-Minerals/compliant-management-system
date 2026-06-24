@@ -17,6 +17,7 @@ import {
 } from "../../select";
 import { Card } from "../../card";
 import { exportToCSV } from "../../../../utils/dashboardHelper";
+import { formatDate, getYearInTimezone } from "@/utils/date";
 import { useGetDashboardStatsQuery } from "@/redux/api/dashboardApi";
 import { Button } from "../../button";
 
@@ -40,8 +41,8 @@ export function ChartBarInteractive({ dataType = "complaint" }: { dataType?: "co
     // Collect all years from sector creation dates
     dashboardData.data.sectors.forEach((sector: any) => {
       if (sector.created_at) {
-        const year = new Date(sector.created_at).getFullYear();
-        years.add(year);
+        const year = getYearInTimezone(sector.created_at);
+        if (year != null) years.add(year);
       }
     });
 
@@ -50,7 +51,7 @@ export function ChartBarInteractive({ dataType = "complaint" }: { dataType?: "co
 
     // If no years found, use current year
     if (yearsArray.length === 0) {
-      const currentYear = new Date().getFullYear();
+      const currentYear = getYearInTimezone(new Date()) ?? new Date().getUTCFullYear();
       yearsArray.push(currentYear);
     }
 
@@ -84,7 +85,7 @@ export function ChartBarInteractive({ dataType = "complaint" }: { dataType?: "co
     return dashboardData.data.sectors
       .map((sector: any) => {
         const sectorYear = sector.created_at
-          ? new Date(sector.created_at).getFullYear()
+          ? getYearInTimezone(sector.created_at)
           : null;
 
         // Calculate total complaints for this sector (sum of all categories)
@@ -166,7 +167,7 @@ export function ChartBarInteractive({ dataType = "complaint" }: { dataType?: "co
       Sector: sector.name,
       "Created Year": sector.createdYear ?? "N/A",
       "Created Date": sector.createdDate
-        ? new Date(sector.createdDate).toLocaleDateString()
+        ? formatDate(sector.createdDate)
         : "N/A",
       "Complaint Count": sector.complaints,
       "Categories Count": sector.categories,
@@ -260,7 +261,7 @@ export function ChartBarInteractive({ dataType = "complaint" }: { dataType?: "co
                   const year = parseInt(yearOption.value);
                   dashboardData.data.sectors.forEach((sector: any) => {
                     if (sector.created_at) {
-                      const sectorYear = new Date(sector.created_at).getFullYear();
+                      const sectorYear = getYearInTimezone(sector.created_at);
                       if (sectorYear === year) {
                         // Calculate sector complaints
                         const sectorComplaints = sector.complaint_categories?.reduce(
@@ -406,7 +407,7 @@ export function ChartBarInteractive({ dataType = "complaint" }: { dataType?: "co
               <div className="flex items-center gap-1">
                 <span className="font-medium">Earliest Created:</span>
                 <span className="text-muted-foreground">
-                  {new Date(chartData[chartData.length - 1].createdDate).toLocaleDateString()}
+                  {formatDate(chartData[chartData.length - 1].createdDate)}
                 </span>
               </div>
             )}

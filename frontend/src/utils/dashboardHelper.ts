@@ -1,34 +1,25 @@
+import { isWithinRange, type TimeRange } from "./date";
+
+export { isWithinRange, type TimeRange };
+
 export const normalizeStatus = (status: string) => {
   if (status === "resolved" || status === "closed") return "resolved";
   if (status === "rejected") return "rejected";
   return "pending";
 };
 
-export const isWithinRange = (date: string, range: "90d" | "30d" | "7d") => {
-  const now = new Date();
-  const created = new Date(date);
-
-  const diffDays = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
-
-  if (range === "7d") return diffDays <= 7;
-  if (range === "30d") return diffDays <= 30;
-  return diffDays <= 90;
-};
-
-export type TimeRange = "90d" | "30d" | "7d";
-
 export const mapDashboardToStatCards = (
   dashboardData: any,
   selectedInstituteId: string,
   selectedProjectId: string | null,
-  timeRange: TimeRange
+  timeRange: TimeRange,
 ) => {
   let resolved = 0;
   let pending = 0;
   let rejected = 0;
 
   const institute = dashboardData?.data?.institutes.find(
-    (i: any) => i.institute_id === selectedInstituteId
+    (i: any) => i.institute_id === selectedInstituteId,
   );
 
   if (!institute) return [];
@@ -81,18 +72,16 @@ export const mapDashboardToStatCards = (
   ];
 };
 
-
-
 export const exportToCSV = (rows: Record<string, any>[], filename: string) => {
   if (!rows.length) return;
 
   const headers = Object.keys(rows[0]);
   const csvContent = [
     headers.join(","),
-    ...rows.map(row =>
+    ...rows.map((row) =>
       headers
-        .map(h => `"${String(row[h]).replace(/"/g, '""')}"`)
-        .join(",")
+        .map((h) => `"${String(row[h]).replace(/"/g, '""')}"`)
+        .join(","),
     ),
   ].join("\n");
 
