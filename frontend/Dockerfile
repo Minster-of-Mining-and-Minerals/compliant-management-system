@@ -3,15 +3,19 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
+ARG NEXT_PUBLIC_BASE_URL=https://197.156.80.36/api
+ARG NEXT_PUBLIC_FILE_URL=https://197.156.80.36
+ARG NEXT_PUBLIC_FRONTEND_URL=https://197.156.80.36
+
+ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
+ENV NEXT_PUBLIC_FILE_URL=$NEXT_PUBLIC_FILE_URL
+ENV NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL
+
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
-# Copy source files
 COPY . .
 
-# Build the application
-# next.config.ts should have output: 'standalone'
 RUN npm run build
 
 # Stage 2: Runner
@@ -21,14 +25,10 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy necessary files from builder
-# STANDALONE output contains everything needed to run, including node_modules
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Expose port
 EXPOSE 3000
 
-# Start the application using the standalone server
 CMD ["node", "server.js"]
