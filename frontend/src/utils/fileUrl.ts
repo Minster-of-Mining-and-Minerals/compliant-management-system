@@ -1,18 +1,20 @@
 export const getFileUrl = (filePath: string) => {
-  // const apiBase =
-  //   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+  const normalized = filePath.replace(/\\/g, "/").replace(/^\//, "");
+
+  // Same-origin in the browser — works on public or private IP
+  if (typeof window !== "undefined") {
+    return `/${normalized}`;
+  }
+
   const apiBase = process.env.NEXT_PUBLIC_FILE_URL || "http://localhost:4000";
-
-  // const serverBase = apiBase.replace(/\/api\/?$/, "");
-
-  return `${apiBase}/${filePath.replace(/\\/g, "/")}`;
+  return `${apiBase.replace(/\/$/, "")}/${normalized}`;
 };
 
 export const getFileType = (fileName: string): string => {
   const extension = fileName.toLowerCase().split(".").pop();
   if (
     ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg"].includes(
-      extension || ""
+      extension || "",
     )
   ) {
     return "image";

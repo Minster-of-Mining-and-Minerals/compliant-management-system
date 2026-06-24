@@ -99,8 +99,6 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:4000",
-  "https://197.156.81.108",
-  "http://197.156.81.108",
   "https://172.31.102.108",
   "http://172.31.102.108",
   process.env.FRONTEND_URL,

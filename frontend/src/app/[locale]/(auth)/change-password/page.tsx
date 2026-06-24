@@ -83,7 +83,19 @@ function ChangePasswordForm({ isFirstLogin }: { isFirstLogin: boolean }) {
       );
       await performLogout();
     } catch (error: unknown) {
-      const err = error as { data?: { message?: string }; status?: number };
+      const err = error as {
+        data?: { message?: string };
+        status?: number | string;
+        error?: string;
+      };
+
+      if (err?.status === "FETCH_ERROR" || err?.error === "FETCH_ERROR") {
+        toast.error(
+          "Could not reach the server. If you use the private IP, ensure the app was rebuilt with the latest update.",
+        );
+        return;
+      }
+
       if (err?.status === 401 || err?.status === 403) {
         toast.error(
           err?.data?.message || "Session expired. Please log in again.",

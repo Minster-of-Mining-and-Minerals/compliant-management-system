@@ -35,9 +35,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://197.156.81.108/api}
-        NEXT_PUBLIC_FILE_URL: ${NEXT_PUBLIC_FILE_URL:-https://197.156.81.108}
-        NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL:-https://197.156.81.108}
+        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://172.31.102.108/api}
+        NEXT_PUBLIC_FILE_URL: ${NEXT_PUBLIC_FILE_URL:-https://172.31.102.108}
+        NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL:-https://172.31.102.108}
         NEXT_PUBLIC_SYSTEM_TIMEZONE: ${NEXT_PUBLIC_SYSTEM_TIMEZONE:-Africa/Addis_Ababa}
     container_name: cms_frontend
     restart: always
@@ -47,7 +47,7 @@ services:
       NODE_ENV: production
       AUTH_TRUSTED_HOST: "true"
       NEXTAUTH_TRUST_HOST: "true"
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://197.156.81.108}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://172.31.102.108}
       BACKEND_INTERNAL_URL: http://backend:4000
     depends_on:
       - backend
@@ -59,8 +59,7 @@ services:
     container_name: cms_nginx
     restart: always
     environment:
-      PUBLIC_IP: ${PUBLIC_HOST:-197.156.81.108}
-      PRIVATE_IP: ${PRIVATE_HOST:-172.31.102.108}
+      APP_HOST: ${APP_HOST:-172.31.102.108}
     ports:
       - "80:80"
       - "443:443"

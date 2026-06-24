@@ -7,14 +7,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SSL_DIR="${SCRIPT_DIR}/ssl"
 mkdir -p "${SSL_DIR}"
 
-PUBLIC_IP="197.156.81.108"
-PRIVATE_IP="172.31.102.108"
+APP_HOST="${APP_HOST:-172.31.102.108}"
 
 openssl req -x509 -nodes -days 825 -newkey rsa:2048 \
   -keyout "${SSL_DIR}/server.key" \
   -out "${SSL_DIR}/server.crt" \
-  -subj "/CN=${PUBLIC_IP}" \
-  -addext "subjectAltName=IP:${PUBLIC_IP},IP:${PRIVATE_IP},DNS:localhost"
+  -subj "/CN=${APP_HOST}" \
+  -addext "subjectAltName=IP:${APP_HOST},DNS:localhost"
 
 chmod 600 "${SSL_DIR}/server.key"
 chmod 644 "${SSL_DIR}/server.crt"

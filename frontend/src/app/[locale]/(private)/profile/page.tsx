@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUploadAttachmentsMutation } from "@/redux/api/attachementApi";
 import { useGetProfileQuery, useUpdateProfileMutation } from "@/redux/api/profileApi";
+import { getFileUrl } from "@/utils/fileUrl";
 
 
 const profileFormSchema = z
@@ -158,8 +159,8 @@ export default function ProfilePage() {
         .slice(0, 2)
     : "??";
 
-  const profileImageUrl = profile?.profileImage?.file_path 
-    ? `${process.env.NEXT_PUBLIC_FILE_URL}/${profile.profileImage.file_path.replace(/\\/g, "/")}` 
+  const profileImageUrl = profile?.profileImage?.file_path
+    ? getFileUrl(profile.profileImage.file_path)
     : "";
 
   return (

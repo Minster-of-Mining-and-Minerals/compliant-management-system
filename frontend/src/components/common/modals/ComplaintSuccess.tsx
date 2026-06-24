@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { useRef } from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import { getAppOrigin } from "@/utils/apiUrl";
 interface TicketSuccessModalProps {
     open: boolean;
     onClose: () => void;
@@ -45,9 +46,7 @@ const TicketSuccessModal = ({
         link.click();
     };
 
-    const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL;
-
-    const trackingUrl = `${FRONTEND_URL}/en/track-complaint?ticketNumber=${ticketNumber}`;
+    const trackingUrl = `${getAppOrigin()}/en/track-complaint?ticketNumber=${ticketNumber}`;
     return (
         /* ===== OVERLAY ===== */
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">

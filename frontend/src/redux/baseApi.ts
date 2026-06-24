@@ -1,10 +1,14 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
 import { performLogout } from "@/utils/logout";
+import {
+  fetchWithTimeout,
+} from "@/utils/apiUrl";
 
-// Custom base query with authentication
+// Same-origin /api works on both public and private IP (via nginx)
 const baseQuery = fetchBaseQuery({
-  baseUrl: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+  baseUrl: "/api",
+  fetchFn: fetchWithTimeout,
   prepareHeaders: async (headers) => {
     const session = await getSession();
     if (session?.accessToken) {

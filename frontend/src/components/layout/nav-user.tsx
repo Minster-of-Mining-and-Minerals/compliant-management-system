@@ -16,6 +16,7 @@ import { logout } from "@/actions/user";
 import { useRouter } from "next/navigation";
 
 import { performLogout } from "@/utils/logout";
+import { getFileUrl } from "@/utils/fileUrl";
 
 interface NavUserProps {
   user: {
@@ -42,9 +43,7 @@ export function NavUser({ user }: NavUserProps) {
   const handleProfile = () => {
     router.push("/profile");
   }
-  const profileImageUrl = user.avatar
-    ? `${process.env.NEXT_PUBLIC_FILE_URL}/${user.avatar.replace(/\\/g, "/")}`
-    : "";
+  const profileImageUrl = user.avatar ? getFileUrl(user.avatar) : "";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

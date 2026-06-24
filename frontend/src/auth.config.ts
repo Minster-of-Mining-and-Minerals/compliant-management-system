@@ -15,10 +15,8 @@ export default {
         const { email, password } = credentials;
 
         try {
-          // 🔥 FIX: Use internal Docker service name so the frontend
-          // container calls the backend directly — not via nginx.
-          // NEXT_PUBLIC_BASE_URL points to the public nginx URL and
-          // should NOT be used for server-side calls inside Docker.
+          // Server-side login uses the internal Docker backend URL.
+          // Browser API calls use same-origin /api (see redux/baseApi.ts).
           const backendUrl =
             process.env.BACKEND_INTERNAL_URL
               ? `${process.env.BACKEND_INTERNAL_URL}/api/auth/login`

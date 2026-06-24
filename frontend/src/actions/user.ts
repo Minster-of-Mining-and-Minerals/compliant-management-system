@@ -56,12 +56,14 @@ export const getCurrentUser = async () => {
   return session?.user ?? null;
 };
 
+import { getServerApiBaseUrl } from "@/utils/apiUrl";
+
 export const checkPermission = async (permissionKey: string) => {
   const session = await auth();
   if (!session?.accessToken) return false;
 
   try {
-    const backendUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/me/permissions`;
+    const backendUrl = `${getServerApiBaseUrl()}/auth/me/permissions`;
 
     const res = await fetch(backendUrl, {
         headers: {
