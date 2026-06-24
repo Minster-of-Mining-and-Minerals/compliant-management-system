@@ -15,12 +15,7 @@ export default {
         const { email, password } = credentials;
 
         try {
-          // Server-side login uses the internal Docker backend URL.
-          // Browser API calls use same-origin /api (see redux/baseApi.ts).
-          const backendUrl =
-            process.env.BACKEND_INTERNAL_URL
-              ? `${process.env.BACKEND_INTERNAL_URL}/api/auth/login`
-              : `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`;
+          const backendUrl = `${process.env.BACKEND_INTERNAL_URL}/api/auth/login`;
 
           // console.log("Auth attempt to:", backendUrl);
 

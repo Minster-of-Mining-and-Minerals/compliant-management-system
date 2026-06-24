@@ -35,9 +35,6 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://172.31.102.108/api}
-        NEXT_PUBLIC_FILE_URL: ${NEXT_PUBLIC_FILE_URL:-https://172.31.102.108}
-        NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL:-https://172.31.102.108}
         NEXT_PUBLIC_SYSTEM_TIMEZONE: ${NEXT_PUBLIC_SYSTEM_TIMEZONE:-Africa/Addis_Ababa}
     container_name: cms_frontend
     restart: always

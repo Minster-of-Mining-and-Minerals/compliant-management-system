@@ -1,21 +1,25 @@
 /**
  * API and file URL helpers.
  *
- * Browser requests use relative paths so the app works on both public and
- * private IPs (same host the user opened). Server-side code uses the Docker
- * internal backend URL when available.
+ * Browser requests resolve from window.location at runtime so no IP can be
+ * baked into the JS bundle at build time. Server-side code uses Docker internal URL.
  */
 
-export function getClientApiBaseUrl(): string {
+/** Called on every API request in the browser — always same host as the page. */
+export function resolveApiBaseUrl(): string {
   if (typeof window !== "undefined") {
-    return "/api";
+    return `${window.location.origin}/api`;
   }
 
   if (process.env.BACKEND_INTERNAL_URL) {
     return `${process.env.BACKEND_INTERNAL_URL.replace(/\/$/, "")}/api`;
   }
 
-  return process.env.NEXT_PUBLIC_BASE_URL || "/api";
+  return "/api";
+}
+
+export function getClientApiBaseUrl(): string {
+  return resolveApiBaseUrl();
 }
 
 export function getServerApiBaseUrl(): string {
@@ -23,7 +27,7 @@ export function getServerApiBaseUrl(): string {
     return `${process.env.BACKEND_INTERNAL_URL.replace(/\/$/, "")}/api`;
   }
 
-  return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:4000/api";
+  return "http://localhost:4000/api";
 }
 
 export function getAppOrigin(): string {
@@ -31,7 +35,7 @@ export function getAppOrigin(): string {
     return window.location.origin;
   }
 
-  return process.env.NEXT_PUBLIC_FRONTEND_URL || "";
+  return "";
 }
 
 export const API_REQUEST_TIMEOUT_MS = 30_000;

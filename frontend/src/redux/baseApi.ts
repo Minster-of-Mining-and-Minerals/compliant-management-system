@@ -1,12 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { BaseQueryFn } from "@reduxjs/toolkit/query";
 import { getSession } from "next-auth/react";
 import { performLogout } from "@/utils/logout";
-import {
-  fetchWithTimeout,
-} from "@/utils/apiUrl";
+import { fetchWithTimeout, resolveApiBaseUrl } from "@/utils/apiUrl";
 
-// Same-origin /api works on both public and private IP (via nginx)
-const baseQuery = fetchBaseQuery({
+const rawBaseQuery = fetchBaseQuery({
   baseUrl: "/api",
   fetchFn: fetchWithTimeout,
   prepareHeaders: async (headers) => {
@@ -20,7 +18,16 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
-const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
+/** Resolve API host at request time — never use a build-time IP. */
+const baseQuery: BaseQueryFn = async (args, api, extraOptions) => {
+  const apiBaseUrl = resolveApiBaseUrl();
+  const request =
+    typeof args === "string" ? { url: args, baseUrl: apiBaseUrl } : { ...args, baseUrl: apiBaseUrl };
+
+  return rawBaseQuery(request, api, extraOptions);
+};
+
+const baseQueryWithReauth: BaseQueryFn = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
   const requestUrl =
     typeof args === "string" ? args : args?.url?.toString?.() ?? "";
