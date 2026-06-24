@@ -1,15 +1,30 @@
 const { ComplaintHistory } = require("../models");
 const AccessService = require("./accessService");
 const { hasPermission } = require("./permissionService");
+const {
+  isRootHierarchyUser,
+  getSectorSubtreeIds,
+  userManagesDepartment,
+} = require("./sectorScopeService");
+const { isInternalRoutedComplaint } = require("./internalComplaintRoutingService");
 
 const TERMINAL_STATUSES = new Set(["resolved", "rejected", "closed"]);
 
+const isInternalComplaint = (complaint) => isInternalRoutedComplaint(complaint);
+
 /**
- * Accept is only allowed while the complaint is still pending (unclaimed).
- * After accept, accepted_by_user_id locks the complaint to that handler.
+ * Accept: external pending queue OR internal assigned (handled in acceptComplaint controller).
  */
 const canAccept = (complaint) => {
   if (!complaint) return { allowed: false, reason: "Complaint not found." };
+
+  if (isInternalRoutedComplaint(complaint)) {
+    return {
+      allowed: false,
+      reason: "Use internal accept rules for routed complaints.",
+    };
+  }
+
   if (complaint.status !== "pending") {
     return {
       allowed: false,
@@ -24,7 +39,6 @@ const canAccept = (complaint) => {
   }
   return { allowed: true };
 };
-
 /**
  * Assign / sector-assign: only the handler who accepted (or global admin).
  */
