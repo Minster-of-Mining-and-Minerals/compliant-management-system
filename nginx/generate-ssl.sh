@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SSL_DIR="${SCRIPT_DIR}/ssl"
 mkdir -p "${SSL_DIR}"
 
-PUBLIC_IP="197.156.80.36"
+PUBLIC_IP="197.156.81.108"
 PRIVATE_IP="172.31.102.108"
 
 openssl req -x509 -nodes -days 825 -newkey rsa:2048 \

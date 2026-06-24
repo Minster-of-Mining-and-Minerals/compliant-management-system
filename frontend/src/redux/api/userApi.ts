@@ -154,7 +154,12 @@ export const userApi = baseApi.injectEndpoints({
      * --------------------------- */
     changePassword: builder.mutation<
       { success: boolean; message: string },
-      { current_password: string; new_password: string; confirm_password: string; confirm_change: boolean }
+      {
+        current_password?: string;
+        new_password: string;
+        confirm_password: string;
+        confirm_change: boolean;
+      }
     >({
       query: (body) => ({
         url: "/change-password",

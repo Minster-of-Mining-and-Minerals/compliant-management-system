@@ -18,19 +18,32 @@ import { toast } from "react-toastify";
 import { useChangePasswordMutation } from "@/redux/api/userApi";
 import { useRouter } from "@/i18n/navigation";
 import { useSession } from "next-auth/react";
-import { Lock, ArrowLeftIcon, EyeIcon, EyeOffIcon, AlertCircle } from "lucide-react";
+import { ArrowLeftIcon, EyeIcon, EyeOffIcon, AlertCircle } from "lucide-react";
 import { performLogout } from "@/utils/logout";
 
-const passwordSchema = z.object({
-  current_password: z.string().min(1, "Current password is required"),
-  new_password: z.string().min(8, "Password must be at least 8 characters"),
-  confirm_password: z.string().min(1, "Please confirm your password"),
-}).refine((data) => data.new_password === data.confirm_password, {
-  message: "Passwords don't match",
-  path: ["confirm_password"],
-});
+const firstLoginSchema = z
+  .object({
+    new_password: z.string().min(8, "Password must be at least 8 characters"),
+    confirm_password: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords don't match",
+    path: ["confirm_password"],
+  });
 
-type PasswordFormValues = z.infer<typeof passwordSchema>;
+const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(1, "Current password is required"),
+    new_password: z.string().min(8, "Password must be at least 8 characters"),
+    confirm_password: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords don't match",
+    path: ["confirm_password"],
+  });
+
+type FirstLoginFormValues = z.infer<typeof firstLoginSchema>;
+type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
 export default function ChangePasswordPage() {
   const router = useRouter();
@@ -38,38 +51,39 @@ export default function ChangePasswordPage() {
   const [changePassword, { isLoading }] = useChangePasswordMutation();
   const [showPasswords, setShowPasswords] = useState(false);
 
-  const form = useForm<PasswordFormValues>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      current_password: "",
-      new_password: "",
-      confirm_password: "",
-    },
+  const isFirstLogin = session?.user?.is_first_logged_in;
+
+  const form = useForm<FirstLoginFormValues | ChangePasswordFormValues>({
+    resolver: zodResolver(isFirstLogin ? firstLoginSchema : changePasswordSchema),
+    defaultValues: isFirstLogin
+      ? { new_password: "", confirm_password: "" }
+      : { current_password: "", new_password: "", confirm_password: "" },
   });
 
-  const onSubmit = async (values: PasswordFormValues) => {
+  const onSubmit = async (
+    values: FirstLoginFormValues | ChangePasswordFormValues,
+  ) => {
     try {
       await changePassword({
-        current_password: values.current_password,
+        current_password:
+          "current_password" in values ? values.current_password : undefined,
         new_password: values.new_password,
         confirm_password: values.confirm_password,
         confirm_change: true,
       }).unwrap();
 
-      toast.success("Password changed successfully! Please log in with your new password.");
+      toast.success(
+        "Password changed successfully! Please log in with your new password.",
+      );
       await performLogout();
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to change password");
     }
   };
 
-  const isFirstLogin = session?.user?.is_first_logged_in;
-
   return (
     <div className="min-h-screen bg-[#F9FBFC] flex items-center justify-center px-4 py-12">
       <div className="w-full relative max-w-6xl min-h-[80vh] shadow-2xl rounded-2xl border border-[#DCE7F1] overflow-hidden flex flex-col lg:flex-row bg-white">
-
-        {/* Back/Logout Button */}
         {isFirstLogin ? (
           <Button
             onClick={() => performLogout()}
@@ -88,7 +102,6 @@ export default function ChangePasswordPage() {
           </Button>
         )}
 
-        {/* Left Section - Logo */}
         <div className="w-full bg-[#F9FBFC] p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-[#DCE7F1]">
           <div className="text-center">
             <img
@@ -99,7 +112,6 @@ export default function ChangePasswordPage() {
           </div>
         </div>
 
-        {/* Right Section - Form */}
         <div className="w-full px-8 lg:px-16 py-12 flex items-center justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
@@ -108,7 +120,7 @@ export default function ChangePasswordPage() {
               </h1>
               <p className="text-sm text-golden-dark/70">
                 {isFirstLogin
-                  ? "For security reasons, you must change your temporary password before proceeding."
+                  ? "Set a new password to continue. Your temporary password will be replaced."
                   : "Update your password to keep your account secure."}
               </p>
             </div>
@@ -117,57 +129,67 @@ export default function ChangePasswordPage() {
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex gap-3">
                 <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
                 <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                  Important: Once you update your password, you will be logged out and must re-enter your new credentials to access the system.
+                  You only need to enter a new password. After updating, you
+                  will be logged out and must sign in again with your new
+                  credentials.
                 </p>
               </div>
             )}
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                <FormField
-                  control={form.control}
-                  name="current_password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-golden-dark">Current Password</FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <Input
-                            type={showPasswords ? "text" : "password"}
-                            placeholder="••••••••"
-                            {...field}
-                            className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
-                          />
-                        </FormControl>
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswords(!showPasswords)}
-                          className="absolute top-1/2 right-3 -translate-y-1/2"
-                        >
-                          {showPasswords ? <EyeIcon className="h-5 w-5 text-golden-dark" /> : <EyeOffIcon className="h-5 w-5 text-golden-dark" />}
-                        </button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {!isFirstLogin && (
+                  <FormField
+                    control={form.control}
+                    name="current_password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-golden-dark">
+                          Current Password
+                        </FormLabel>
+                        <div className="relative">
+                          <FormControl>
+                            <Input
+                              type={showPasswords ? "text" : "password"}
+                              placeholder="••••••••"
+                              {...field}
+                              className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
+                            />
+                          </FormControl>
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswords(!showPasswords)}
+                            className="absolute top-1/2 right-3 -translate-y-1/2"
+                          >
+                            {showPasswords ? (
+                              <EyeIcon className="h-5 w-5 text-golden-dark" />
+                            ) : (
+                              <EyeOffIcon className="h-5 w-5 text-golden-dark" />
+                            )}
+                          </button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}
                   name="new_password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-golden-dark">New Password</FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <Input
-                            type={showPasswords ? "text" : "password"}
-                            placeholder="••••••••"
-                            {...field}
-                            className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
-                          />
-                        </FormControl>
-                      </div>
+                      <FormLabel className="text-golden-dark">
+                        New Password
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type={showPasswords ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...field}
+                          className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -178,17 +200,17 @@ export default function ChangePasswordPage() {
                   name="confirm_password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-golden-dark">Confirm New Password</FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <Input
-                            type={showPasswords ? "text" : "password"}
-                            placeholder="••••••••"
-                            {...field}
-                            className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
-                          />
-                        </FormControl>
-                      </div>
+                      <FormLabel className="text-golden-dark">
+                        Confirm New Password
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type={showPasswords ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...field}
+                          className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
