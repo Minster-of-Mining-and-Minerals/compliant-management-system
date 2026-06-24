@@ -12,113 +12,109 @@ import {
 } from "@/components/ui/select";
 import { TextArea } from "@/components/ui/textarea";
 import { FileUploadField } from "@/components/ui/FileUploadField";
-import { useGetSectorNodesQuery, useGetSectorNodesWithFlatChildrenQuery } from "@/redux/api/sectorNodeApi";
+import { useGetSectorNodesWithFlatChildrenQuery } from "@/redux/api/sectorNodeApi";
 import { useGetComplaintCategoriesQuery } from "@/redux/api/complaintCategoryApi";
-import { useCreateComplaintMutation } from "@/redux/api/complaintApi";
+import { useCreateInternalComplaintMutation } from "@/redux/api/complaintApi";
+import { useGetSameSectorUsersQuery } from "@/redux/api/userApi";
+import { useGetMySectorDepartmentsQuery } from "@/redux/api/sectorNodeApi";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { SectorNode } from "@/redux/types/sectorNode";
-import { useGetUserTypesQuery } from "@/redux/api/userApi";
 
 interface CreateMyComplaintProps {
     isOpen: boolean;
     onClose: () => void;
     sector_node_id?: string;
-    department_id?: string; // Added this prop
 }
 
 interface ComplaintFormValues {
     attachment_id: File[];
 }
 
-const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: CreateMyComplaintProps) => {
+type TargetType = "person" | "department";
+
+const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplaintProps) => {
     const { data: session } = useSession();
-    const { data: userTypes = [] } = useGetUserTypesQuery();
-    const complaint_type_id = userTypes?.find(
-        (type: any) => type.name === "internal"
-    )?.user_type_id;
+
+    const sessionSectorId =
+        sector_node_id ||
+        session?.user?.sector?.sector_node_id ||
+        "";
 
     const [sectorId, setSectorId] = useState("");
-    const [departments, setDepartments] = useState<SectorNode[]>([]);
-    const [departmentId, setDepartmentId] = useState("none");
+    const [targetType, setTargetType] = useState<TargetType>("person");
+    const [targetUserId, setTargetUserId] = useState("");
+    const [targetDepartmentId, setTargetDepartmentId] = useState("");
     const [complaintDescription, setComplaintDescription] = useState("");
     const [complaintCategoryId, setComplaintCategoryId] = useState("");
-    const [complaintCategoryName, setComplaintCategoryName] = useState("");
     const [formValues, setFormValues] = useState<ComplaintFormValues>({
         attachment_id: [],
     });
 
-    // Additional Fields
     const [incidentDate, setIncidentDate] = useState("");
-    const [nameOfPersonConcerned, setNameOfPersonConcerned] = useState("");
     const [requestedAction, setRequestedAction] = useState("");
 
-    // API queries
-    const { data: sectorNodesData = [] } = useGetSectorNodesWithFlatChildrenQuery();
+    const { data: sectorNodesData = [] } = useGetSectorNodesWithFlatChildrenQuery(undefined, {
+        skip: !isOpen,
+    });
     const sectors = sectorNodesData.map((item) => ({
         ...item.sector,
         children: item.children || [],
     }));
 
-    // Compute selected items for display - Move here AFTER sectors is defined
-    const selectedSector = sectors.find(s => s.sector_node_id === sectorId);
-    const selectedDepartment = departments.find(d => d.sector_node_id === departmentId);
+    const selectedSector = sectors.find((s) => s.sector_node_id === sectorId);
 
-    const { data: complaintCategories = [] } = useGetComplaintCategoriesQuery({
-        is_active: true,
-        type: "internal",
+    const { data: categoriesResponse } = useGetComplaintCategoriesQuery(
+        { is_active: true, type: "internal" },
+        { skip: !isOpen },
+    );
+    const complaintCategories = Array.isArray(categoriesResponse?.data)
+        ? categoriesResponse.data
+        : [];
+
+    const { data: sameSectorUsersResponse, isError: sameSectorUsersError } =
+        useGetSameSectorUsersQuery(
+            { limit: 100 },
+            { skip: !isOpen || targetType !== "person" },
+        );
+    const sameSectorUsers = Array.isArray(sameSectorUsersResponse?.data)
+        ? sameSectorUsersResponse.data
+        : [];
+
+    const { data: sectorDepartments = [] } = useGetMySectorDepartmentsQuery(undefined, {
+        skip: !isOpen || targetType !== "department",
     });
+    const departmentOptions = Array.isArray(sectorDepartments)
+        ? sectorDepartments
+        : [];
 
-    const [createComplaint, { isLoading: isSubmitting }] =
-        useCreateComplaintMutation();
+    const [createInternalComplaint, { isLoading: isSubmitting }] =
+        useCreateInternalComplaintMutation();
 
-    // Initialize sector from prop when component opens or prop changes
     useEffect(() => {
-        if (isOpen && sector_node_id && sectors.length > 0) {
+        if (isOpen && sessionSectorId) {
+            setSectorId(sessionSectorId);
+        }
+    }, [sessionSectorId, isOpen]);
+
+    useEffect(() => {
+        if (isOpen && sessionSectorId && sectors.length > 0 && !sectorId) {
             const foundSector = sectors.find(
-                (item) => item.sector_node_id === sector_node_id
+                (item) => item.sector_node_id === sessionSectorId,
             );
-
             if (foundSector) {
-                setSectorId(sector_node_id);
-                const sectorDepartments = foundSector?.children || [];
-                setDepartments(sectorDepartments);
-
-                // Only set the department from prop if:
-                // 1. A department_id prop is provided AND it exists in this sector
-                // 2. OR we are currently in the default 'none' state and initializing
-                if (department_id && sectorDepartments.some(dept => dept.sector_node_id === department_id)) {
-                    setDepartmentId(department_id);
-                } else if (departmentId === "none" || !departmentId) {
-                    // Only default to none if we haven't selected anything yet
-                    // This prevents overwriting manual selections when 'sectors' data refreshes
-                    setDepartmentId("none");
-                }
+                setSectorId(sessionSectorId);
             }
         }
-    }, [sector_node_id, department_id, sectors, isOpen]);
-
-    const handleSectorChange = (value: string) => {
-        setSectorId(value);
-        setDepartmentId("none");
-        const selectedSector = sectors.find(
-            (item) => item.sector_node_id === value
-        );
-        setDepartments(selectedSector?.children || []);
-    };
+    }, [sessionSectorId, sectors, isOpen, sectorId]);
 
     const handleComplaintCategoryChange = (value: string) => {
-        const selectedCategory = complaintCategories.find(
-            (cat) => cat.category_id === value
-        );
         setComplaintCategoryId(value);
-        setComplaintCategoryName(selectedCategory?.name || "");
     };
 
     useEffect(() => {
         if (complaintCategories.length > 0 && !complaintCategoryId) {
             setComplaintCategoryId(complaintCategories[0].category_id);
-            setComplaintCategoryName(complaintCategories[0].name);
         }
     }, [complaintCategories, complaintCategoryId]);
 
@@ -129,20 +125,24 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
         }));
     };
 
+    const handleTargetTypeChange = (value: TargetType) => {
+        setTargetType(value);
+        setTargetUserId("");
+        setTargetDepartmentId("");
+    };
+
     const resetForm = () => {
         setSectorId("");
-        setDepartmentId("none");
-        setDepartments([]);
+        setTargetType("person");
+        setTargetUserId("");
+        setTargetDepartmentId("");
         setComplaintDescription("");
         setIncidentDate("");
-        setNameOfPersonConcerned("");
         setRequestedAction("");
         setFormValues({ attachment_id: [] });
 
-        // Reset category to first option
         if (complaintCategories.length > 0) {
             setComplaintCategoryId(complaintCategories[0].category_id);
-            setComplaintCategoryName(complaintCategories[0].name);
         }
     };
 
@@ -158,19 +158,30 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validation
         if (!complaintDescription.trim()) {
             toast.error("Please provide a description for your complaint");
             return;
         }
 
-        if (!sectorId) {
-            toast.error("Please select a sector");
+        if (!sectorId && !session?.user?.department?.sector_node_id) {
+            toast.error(
+                "Your account must be assigned to a sector or department before filing internal complaints",
+            );
             return;
         }
 
         if (!complaintCategoryId) {
             toast.error("Please select a category");
+            return;
+        }
+
+        if (targetType === "person" && !targetUserId) {
+            toast.error("Please select the person you are raising this complaint against");
+            return;
+        }
+
+        if (targetType === "department" && !targetDepartmentId) {
+            toast.error("Please select the department you are raising this complaint against");
             return;
         }
 
@@ -180,38 +191,29 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
                     ? formValues.attachment_id
                     : undefined;
 
-            const payload = {
-                // User info from session
-                complaint_type_id,
-                full_name: session?.user?.name || undefined,
-                email: session?.user?.email || undefined,
-                phone_number: session?.user?.phone_number || undefined,
+            const selectedUser = sameSectorUsers.find(
+                (u) => u.user_id === targetUserId,
+            );
 
-                // Required fields
+            await createInternalComplaint({
+                target_type: targetType,
+                target_user_id: targetType === "person" ? targetUserId : undefined,
+                department_id:
+                    targetType === "department" ? targetDepartmentId : undefined,
                 category_id: complaintCategoryId,
-                sector_node_id: sectorId, // Always use the state value
-                department_id: (departmentId && departmentId !== "none") ? departmentId : undefined,
                 description: complaintDescription.trim(),
-
-                // Optional fields
-                concern_to_user_name: nameOfPersonConcerned.trim() || "",
+                concern_to_user_name: selectedUser?.full_name || undefined,
                 request: requestedAction.trim() || "",
                 incident_date: incidentDate || undefined,
-                is_anonymous: false,
+                attachment_ids,
+            }).unwrap();
 
-                // File attachments (if any)
-                attachment_ids: attachment_ids,
-            };
-
-            await createComplaint(payload).unwrap();
-            toast.success("Complaint submitted successfully!");
-
-            // Reset form and close modal
+            toast.success("Internal complaint submitted and routed successfully!");
             resetForm();
             onClose();
         } catch (err: any) {
             toast.error(
-                err?.data?.message || err?.message || "An unexpected error occurred"
+                err?.data?.message || err?.message || "An unexpected error occurred",
             );
         }
     };
@@ -224,10 +226,9 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
             onClick={handleBackdropClick}
         >
             <div className="bg-white p-6 rounded-2xl w-full max-w-[800px] shadow-2xl max-h-[90vh] overflow-y-auto">
-                {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-[#094C81]">
-                        Create My Complaint
+                        Create Internal Complaint
                     </h2>
                     <button
                         onClick={handleClose}
@@ -237,12 +238,10 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
                     </button>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit}>
                     <div className="flex justify-between items-center mb-4">
                         <h1 className="block text-primary font-semibold text-lg">
-                            {selectedSector?.name} 
-                            {selectedDepartment?.name && ` - ${selectedDepartment.name}`}
+                            {selectedSector?.name ?? session?.user?.sector?.name ?? "Your sector"}
                         </h1>
                         <div className="min-w-40">
                             <label
@@ -261,7 +260,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
                                     <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {complaintCategories?.map((category) => (
+                                    {complaintCategories.map((category) => (
                                         <SelectItem
                                             key={category.category_id}
                                             value={category.category_id}
@@ -275,7 +274,85 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
                     </div>
 
                     <div className="mt-4 gap-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
-                        {/* Incident Date */}
+                        <div className="w-full">
+                            <label className="block text-sm text-golden-dark">
+                                Raise Against
+                                <span className="text-red-500"> *</span>
+                            </label>
+                            <Select
+                                value={targetType}
+                                onValueChange={(v) => handleTargetTypeChange(v as TargetType)}
+                                disabled={isSubmitting}
+                            >
+                                <SelectTrigger className="w-full h-12 mt-1">
+                                    <SelectValue placeholder="Select target type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="person">Person</SelectItem>
+                                    <SelectItem value="department">Department</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {targetType === "person" ? (
+                            <div className="w-full md:col-span-2">
+                                <label className="block text-sm text-golden-dark">
+                                    Person in your sector
+                                    <span className="text-red-500"> *</span>
+                                </label>
+                                <Select
+                                    value={targetUserId}
+                                    onValueChange={setTargetUserId}
+                                    disabled={isSubmitting}
+                                >
+                                    <SelectTrigger className="w-full h-12 mt-1">
+                                        <SelectValue placeholder="Select colleague" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {sameSectorUsers.map((user) => (
+                                            <SelectItem key={user.user_id} value={user.user_id}>
+                                                {user.full_name}
+                                                {user.department?.name
+                                                    ? ` — ${user.department.name}`
+                                                    : ""}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {sameSectorUsersError && (
+                                    <p className="text-xs text-amber-700 mt-1">
+                                        Could not load colleagues. Ensure your account has a sector or department assigned.
+                                    </p>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="w-full md:col-span-2">
+                                <label className="block text-sm text-golden-dark">
+                                    Department in your sector
+                                    <span className="text-red-500"> *</span>
+                                </label>
+                                <Select
+                                    value={targetDepartmentId}
+                                    onValueChange={setTargetDepartmentId}
+                                    disabled={isSubmitting}
+                                >
+                                    <SelectTrigger className="w-full h-12 mt-1">
+                                        <SelectValue placeholder="Select department" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {departmentOptions.map((dept: SectorNode) => (
+                                            <SelectItem
+                                                key={dept.sector_node_id}
+                                                value={dept.sector_node_id}
+                                            >
+                                                {dept.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
                         <div className="w-full">
                             <label
                                 htmlFor="dateOfIncident"
@@ -286,99 +363,14 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
                             <Input
                                 type="date"
                                 id="dateOfIncident"
-                                name="dateOfIncident"
                                 className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                                placeholder="Select date"
                                 value={incidentDate}
                                 onChange={(e) => setIncidentDate(e.target.value)}
                                 disabled={isSubmitting}
                             />
                         </div>
 
-                        {/* Sector - Always show but disable if sector_node_id is provided */}
-                        <div className="w-full">
-                            <label
-                                htmlFor="sector"
-                                className="block text-sm text-golden-dark"
-                            >
-                                Sector
-                                <span className="text-red-500"> *</span>
-                            </label>
-                            <Select
-                                value={sectorId}
-                                onValueChange={handleSectorChange}
-                                disabled={isSubmitting || !!sector_node_id} // Disable if sector_node_id is provided
-                            >
-                                <SelectTrigger className="w-full h-12 mt-1">
-                                    <SelectValue placeholder="Select sector" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {sectors.map((sector) => (
-                                        <SelectItem
-                                            key={sector.sector_node_id}
-                                            value={sector.sector_node_id}
-                                        >
-                                            {sector.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Department */}
-                        <div className="w-full">
-                            <label
-                                htmlFor="department"
-                                className="block text-sm text-golden-dark"
-                            >
-                                Department
-                                <span className="text-gray-500 text-xs"> (Optional)</span>
-                            </label>
-                            <Select
-                                value={departmentId}
-                                onValueChange={setDepartmentId}
-                                disabled={!sectorId || isSubmitting}
-                            >
-                                <SelectTrigger className="w-full h-12 mt-1">
-                                    <SelectValue placeholder="Select department" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">No specific department</SelectItem>
-                                    {departments.map((dept) => (
-                                        <SelectItem
-                                            key={dept.sector_node_id}
-                                            value={dept.sector_node_id}
-                                        >
-                                            {dept.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Person Concerned */}
-                        <div className="w-full">
-                            <label
-                                htmlFor="nameOfPersonConcerned"
-                                className="block text-sm text-golden-dark"
-                            >
-                                Name of Person Concerned
-                                <span className="text-gray-500"> (Optional)</span>
-                            </label>
-                            <Input
-                                type="text"
-                                id="nameOfPersonConcerned"
-                                name="nameOfPersonConcerned"
-                                className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                                placeholder="Enter name"
-                                value={nameOfPersonConcerned}
-                                onChange={(e) => setNameOfPersonConcerned(e.target.value)}
-                                disabled={isSubmitting}
-                            />
-                        </div>
-
-                        {/* Description */}
-                        <div className="w-full">
+                        <div className="w-full md:col-span-2">
                             <label
                                 htmlFor="complaintDescription"
                                 className="block text-sm text-golden-dark"
@@ -397,8 +389,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
                             />
                         </div>
 
-                        {/* Requested Action */}
-                        <div className="w-full">
+                        <div className="w-full md:col-span-2">
                             <label
                                 htmlFor="requestedAction"
                                 className="block text-sm text-golden-dark"
@@ -417,12 +408,8 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
                             />
                         </div>
 
-                        {/* Evidence/Attachments */}
                         <div className="w-full">
-                            <label
-                                htmlFor="evidence"
-                                className="block text-sm text-golden-dark"
-                            >
+                            <label className="block text-sm text-golden-dark">
                                 Evidence
                                 <span className="text-gray-500"> (Optional)</span>
                             </label>
@@ -438,7 +425,6 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
                         </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex justify-end gap-4 mt-6">
                         <Button
                             onClick={handleClose}
@@ -453,8 +439,9 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id, department_id }: C
                             disabled={
                                 isSubmitting ||
                                 !complaintCategoryId ||
-                                !sectorId ||
-                                !complaintDescription.trim()
+                                !complaintDescription.trim() ||
+                                (targetType === "person" && !targetUserId) ||
+                                (targetType === "department" && !targetDepartmentId)
                             }
                             className="bg-golden-dark min-w-52 hover:bg-golden-darkHover h-12 text-base text-white py-1 rounded-md shadow-md disabled:opacity-70"
                         >

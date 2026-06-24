@@ -47,6 +47,9 @@ const canManageAssignment = (complaint, userId, isGlobalAdmin = false) => {
   if (TERMINAL_STATUSES.has(complaint.status)) {
     return { allowed: false, reason: "Cannot assign a closed complaint." };
   }
+  if (complaint.compliant_user_id === userId) {
+    return { allowed: false, reason: "Filers cannot assign complaints." };
+  }
   if (!complaint.accepted_by_user_id) {
     return {
       allowed: false,
@@ -62,13 +65,13 @@ const canManageAssignment = (complaint, userId, isGlobalAdmin = false) => {
   return { allowed: true };
 };
 
-/**
- * Resolve: handler who accepted OR current assignee (or global admin).
- */
 const canResolve = (complaint, userId, isGlobalAdmin = false) => {
   if (!complaint) return { allowed: false, reason: "Complaint not found." };
   if (complaint.status === "resolved") {
     return { allowed: false, reason: "Complaint is already resolved." };
+  }
+  if (complaint.compliant_user_id === userId) {
+    return { allowed: false, reason: "Filers cannot resolve their own complaints." };
   }
   if (!complaint.accepted_by_user_id) {
     return {
@@ -78,7 +81,9 @@ const canResolve = (complaint, userId, isGlobalAdmin = false) => {
   }
   const isHandler = complaint.accepted_by_user_id === userId;
   const isAssignee = complaint.assigned_to_user_id === userId;
-  if (!isGlobalAdmin && !isHandler && !isAssignee) {
+  const isTarget =
+    complaint.target_type === "person" && complaint.target_user_id === userId;
+  if (!isGlobalAdmin && !isHandler && !isAssignee && !isTarget) {
     return {
       allowed: false,
       reason: "Only the accepting handler or assignee can resolve this complaint.",
@@ -87,11 +92,13 @@ const canResolve = (complaint, userId, isGlobalAdmin = false) => {
   return { allowed: true };
 };
 
-/**
- * Complainant confirms resolution → closed.
- */
 const canConfirmResolution = (complaint, userId) => {
-  if (!complaint) return { allowed: false, reason: "Complaint not found." };
+  if (isInternalComplaint(complaint)) {
+    return {
+      allowed: false,
+      reason: "Internal complaints cannot be confirmed by the filer.",
+    };
+  }  if (!complaint) return { allowed: false, reason: "Complaint not found." };
   if (complaint.status !== "resolved") {
     return {
       allowed: false,
@@ -111,7 +118,12 @@ const canConfirmResolution = (complaint, userId) => {
  * Complainant rejects resolution → reopened (in_progress), handler keeps lock.
  */
 const canRejectResolution = (complaint, userId) => {
-  if (!complaint) return { allowed: false, reason: "Complaint not found." };
+  if (isInternalComplaint(complaint)) {
+    return {
+      allowed: false,
+      reason: "Internal complaints cannot be rejected by the filer.",
+    };
+  }  if (!complaint) return { allowed: false, reason: "Complaint not found." };
   if (complaint.status !== "resolved") {
     return {
       allowed: false,
@@ -158,8 +170,35 @@ const canViewComplaint = async (complaint, userId, permissions = []) => {
   const isOwner = complaint.compliant_user_id === userId;
   const isAssignee = complaint.assigned_to_user_id === userId;
   const isHandler = complaint.accepted_by_user_id === userId;
+  const isTarget = complaint.target_user_id === userId;
   const canReadAll = hasPermission(permissions, "complaint", "read_all");
   const canReadOwn = hasPermission(permissions, "complaint", "read_own");
+
+  if (isInternalRoutedComplaint(complaint)) {
+    if (isOwner && canReadOwn) return true;
+    if (isTarget || isAssignee || isHandler) return true;
+
+    if (await isRootHierarchyUser(userId)) return true;
+    if (isAdmin || canReadAll) return true;
+
+    if (complaint.target_type === "department" && complaint.department_id) {
+      if (await userManagesDepartment(userId, complaint.department_id)) {
+        return true;
+      }
+    }
+
+    if (complaint.filer_sector_node_id) {
+      const subtree = await getSectorSubtreeIds(complaint.filer_sector_node_id);
+      const overlaps = [
+        complaint.sector_node_id,
+        complaint.department_id,
+        complaint.filer_sector_node_id,
+      ].some((id) => id && subtree.some((s) => accessSectorIds.includes(s)));
+      if (overlaps && !isOwner) return true;
+    }
+
+    return false;
+  }
 
   const assignedSectorIds = [
     complaint.sector_node_id,
@@ -186,5 +225,6 @@ module.exports = {
   canRejectResolution,
   logHistory,
   canViewComplaint,
+  isInternalComplaint,
   TERMINAL_STATUSES,
 };

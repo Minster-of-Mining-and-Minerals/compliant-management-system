@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   createUser,
   getUsers,
+  getSameSectorUsers,
   getUserById,
   updateUser,
   deleteUser,
@@ -12,6 +13,7 @@ const {
   getUserTypes,
   getUserPositions,
 } = require("../../controllers/user-controllers/userController");
+const { authenticateToken } = require("../../middlewares/authMiddleware");
 
 // Middleware for authentication if needed (example)
 // const { authenticate } = require("../middlewares/authMiddleware");
@@ -74,6 +76,8 @@ router.get("/positions", getUserPositions);
  *         description: List of users
  */
 router.get("/", getUsers);
+
+router.get("/same-sector", authenticateToken, getSameSectorUsers);
 
 /**
  * @swagger

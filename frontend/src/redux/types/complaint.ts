@@ -27,10 +27,16 @@ export interface Complaint {
   compliant_user_id?: string;
   accepted_by_user_id?: string | null;
   assigned_to_user_id?: string | null;
+  target_type?: "person" | "department" | null;
+  target_user_id?: string | null;
+  filer_sector_node_id?: string | null;
   user?: User;
   assignedTo?: User;
   acceptedBy?: User;
+  targetUser?: User;
   assignedSector?: SectorNode;
+  targetDepartment?: SectorNode;
+  filerSector?: SectorNode;
   category?: ComplaintCategory;
   history?: Array<{
     history_id: string;
@@ -67,6 +73,19 @@ export interface CreateComplaintPayload {
   captcha_token?: string;
   ip_address?: string;
   attachment_ids?: string;
+}
+
+/** ---------- CREATE INTERNAL ---------- */
+export interface CreateInternalComplaintPayload {
+  target_type: "person" | "department";
+  target_user_id?: string;
+  department_id?: string;
+  category_id: string;
+  description: string;
+  concern_to_user_name?: string;
+  request?: string;
+  incident_date?: string;
+  attachment_ids?: string[];
 }
 
 /** ---------- UPDATE ---------- */

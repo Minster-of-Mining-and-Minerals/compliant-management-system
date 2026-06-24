@@ -27,6 +27,19 @@ const {
   logHistory,
   canViewComplaint,
 } = require("../../services/complaintWorkflowService");
+const {
+  routeInternalComplaint,
+  canAcceptInternal,
+} = require("../../services/internalComplaintRoutingService");
+const {
+  isUserInSectorSubtree,
+  isDepartmentInFilerSector,
+  resolveFilerSectorNodeId,
+  getInternalUserTypeId,
+  isRootHierarchyUser,
+  getSectorSubtreeIds,
+  getManagedDepartmentIds,
+} = require("../../services/sectorScopeService");
 const compliantResolution = require("../../models/compliant-management/compliantResolution");
 
 // =========== Create Complaint ===========
@@ -273,26 +286,236 @@ const createComplaint = async (req, res) => {
   }
 };
 
+// =========== Create internal complaint (authenticated, direct routing) ===========
+const createInternalComplaint = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const filerUserId = req.user.user_id;
+    const filer = await User.findByPk(filerUserId, { transaction: t });
+    const filerSectorId = await resolveFilerSectorNodeId(filerUserId);
+
+    if (!filerSectorId) {
+      await t.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "You must belong to a sector or department to file internal complaints.",
+      });
+    }
+
+    const {
+      target_type,
+      target_user_id,
+      department_id,
+      category_id,
+      description,
+      concern_to_user_name,
+      request,
+      incident_date,
+      attachment_ids,
+    } = req.body;
+
+    const internalTypeId = await getInternalUserTypeId();
+    if (!internalTypeId) {
+      await t.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "Internal user type is not configured.",
+      });
+    }
+
+    const category = await ComplaintCategory.findByPk(category_id, {
+      transaction: t,
+    });
+    if (!category || category.type !== "internal") {
+      await t.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "Invalid internal complaint category.",
+      });
+    }
+
+    if (target_type === "person") {
+      if (!target_user_id) {
+        await t.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Target user is required for person complaints.",
+        });
+      }
+      if (target_user_id === filerUserId) {
+        await t.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "You cannot raise a complaint against yourself.",
+        });
+      }
+      const inSector = await isUserInSectorSubtree(
+        target_user_id,
+        filerSectorId,
+      );
+      if (!inSector) {
+        await t.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Target person must be within your sector.",
+        });
+      }
+    } else if (target_type === "department") {
+      if (!department_id) {
+        await t.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Target department is required.",
+        });
+      }
+      const inSector = await isDepartmentInFilerSector(
+        department_id,
+        filerSectorId,
+      );
+      if (!inSector) {
+        await t.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Target department must be within your sector.",
+        });
+      }
+    } else {
+      await t.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "target_type must be person or department.",
+      });
+    }
+
+    const ticketing_code = await generateTicket();
+
+    const complaint = await Complaint.create(
+      {
+        complaint_id: uuidv4(),
+        ticketing_code,
+        compliant_user_id: filerUserId,
+        compliant_type_id: internalTypeId,
+        category_id,
+        sector_node_id: filerSectorId,
+        filer_sector_node_id: filerSectorId,
+        department_id: target_type === "department" ? department_id : null,
+        target_type,
+        target_user_id: target_type === "person" ? target_user_id : null,
+        description,
+        concern_to_user_name: concern_to_user_name || null,
+        request: request || "No specific request provided",
+        incident_date: incident_date || null,
+        status: "pending",
+        is_anonymous: false,
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      { transaction: t },
+    );
+
+    if (attachment_ids?.length) {
+      const links = attachment_ids.map((attachment_id) => ({
+        complaint_id: complaint.complaint_id,
+        attachment_id,
+      }));
+      await ComplaintAttachment.bulkCreate(links, { transaction: t });
+    }
+
+    await logHistory(
+      {
+        complaint_id: complaint.complaint_id,
+        user_id: filerUserId,
+        action: "created",
+        status_at_time: "pending",
+        notes: "Internal complaint created",
+      },
+      t,
+    );
+
+    await routeInternalComplaint(complaint, filerUserId, t);
+
+    await t.commit();
+
+    const result = await Complaint.findByPk(complaint.complaint_id, {
+      include: [
+        { model: User, as: "user", attributes: ["user_id", "full_name", "email"] },
+        { model: User, as: "targetUser", attributes: ["user_id", "full_name", "email"] },
+        { model: ComplaintCategory, as: "category", attributes: ["category_id", "name"] },
+        { model: SectorNode, as: "assignedSector", attributes: ["sector_node_id", "name"] },
+      ],
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Internal complaint submitted and routed successfully.",
+      data: result,
+    });
+  } catch (error) {
+    if (!t.finished) await t.rollback();
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to submit internal complaint",
+      error: error.message,
+    });
+  }
+};
+
 // =========== Get all complaints ===========
 const getComplaints = async (req, res) => {
   try {
     // ====== 1. Determine User Role and Access Scope ======
     const user_id = req.user?.user_id;
-    const { status, sector_node_id, category_id, compliant_type_id, search, page = 1, limit = 10 } =
+    const { status, sector_node_id, category_id, compliant_type_id, search, scope, page = 1, limit = 10 } =
       req.query;
     
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const limitInt = parseInt(limit);
 
     const { isAdmin, accessSectorIds } = await AccessService.getUserAccessSectors(user_id);
+    const internalTypeId = await getInternalUserTypeId();
+    const isInternalList =
+      compliant_type_id && internalTypeId && compliant_type_id === internalTypeId;
+    const rootUser = await isRootHierarchyUser(user_id);
 
     // ====== 2. Build whereClause ======
     const whereClause = {
       [Op.and]: [],
     };
 
-    // Baseline visibility based on roles
-    if (!isAdmin) {
+    if (isInternalList && scope) {
+      if (scope === "all") {
+        if (!rootUser && !isAdmin) {
+          whereClause[Op.and].push({ complaint_id: null });
+        }
+      } else if (scope === "against_me") {
+        whereClause[Op.and].push({
+          [Op.or]: [
+            { target_user_id: user_id },
+            { assigned_to_user_id: user_id },
+          ],
+        });
+      } else if (scope === "my_department") {
+        const managedDeptIds = await getManagedDepartmentIds(user_id);
+        if (managedDeptIds.length === 0) {
+          whereClause[Op.and].push({ complaint_id: null });
+        } else {
+          whereClause[Op.and].push({
+            target_type: "department",
+            department_id: { [Op.in]: managedDeptIds },
+          });
+        }
+      } else if (scope === "sector") {
+        const filerSectorNodeId = await resolveFilerSectorNodeId(user_id);
+        if (filerSectorNodeId) {
+          const subtree = await getSectorSubtreeIds(filerSectorNodeId);
+          whereClause[Op.and].push({
+            filer_sector_node_id: { [Op.in]: subtree },
+            compliant_user_id: { [Op.ne]: user_id },
+          });
+        }
+      }
+    } else if (!isAdmin) {
       const manageableFilter = {
         [Op.or]: [
           { sector_node_id: { [Op.in]: accessSectorIds } },
@@ -389,12 +612,22 @@ const getComplaints = async (req, res) => {
         { model: User, as: "assignedTo", attributes: ["user_id", "full_name"] },
         {
           model: User,
+          as: "targetUser",
+          attributes: ["user_id", "full_name", "email"],
+        },
+        {
+          model: User,
           as: "acceptedBy",
           attributes: ["user_id", "full_name", "email"],
         },
         {
           model: SectorNode,
           as: "assignedSector",
+          attributes: ["sector_node_id", "name"],
+        },
+        {
+          model: SectorNode,
+          as: "targetDepartment",
           attributes: ["sector_node_id", "name"],
         },
         {
@@ -533,12 +766,22 @@ const getComplaintById = async (req, res) => {
         { model: User, as: "assignedTo", attributes: ["user_id", "full_name"] },
         {
           model: User,
+          as: "targetUser",
+          attributes: ["user_id", "full_name", "email"],
+        },
+        {
+          model: User,
           as: "acceptedBy",
           attributes: ["user_id", "full_name", "email"],
         },
         {
           model: SectorNode,
           as: "assignedSector",
+          attributes: ["sector_node_id", "name"],
+        },
+        {
+          model: SectorNode,
+          as: "targetDepartment",
           attributes: ["sector_node_id", "name"],
         },
         {
@@ -811,7 +1054,13 @@ const acceptComplaint = async (req, res) => {
       return res.status(404).json({ message: "Complaint not found" });
     }
 
-    const acceptance = canAccept(complaint);
+    let acceptance;
+    if (complaint.target_type) {
+      acceptance = await canAcceptInternal(complaint, user_id);
+    } else {
+      acceptance = canAccept(complaint);
+    }
+
     if (!acceptance.allowed) {
       await t.rollback();
       return res.status(409).json({
@@ -820,14 +1069,16 @@ const acceptComplaint = async (req, res) => {
       });
     }
 
-    await complaint.update(
-      {
-        status: "in_progress",
-        accepted_by_user_id: user_id,
-        updated_at: new Date(),
-      },
-      { transaction: t },
-    );
+    const updatePayload = {
+      status: "in_progress",
+      accepted_by_user_id: user_id,
+      updated_at: new Date(),
+    };
+    if (complaint.target_type) {
+      updatePayload.assigned_to_user_id = user_id;
+    }
+
+    await complaint.update(updatePayload, { transaction: t });
 
     await logHistory(
       {
@@ -835,8 +1086,9 @@ const acceptComplaint = async (req, res) => {
         user_id,
         action: "accepted",
         status_at_time: "in_progress",
-        notes:
-          "Complaint accepted by handler — locked to this user; status changed to In Progress",
+        notes: complaint.target_type
+          ? "Internal complaint accepted by target handler"
+          : "Complaint accepted by handler — locked to this user; status changed to In Progress",
       },
       t,
     );
@@ -1039,6 +1291,7 @@ const generateTicket = async () => {
 
 module.exports = {
   createComplaint,
+  createInternalComplaint,
   getComplaints,
   getComplaintById,
   getComplaintByTicketingNumber,

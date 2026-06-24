@@ -4,6 +4,7 @@ const router = express.Router();
 
 const {
   createComplaint,
+  createInternalComplaint,
   getComplaints,
   getComplaintById,
   updateComplaint,
@@ -17,6 +18,7 @@ const {
 
 const {
   validateCreateComplaint,
+  validateCreateInternalComplaint,
   validateUpdateComplaint,
 } = require("../../validators/compliant-validators/complaintValidator");
 const {
@@ -106,6 +108,14 @@ router.get("/ticketing_code/:ticketing_code", getComplaintByTicketingNumber);
 router.get("/:id", authenticateToken, getComplaintById);
 
 router.post("/", validateCreateComplaint, createComplaint);
+
+router.post(
+  "/internal",
+  authenticateToken,
+  checkPermission("complaint", "create"),
+  validateCreateInternalComplaint,
+  createInternalComplaint,
+);
 
 router.post(
   "/accept",

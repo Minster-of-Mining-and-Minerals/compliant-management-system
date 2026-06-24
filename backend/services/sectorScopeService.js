@@ -12,6 +12,43 @@ const {
 /**
  * Sector node + all descendants (departments under a sector).
  */
+/**
+ * Resolve the sector boundary for internal complaints.
+ * Uses sector_node_id when set, otherwise walks up from department_id.
+ */
+const resolveFilerSectorNodeId = async (userId) => {
+  const user = await User.findByPk(userId, {
+    attributes: ["sector_node_id", "department_id"],
+  });
+  if (!user) return null;
+  if (user.sector_node_id) return user.sector_node_id;
+
+  if (!user.department_id) return null;
+
+  let currentId = user.department_id;
+
+  for (let i = 0; i < 50; i++) {
+    const node = await SectorNode.findByPk(currentId, {
+      attributes: ["sector_node_id", "parent_id"],
+    });
+    if (!node) break;
+
+    if (!node.parent_id) return node.sector_node_id;
+
+    const parent = await SectorNode.findByPk(node.parent_id, {
+      attributes: ["sector_node_id", "parent_id"],
+    });
+
+    if (parent && !parent.parent_id) {
+      return node.sector_node_id;
+    }
+
+    currentId = node.parent_id;
+  }
+
+  return user.department_id;
+};
+
 const getSectorSubtreeIds = async (sectorNodeId) => {
   if (!sectorNodeId) return [];
   const descendants = await getDescendantSectorNodeIds(sectorNodeId);
@@ -168,6 +205,38 @@ const getDepartmentsInFilerSector = async (filerSectorNodeId) => {
   });
 };
 
+/**
+ * Department node IDs the user belongs to, heads, or represents.
+ */
+const getManagedDepartmentIds = async (userId) => {
+  const ids = new Set();
+  const user = await User.findByPk(userId, {
+    attributes: ["department_id"],
+  });
+  if (user?.department_id) ids.add(user.department_id);
+
+  const headDepts = await SectorNode.findAll({
+    where: { head_id: userId, is_active: true },
+    attributes: ["sector_node_id"],
+  });
+  headDepts.forEach((d) => ids.add(d.sector_node_id));
+
+  const now = new Date();
+  const reps = await SectorRepresentative.findAll({
+    where: {
+      user_id: userId,
+      is_active: true,
+      can_manage: true,
+      valid_from: { [Op.lte]: now },
+      [Op.or]: [{ valid_until: null }, { valid_until: { [Op.gte]: now } }],
+    },
+    attributes: ["sector_node_id"],
+  });
+  reps.forEach((r) => ids.add(r.sector_node_id));
+
+  return [...ids];
+};
+
 const userManagesDepartment = async (userId, departmentId) => {
   if (!departmentId) return false;
 
@@ -205,6 +274,8 @@ module.exports = {
   isDepartmentInFilerSector,
   getSameSectorInternalUsers,
   getDepartmentsInFilerSector,
+  getManagedDepartmentIds,
+  resolveFilerSectorNodeId,
   userManagesDepartment,
   getInternalUserTypeId,
 };

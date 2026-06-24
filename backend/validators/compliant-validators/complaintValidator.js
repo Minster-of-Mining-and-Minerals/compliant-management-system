@@ -106,6 +106,70 @@ const updateComplaintSchema = Joi.object({
     .optional(),
 });
 
+// =================== Create Internal Complaint Schema ===================
+const createInternalComplaintSchema = Joi.object({
+  target_type: Joi.string()
+    .valid("person", "department")
+    .required()
+    .messages({
+      "any.required": "Target type is required (person or department).",
+      "any.only": "Target type must be person or department.",
+    }),
+
+  target_user_id: Joi.string()
+    .optional()
+    .allow(null, "")
+    .custom((value, helpers) => {
+      if (!value) return value;
+      if (!isUuid(value)) return helpers.error("any.invalid");
+      return value;
+    })
+    .messages({
+      "any.invalid": "Target user ID must be a valid UUID.",
+    }),
+
+  department_id: Joi.string()
+    .optional()
+    .allow(null, "")
+    .custom((value, helpers) => {
+      if (!value) return value;
+      if (!isUuid(value)) return helpers.error("any.invalid");
+      return value;
+    })
+    .messages({
+      "any.invalid": "Department ID must be a valid UUID.",
+    }),
+
+  category_id: Joi.string()
+    .required()
+    .custom((value, helpers) => {
+      if (!isUuid(value)) return helpers.error("any.invalid");
+      return value;
+    })
+    .messages({
+      "any.required": "Complaint category is required.",
+      "any.invalid": "Category ID must be a valid UUID.",
+    }),
+
+  description: Joi.string().min(10).required().messages({
+    "string.empty": "Complaint description is required.",
+    "string.min": "Description must be at least 10 characters long.",
+  }),
+
+  concern_to_user_name: Joi.string().optional().allow(null, ""),
+
+  request: Joi.string().optional().allow(null, ""),
+
+  incident_date: Joi.date().optional().allow(null).messages({
+    "date.base": "Incident date must be a valid date.",
+  }),
+
+  attachment_ids: Joi.array()
+    .items(Joi.string().guid({ version: "uuidv4" }))
+    .optional()
+    .allow(null),
+});
+
 // =================== Validators ===================
 exports.validateCreateComplaint = (req, res, next) => {
   const { error } = createComplaintSchema.validate(req.body, {
@@ -116,6 +180,35 @@ exports.validateCreateComplaint = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: error.details[0].message,
+    });
+  }
+
+  next();
+};
+
+exports.validateCreateInternalComplaint = (req, res, next) => {
+  const { error } = createInternalComplaintSchema.validate(req.body, {
+    abortEarly: true,
+  });
+
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.details[0].message,
+    });
+  }
+
+  const { target_type, target_user_id, department_id } = req.body;
+  if (target_type === "person" && !target_user_id) {
+    return res.status(400).json({
+      success: false,
+      message: "Target user is required when target type is person.",
+    });
+  }
+  if (target_type === "department" && !department_id) {
+    return res.status(400).json({
+      success: false,
+      message: "Department is required when target type is department.",
     });
   }
 

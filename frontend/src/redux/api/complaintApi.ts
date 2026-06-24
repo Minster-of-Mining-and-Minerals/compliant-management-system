@@ -4,6 +4,7 @@ import {
   Complaint,
   ConfirmResolutionDto,
   CreateComplaintPayload,
+  CreateInternalComplaintPayload,
   RejectResolutionDto,
   UpdateComplaintPayload,
 } from "../types/complaint";
@@ -22,6 +23,7 @@ export const complaintApi = baseApi.injectEndpoints({
         compliant_type_id?: string;
         category_id?: string;
         search?: string;
+        scope?: "all" | "against_me" | "my_department" | "sector";
         user_id?: string;
       }) | void
     >({
@@ -68,6 +70,19 @@ export const complaintApi = baseApi.injectEndpoints({
     createComplaint: builder.mutation<Complaint, CreateComplaintPayload>({
       query: (body) => ({
         url: "/complaints",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response: any): Complaint => response.data,
+      invalidatesTags: ["Complaint"],
+    }),
+
+    createInternalComplaint: builder.mutation<
+      Complaint,
+      CreateInternalComplaintPayload
+    >({
+      query: (body) => ({
+        url: "/complaints/internal",
         method: "POST",
         body,
       }),
@@ -159,6 +174,7 @@ export const {
   useGetComplaintByTicketingCodeQuery,
   useGetComplaintByUserIdQuery,
   useCreateComplaintMutation,
+  useCreateInternalComplaintMutation,
   useUpdateComplaintMutation,
   useDeleteComplaintMutation,
   useAcceptCompliantMutation,

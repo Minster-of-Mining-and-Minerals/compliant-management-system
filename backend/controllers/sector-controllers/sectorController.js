@@ -3,6 +3,7 @@
 const { SectorNode, User, SectorRepresentative, sequelize } = require("../../models");
 const { v4: uuidv4, validate: isUuid } = require("uuid");
 const { Op } = require("sequelize");
+const { getDepartmentsInFilerSector, resolveFilerSectorNodeId } = require("../../services/sectorScopeService");
 
 /**
  * =================== Create Sector Node ===================
@@ -612,6 +613,35 @@ const getSectorNodeChildrenUsers = async (req, res) => {
   }
 };
 
+const getMySectorDepartments = async (req, res) => {
+  try {
+    const userId = req.user?.user_id;
+    const filerSectorNodeId = await resolveFilerSectorNodeId(userId);
+
+    if (!filerSectorNodeId) {
+      return res.status(400).json({
+        success: false,
+        message: "You must belong to a sector or department to list departments.",
+      });
+    }
+
+    const departments = await getDepartmentsInFilerSector(filerSectorNodeId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Sector departments fetched successfully.",
+      data: departments,
+    });
+  } catch (error) {
+    console.error("Error fetching sector departments:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch sector departments.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createSectorNode,
   getSectorNodes,
@@ -622,6 +652,7 @@ module.exports = {
   getSectorNodeChildrenUsers,
   getSectorNodeUsers,
   getSectorsWithFlatChildren,
+  getMySectorDepartments,
 };
 
 const collectChildNodeIds = async (nodeId, collected = []) => {

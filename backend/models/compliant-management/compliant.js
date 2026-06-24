@@ -57,6 +57,11 @@ module.exports = (sequelize, DataTypes) => {
         as: "filerSector",
       });
 
+      Complaint.belongsTo(models.SectorNode, {
+        foreignKey: "department_id",
+        as: "targetDepartment",
+      });
+
       // Complaint can have many attachments
       Complaint.hasMany(models.ComplaintAttachment, {
         foreignKey: "complaint_id",

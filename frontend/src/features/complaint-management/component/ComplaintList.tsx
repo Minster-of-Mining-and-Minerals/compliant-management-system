@@ -25,6 +25,15 @@ export interface ComplaintTableProps {
   sideActions?: ActionButton[];
   userType?: string;
 }
+
+type InternalScope = "all" | "against_me" | "my_department" | "sector";
+
+const INTERNAL_SCOPE_OPTIONS: { label: string; value: InternalScope }[] = [
+  { label: "Against Me", value: "against_me" },
+  { label: "My Department", value: "my_department" },
+  { label: "My Sector", value: "sector" },
+  { label: "All Internal", value: "all" },
+];
 /* ----------------------------------
    COMPONENT
 ----------------------------------- */
@@ -46,6 +55,8 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
   
   /* Filters */
   const [statusFilter, setStatusFilter] = useState("");
+  const [internalScope, setInternalScope] = useState<InternalScope>("against_me");
+  const isInternalTab = userType === "internal";
 
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
@@ -53,6 +64,7 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
   const { data: response, isLoading, isError } = useGetComplaintsQuery({
     compliant_type_id: userTypeId,
     status: statusFilter,
+    scope: isInternalTab ? internalScope : undefined,
     page: pageIndex + 1,
     limit: pageSize,
     search: searchQuery,
@@ -60,10 +72,10 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
     skip: !userTypeId,
   });
 
-  // Reset page index when search changes
+  // Reset page index when search or scope changes
   useEffect(() => {
     setPageIndex(0);
-  }, [searchQuery]);
+  }, [searchQuery, internalScope]);
 
   const data = response?.data ?? [];
   const totalPages = response?.meta?.totalPages ?? 0;
@@ -133,6 +145,26 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
       ),
     },
     {
+      id: "target",
+      header: "Target",
+      cell: ({ row }) => {
+        const c = row.original;
+        if (c.target_type === "person") {
+          return (
+            <span className="text-sm">{c.targetUser?.full_name ?? "—"}</span>
+          );
+        }
+        if (c.target_type === "department") {
+          return (
+            <span className="text-sm">
+              {c.targetDepartment?.name ?? c.assignedSector?.name ?? "—"}
+            </span>
+          );
+        }
+        return <span className="text-sm">—</span>;
+      },
+    },
+    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
@@ -182,6 +214,21 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
       filters={filters}
       filterColumnsPerRow={1}
     >
+      {isInternalTab && (
+        <div className="flex flex-wrap gap-2 mb-4 px-1">
+          {INTERNAL_SCOPE_OPTIONS.map((option) => (
+            <Button
+              key={option.value}
+              type="button"
+              size="sm"
+              variant={internalScope === option.value ? "default" : "outline"}
+              onClick={() => setInternalScope(option.value)}
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
+      )}
       <DataTable
         columns={columns}
         data={data}

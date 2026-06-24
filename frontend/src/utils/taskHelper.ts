@@ -10,23 +10,37 @@ const getHandlerId = (object: any): string | null =>
 const getAssigneeId = (object: any): string | null =>
   object?.assigned_to_user_id ?? object?.assignedTo?.user_id ?? null;
 
-/** Only pending, unclaimed complaints can be accepted */
+const isInternalRouted = (object: any): boolean =>
+  object?.target_type === "person" || object?.target_type === "department";
+
+/** External: pending accept. Internal: assigned accept by target/dept handler. */
 export const canInternallyMarkInProgress = (
-  _user_id: string,
+  user_id: string,
   issueStatus: string,
   object: any,
 ): boolean => {
-  if (issueStatus !== "pending") return false;
   if (getHandlerId(object)) return false;
+
+  if (isInternalRouted(object)) {
+    if (issueStatus !== "assigned") return false;
+    if (object.compliant_user_id === user_id) return false;
+    if (object.target_type === "person") {
+      return object.target_user_id === user_id;
+    }
+    return true;
+  }
+
+  if (issueStatus !== "pending") return false;
   return true;
 };
 
-/** Handler who accepted can assign */
+/** Handler who accepted can assign (external workflow only) */
 export const canAssign = (
   user_id: string,
   issueStatus: string,
   object: any,
 ): boolean => {
+  if (isInternalRouted(object)) return false;
   if (TERMINAL.has(issueStatus)) return false;
   const handlerId = getHandlerId(object);
   if (!handlerId) return false;
@@ -43,6 +57,13 @@ export const canInternallyResolve = (
   if (!getHandlerId(object)) return false;
   if (getHandlerId(object) === user_id) return true;
   if (getAssigneeId(object) === user_id) return true;
+  if (
+    isInternalRouted(object) &&
+    object.target_type === "person" &&
+    object.target_user_id === user_id
+  ) {
+    return true;
+  }
   return false;
 };
 
@@ -51,6 +72,7 @@ export const canEscalate = (
   issueStatus: string,
   object: any,
 ): boolean => {
+  if (isInternalRouted(object)) return false;
   if (issueStatus !== "in_progress" && issueStatus !== "assigned") return false;
   return getHandlerId(object) === user_id;
 };
@@ -60,6 +82,7 @@ export const canConfirm = (
   issueStatus: string,
   object: any,
 ): boolean => {
+  if (isInternalRouted(object)) return false;
   if (issueStatus !== "resolved") return false;
   const reporterId = object?.compliant_user_id ?? object?.user?.user_id;
   return reporterId === user_id;
@@ -76,10 +99,13 @@ export const canReRaise = (
   issueStatus: string,
   object: any,
 ): boolean => {
+  if (isInternalRouted(object)) return false;
   if (issueStatus !== "closed") return false;
   const reporterId = object?.compliant_user_id ?? object?.user?.user_id;
   return reporterId === user_id;
 };
+
+export const isInternalComplaint = isInternalRouted;
 
 // Legacy exports kept for any remaining references
 export const canMarkInProgress = canInternallyMarkInProgress;

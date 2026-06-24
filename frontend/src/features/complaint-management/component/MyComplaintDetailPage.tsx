@@ -22,7 +22,7 @@ import {
 // import FileViewer from "../../components/common/FileView";
 import { getFileType, getFileUrl } from "@/utils/fileUrl";
 
-import { canConfirm, canReject } from "@/utils/taskHelper";
+import { canConfirm, canReject, isInternalComplaint } from "@/utils/taskHelper";
 import { toast } from "sonner";
 import CompliantHistoryLog from "./CompliantHistoryLog";
 import TimelineOpener from "./TimelineOpener";
@@ -65,8 +65,11 @@ export default function MyComplaintDetailPage() {
   const [expandedResolutions, setExpandedResolutions] = useState<string[]>([]);
 
   const userId = session?.user?.id || "";
-  const showConfirmActions = canConfirm(userId, complaint?.status ?? "", complaint);
-  const showRejectActions = canReject(userId, complaint?.status ?? "", complaint);
+  const isInternal = isInternalComplaint(complaint);
+  const showConfirmActions =
+    !isInternal && canConfirm(userId, complaint?.status ?? "", complaint);
+  const showRejectActions =
+    !isInternal && canReject(userId, complaint?.status ?? "", complaint);
 
   useBreadcrumbTitleEffect(
     complaint?.ticketing_code,
@@ -184,7 +187,9 @@ export default function MyComplaintDetailPage() {
                     Complaint Detail
                   </h2>
                   <p className="text-gray-600">
-                    Review complaint details and take appropriate action
+                    {isInternal
+                      ? "Track your internal complaint — view only"
+                      : "Review complaint details and take appropriate action"}
                   </p>
                 </div>
                 <div className="flex items-center gap-20">
