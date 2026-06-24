@@ -20,7 +20,7 @@ exports.changePassword = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    const isFirstLogin = user.is_first_logged_in === true;
+    const isFirstLogin = Boolean(user.is_first_logged_in);
 
     // First login: set new password without verifying current (no email is sent)
     if (!isFirstLogin) {

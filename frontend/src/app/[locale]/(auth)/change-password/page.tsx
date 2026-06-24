@@ -17,9 +17,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import { useChangePasswordMutation } from "@/redux/api/userApi";
 import { useRouter } from "@/i18n/navigation";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import { ArrowLeftIcon, EyeIcon, EyeOffIcon, AlertCircle } from "lucide-react";
 import { performLogout } from "@/utils/logout";
+import Loading01 from "@/features/template/component/Loading/Loading01";
 
 const firstLoginSchema = z
   .object({
@@ -45,16 +46,14 @@ const changePasswordSchema = z
 type FirstLoginFormValues = z.infer<typeof firstLoginSchema>;
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
-export default function ChangePasswordPage() {
-  const router = useRouter();
-  const { data: session } = useSession();
+function ChangePasswordForm({ isFirstLogin }: { isFirstLogin: boolean }) {
   const [changePassword, { isLoading }] = useChangePasswordMutation();
   const [showPasswords, setShowPasswords] = useState(false);
 
-  const isFirstLogin = session?.user?.is_first_logged_in;
-
   const form = useForm<FirstLoginFormValues | ChangePasswordFormValues>({
-    resolver: zodResolver(isFirstLogin ? firstLoginSchema : changePasswordSchema),
+    resolver: zodResolver(
+      isFirstLogin ? firstLoginSchema : changePasswordSchema,
+    ),
     defaultValues: isFirstLogin
       ? { new_password: "", confirm_password: "" }
       : { current_password: "", new_password: "", confirm_password: "" },
@@ -63,6 +62,13 @@ export default function ChangePasswordPage() {
   const onSubmit = async (
     values: FirstLoginFormValues | ChangePasswordFormValues,
   ) => {
+    const session = await getSession();
+    if (!session?.accessToken) {
+      toast.error("Session expired. Please log in again.");
+      await performLogout();
+      return;
+    }
+
     try {
       await changePassword({
         current_password:
@@ -76,10 +82,133 @@ export default function ChangePasswordPage() {
         "Password changed successfully! Please log in with your new password.",
       );
       await performLogout();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to change password");
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string }; status?: number };
+      if (err?.status === 401 || err?.status === 403) {
+        toast.error(
+          err?.data?.message || "Session expired. Please log in again.",
+        );
+        return;
+      }
+      toast.error(err?.data?.message || "Failed to change password");
     }
   };
+
+  const onInvalid = () => {
+    const firstError = Object.values(form.formState.errors)[0]?.message;
+    if (firstError) {
+      toast.error(String(firstError));
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+        className="space-y-5"
+      >
+        {!isFirstLogin && (
+          <FormField
+            control={form.control}
+            name="current_password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-golden-dark">
+                  Current Password
+                </FormLabel>
+                <div className="relative">
+                  <FormControl>
+                    <Input
+                      type={showPasswords ? "text" : "password"}
+                      placeholder="••••••••"
+                      {...field}
+                      className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
+                    />
+                  </FormControl>
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(!showPasswords)}
+                    className="absolute top-1/2 right-3 -translate-y-1/2"
+                  >
+                    {showPasswords ? (
+                      <EyeIcon className="h-5 w-5 text-golden-dark" />
+                    ) : (
+                      <EyeOffIcon className="h-5 w-5 text-golden-dark" />
+                    )}
+                  </button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        <FormField
+          control={form.control}
+          name="new_password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-golden-dark">New Password</FormLabel>
+              <FormControl>
+                <Input
+                  type={showPasswords ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...field}
+                  className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="confirm_password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-golden-dark">
+                Confirm New Password
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type={showPasswords ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...field}
+                  className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button
+          type="submit"
+          className="w-full bg-golden-dark hover:bg-golden-dark/90 h-14 text-xl text-white font-semibold rounded-md shadow-md transition-all duration-200 mt-6"
+          disabled={isLoading}
+        >
+          {isLoading ? "Processing..." : "Update & Log Out"}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+export default function ChangePasswordPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return <Loading01 />;
+  }
+
+  if (status === "unauthenticated") {
+    performLogout();
+    return <Loading01 />;
+  }
+
+  const isFirstLogin = Boolean(session?.user?.is_first_logged_in);
 
   return (
     <div className="min-h-screen bg-[#F9FBFC] flex items-center justify-center px-4 py-12">
@@ -136,95 +265,10 @@ export default function ChangePasswordPage() {
               </div>
             )}
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                {!isFirstLogin && (
-                  <FormField
-                    control={form.control}
-                    name="current_password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-golden-dark">
-                          Current Password
-                        </FormLabel>
-                        <div className="relative">
-                          <FormControl>
-                            <Input
-                              type={showPasswords ? "text" : "password"}
-                              placeholder="••••••••"
-                              {...field}
-                              className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
-                            />
-                          </FormControl>
-                          <button
-                            type="button"
-                            onClick={() => setShowPasswords(!showPasswords)}
-                            className="absolute top-1/2 right-3 -translate-y-1/2"
-                          >
-                            {showPasswords ? (
-                              <EyeIcon className="h-5 w-5 text-golden-dark" />
-                            ) : (
-                              <EyeOffIcon className="h-5 w-5 text-golden-dark" />
-                            )}
-                          </button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                <FormField
-                  control={form.control}
-                  name="new_password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-golden-dark">
-                        New Password
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type={showPasswords ? "text" : "password"}
-                          placeholder="••••••••"
-                          {...field}
-                          className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="confirm_password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-golden-dark">
-                        Confirm New Password
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type={showPasswords ? "text" : "password"}
-                          placeholder="••••••••"
-                          {...field}
-                          className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  className="w-full bg-golden-dark hover:bg-golden-dark/90 h-14 text-xl text-white font-semibold rounded-md shadow-md transition-all duration-200 mt-6"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Processing..." : "Update & Log Out"}
-                </Button>
-              </form>
-            </Form>
+            <ChangePasswordForm
+              key={isFirstLogin ? "first-login" : "change-password"}
+              isFirstLogin={isFirstLogin}
+            />
           </div>
         </div>
       </div>

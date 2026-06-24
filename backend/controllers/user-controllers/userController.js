@@ -651,7 +651,8 @@ const resetUserPassword = async (req, res) => {
     await user.update(
       {
         password: hashedPassword,
-        is_first_logged_in: false,
+        is_first_logged_in: true,
+        password_changed_at: null,
         updated_at: new Date(),
       },
       { transaction: t },

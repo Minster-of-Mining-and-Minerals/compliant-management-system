@@ -18,7 +18,11 @@ const baseQuery = fetchBaseQuery({
 
 const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
   let result = await baseQuery(args, api, extraOptions);
-  if (result.error && result.error.status === 401) {
+  const requestUrl =
+    typeof args === "string" ? args : args?.url?.toString?.() ?? "";
+  const isChangePassword = requestUrl.includes("/change-password");
+
+  if (result.error && result.error.status === 401 && !isChangePassword) {
     console.warn("Unauthorized! Forced logout triggered.");
     await performLogout();
   }
