@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Star } from "lucide-react";
+import { CheckCircle2, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
 import { useCreateFeedbackMutation } from "@/redux/api/feedbackApi";
@@ -21,6 +21,7 @@ const FeedbackPage = () => {
   const [fullName, setFullName] = useState("");
   const [feedbackDescription, setFeedbackDescription] = useState("");
   const [rating, setRating] = useState<number>(0);
+  const [successMessage, setSuccessMessage] = useState("");
   const t = useTranslations("Feedback");
 
   // RTK Queries - Fix: Extract data from response
@@ -52,6 +53,8 @@ const FeedbackPage = () => {
       return;
     }
 
+    setSuccessMessage("");
+
     try {
       const feedbackData = {
         sector_node_id: sectorId || null,
@@ -60,8 +63,10 @@ const FeedbackPage = () => {
         rating,
       };
 
-      const result = await createFeedback(feedbackData).unwrap();
-      toast.success(t("toast.success.submitted"));
+      await createFeedback(feedbackData).unwrap();
+      const message = t("toast.success.submitted");
+      setSuccessMessage(message);
+      toast.success(message);
 
       // Reset form
       setSectorId("");
@@ -88,6 +93,7 @@ const FeedbackPage = () => {
     setFullName("");
     setFeedbackDescription("");
     setRating(0);
+    setSuccessMessage("");
   };
 
   return (
@@ -102,6 +108,15 @@ const FeedbackPage = () => {
           </p>
         </div>
         <div className="">
+          {successMessage && (
+            <div
+              role="status"
+              className="mb-6 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800"
+            >
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+              <p className="text-sm font-medium">{successMessage}</p>
+            </div>
+          )}
           <div className=" ">
             <form className="flex-col w-full gap-5 flex" onSubmit={handleSubmit}>
               <div className="w-full md:w-3/4 gap-10">
