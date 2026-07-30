@@ -94,13 +94,13 @@ app.use(
   }),
 );
 
+app.set("trust proxy", 1);
+
 // ================== CORS Configuration ==================
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:4000",
-  "https://172.31.102.108",
-  "http://172.31.102.108",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 const corsOptions = {

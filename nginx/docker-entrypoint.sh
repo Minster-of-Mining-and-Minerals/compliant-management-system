@@ -1,23 +1,27 @@
 #!/bin/sh
 set -e
 
-SSL_DIR="/etc/nginx/ssl"
-CERT="${SSL_DIR}/server.crt"
-KEY="${SSL_DIR}/server.key"
+DOMAIN="${DOMAIN:-complaint.mom.gov.et}"
+CERT="/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"
+KEY="/etc/letsencrypt/live/${DOMAIN}/privkey.pem"
 
-APP_HOST="${APP_HOST:-172.31.102.108}"
+echo "[nginx] Starting entrypoint for domain: ${DOMAIN}"
 
-mkdir -p "${SSL_DIR}"
-
-if [ ! -f "${CERT}" ] || [ ! -f "${KEY}" ]; then
-  echo "[nginx] Generating self-signed TLS certificate for ${APP_HOST}..."
-  openssl req -x509 -nodes -days 825 -newkey rsa:2048 \
-    -keyout "${KEY}" \
-    -out "${CERT}" \
-    -subj "/CN=${APP_HOST}" \
-    -addext "subjectAltName=IP:${APP_HOST},DNS:localhost"
-  chmod 600 "${KEY}"
-  chmod 644 "${CERT}"
+if [ ! -f "$CERT" ] || [ ! -f "$KEY" ]; then
+  echo "================================================================"
+  echo " Let's Encrypt certificates not found for ${DOMAIN}!"
+  echo " Nginx will now start in BOOTSTRAP MODE (HTTP only)."
+  echo " You MUST run ./init-letsencrypt.sh to obtain the certificates."
+  echo "================================================================"
+  
+  # Use envsubst to replace only ${DOMAIN}
+  # we export DOMAIN so envsubst can see it
+  export DOMAIN
+  envsubst '${DOMAIN}' < /etc/nginx/templates/nginx.conf.bootstrap > /etc/nginx/conf.d/default.conf
+else
+  echo "[nginx] Certificates found. Starting in PRODUCTION MODE."
+  export DOMAIN
+  envsubst '${DOMAIN}' < /etc/nginx/templates/nginx.conf.production > /etc/nginx/conf.d/default.conf
 fi
 
 echo "[nginx] Testing configuration..."
