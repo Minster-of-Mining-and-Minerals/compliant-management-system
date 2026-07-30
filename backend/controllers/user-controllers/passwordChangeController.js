@@ -22,13 +22,21 @@ exports.changePassword = async (req, res) => {
 
     const isFirstLogin = Boolean(user.is_first_logged_in);
 
+    // DEBUG LOGGING
+    console.log("====== PASSWORD CHANGE DEBUG ======");
+    console.log("User ID:", userId);
+    console.log("DB is_first_logged_in raw:", user.is_first_logged_in);
+    console.log("Parsed isFirstLogin:", isFirstLogin);
+    console.log("Body current_password provided:", !!current_password);
+    console.log("===================================");
+
     // First login: set new password without verifying current (no email is sent)
     if (!isFirstLogin) {
       if (!current_password) {
         await t.rollback();
         return res.status(400).json({
           success: false,
-          message: "Current password is required",
+          message: "Current password is required. (If you think this is your first login, please click 'Logout' at the top left, log back in, and try again!)",
         });
       }
 
