@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-# Install docker CLI and curl
-apk update && apk add --no-cache docker-cli curl
+# Install ONLY curl to save memory (docker-cli is huge and causes Out-Of-Memory kills on small servers)
+apk update && apk add --no-cache curl
 
 DOMAIN="${DOMAIN:-complaint.mom.gov.et}"
 EMAIL="${EMAIL:-admin@complaint.mom.gov.et}"
@@ -29,8 +29,8 @@ if [ ! -f "$DATA_PATH/live/$DOMAIN/fullchain.pem" ]; then
     --no-eff-email \
     --non-interactive; then
     
-    echo "[certbot] Initial certificate requested successfully. Restarting nginx..."
-    docker restart cms_nginx
+    echo "[certbot] Initial certificate requested successfully. Restarting nginx via Docker Socket..."
+    curl -s -X POST --unix-socket /var/run/docker.sock http://localhost/containers/cms_nginx/restart
   else
     echo "[certbot] Failed to obtain initial certificate. Will try again later."
     # If it fails, we exit so the container can restart and try again
@@ -43,6 +43,7 @@ fi
 # Start the renewal loop
 echo "[certbot] Starting continuous renewal loop..."
 while :; do
-  certbot renew --webroot -w /var/www/certbot --deploy-hook "docker exec cms_nginx nginx -s reload"
+  # Use curl and the Docker socket to restart nginx, avoiding the need for the bulky docker-cli package
+  certbot renew --webroot -w /var/www/certbot --deploy-hook "curl -s -X POST --unix-socket /var/run/docker.sock http://localhost/containers/cms_nginx/restart"
   sleep 12h
 done
