@@ -7,11 +7,9 @@ DATA_PATH="/etc/letsencrypt"
 RSA_KEY_SIZE=4096
 
 # Wait for nginx to be available on port 80
-echo "[certbot] Waiting for Nginx to be ready on HTTP..."
-until wget -q -O /dev/null "http://nginx/" 2>/dev/null; do
-    sleep 3
-done
-echo "[certbot] Nginx is ready!"
+echo "[certbot] Waiting for Nginx to be ready on HTTP (sleeping 10s)..."
+sleep 10
+echo "[certbot] Nginx should be ready!"
 
 if [ ! -f "$DATA_PATH/live/$DOMAIN/fullchain.pem" ]; then
   echo "[certbot] ================================================"
