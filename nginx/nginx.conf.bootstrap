@@ -1,13 +1,22 @@
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    server_name ${DOMAIN} 172.31.102.108;
-
-    client_max_body_size 100M;
+    server_name ${DOMAIN};
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 80;
+    server_name 172.31.102.108;
+
+    client_max_body_size 100M;
 
     location ~ ^/api/auth/(session|csrf|providers|callback|signout|signin|_log) {
         proxy_pass http://frontend:3000;
