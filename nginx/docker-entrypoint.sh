@@ -7,24 +7,43 @@ KEY="/etc/letsencrypt/live/${DOMAIN}/privkey.pem"
 
 echo "[nginx] Starting entrypoint for domain: ${DOMAIN}"
 
+# Make DOMAIN available for envsubst
+export DOMAIN
+
+# ── Select initial config based on cert existence ──────────────────────────────
 if [ ! -f "$CERT" ] || [ ! -f "$KEY" ]; then
-  echo "================================================================"
-  echo " Let's Encrypt certificates not found for ${DOMAIN}!"
-  echo " Nginx will now start in BOOTSTRAP MODE (HTTP only)."
-  echo " Certbot will automatically obtain certificates and restart Nginx."
-  echo "================================================================"
-  
-  # Use envsubst to replace only ${DOMAIN}
-  # we export DOMAIN so envsubst can see it
-  export DOMAIN
-  envsubst '${DOMAIN}' < /etc/nginx/templates/nginx.conf.bootstrap > /etc/nginx/conf.d/default.conf
+    echo "[nginx] No SSL certificate found."
+    echo "[nginx] Starting in HTTP-only bootstrap mode for initial certificate issuance..."
+    envsubst '${DOMAIN}' < /etc/nginx/templates/nginx.conf.bootstrap > /etc/nginx/conf.d/default.conf
 else
-  echo "[nginx] Certificates found. Starting in PRODUCTION MODE."
-  export DOMAIN
-  envsubst '${DOMAIN}' < /etc/nginx/templates/nginx.conf.production > /etc/nginx/conf.d/default.conf
+    echo "[nginx] SSL certificate found. Starting in HTTPS production mode..."
+    envsubst '${DOMAIN}' < /etc/nginx/templates/nginx.conf.production > /etc/nginx/conf.d/default.conf
 fi
 
 echo "[nginx] Testing configuration..."
 nginx -t
 
-exec "$@"
+# ── Start nginx in the background ─────────────────────────────────────────────
+nginx -g "daemon off;" &
+NGINX_PID=$!
+
+# ── If HTTP-only mode: wait for cert, then switch to HTTPS ────────────────────
+if [ ! -f "$CERT" ] || [ ! -f "$KEY" ]; then
+    echo "[nginx] Waiting for Certbot to issue SSL certificate..."
+    while [ ! -f "$CERT" ] || [ ! -f "$KEY" ]; do
+        sleep 5
+    done
+    echo "[nginx] Certificate obtained! Switching to HTTPS production mode..."
+    sleep 2  # allow certbot to finish writing all cert files
+    envsubst '${DOMAIN}' < /etc/nginx/templates/nginx.conf.production > /etc/nginx/conf.d/default.conf
+    nginx -s reload
+    echo "[nginx] Now running in HTTPS mode."
+fi
+
+# ── Reload every 12 hours to pick up renewed certificates ──────────────────────
+while kill -0 "$NGINX_PID" 2>/dev/null; do
+    sleep 12h &
+    wait $!
+    echo "[nginx] Reloading to pick up any renewed SSL certificates..."
+    nginx -s reload
+done

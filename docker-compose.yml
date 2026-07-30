@@ -81,7 +81,6 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-      - /var/run/docker.sock:/var/run/docker.sock
       - ./certbot/certbot-entrypoint.sh:/certbot-entrypoint.sh:ro
     entrypoint: /bin/sh /certbot-entrypoint.sh
     networks:
