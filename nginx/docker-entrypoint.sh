@@ -11,7 +11,7 @@ if [ ! -f "$CERT" ] || [ ! -f "$KEY" ]; then
   echo "================================================================"
   echo " Let's Encrypt certificates not found for ${DOMAIN}!"
   echo " Nginx will now start in BOOTSTRAP MODE (HTTP only)."
-  echo " You MUST run ./init-letsencrypt.sh to obtain the certificates."
+  echo " Certbot will automatically obtain certificates and restart Nginx."
   echo "================================================================"
   
   # Use envsubst to replace only ${DOMAIN}

@@ -75,14 +75,19 @@ services:
     image: certbot/certbot
     container_name: cms_certbot
     restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-complaint.mom.gov.et}
+      EMAIL: ${EMAIL:-admin@complaint.mom.gov.et}
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
       - /var/run/docker.sock:/var/run/docker.sock
-    entrypoint: "/bin/sh -c 'apk update && apk add --no-cache docker-cli && while :; do certbot renew --deploy-hook \"docker exec cms_nginx nginx -s reload\"; sleep 12h; done'"
+      - ./certbot/certbot-entrypoint.sh:/certbot-entrypoint.sh:ro
+    entrypoint: /bin/sh /certbot-entrypoint.sh
     networks:
       - cms_network
-
+    depends_on:
+      - nginx
 volumes:
   postgres_data:
 
