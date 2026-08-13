@@ -19,9 +19,10 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      PORT: 4002
       DB_HOST: postgres
       DB_PORT: 5432
-      SOCKET_PORT: 5000
+      SOCKET_PORT: 5002
     depends_on:
       - postgres
     networks:
@@ -41,11 +42,12 @@ services:
     env_file:
       - ./frontend/.env
     environment:
+      PORT: 3002
       NODE_ENV: production
       AUTH_TRUSTED_HOST: "true"
       NEXTAUTH_TRUST_HOST: "true"
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://${DOMAIN:-complaint.mom.gov.et}}
-      BACKEND_INTERNAL_URL: http://backend:4000
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://${DOMAIN:-10.0.71.199:3002}}
+      BACKEND_INTERNAL_URL: http://backend:4002
     depends_on:
       - backend
     networks:
@@ -56,10 +58,9 @@ services:
     container_name: cms_nginx
     restart: always
     environment:
-      DOMAIN: ${DOMAIN:-complaint.mom.gov.et}
+      DOMAIN: ${DOMAIN:-10.0.71.199:3002}
     ports:
-      - "80:80"
-      - "443:443"
+      - "8082:80"
     volumes:
       - ./nginx/nginx.conf.bootstrap:/etc/nginx/templates/nginx.conf.bootstrap:ro
       - ./nginx/nginx.conf.production:/etc/nginx/templates/nginx.conf.production:ro
@@ -76,7 +77,7 @@ services:
     container_name: cms_certbot
     restart: unless-stopped
     environment:
-      DOMAIN: ${DOMAIN:-complaint.mom.gov.et}
+      DOMAIN: ${DOMAIN:-10.0.71.199:3002}
       EMAIL: ${EMAIL:-admin@complaint.mom.gov.et}
     volumes:
       - ./certbot/conf:/etc/letsencrypt

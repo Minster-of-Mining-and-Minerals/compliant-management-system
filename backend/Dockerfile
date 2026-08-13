@@ -13,8 +13,8 @@ RUN npm install -g sequelize-cli
 COPY . .
 
 # Expose API port and Socket.IO port
-EXPOSE 4000
-EXPOSE 5000
+EXPOSE 4002
+EXPOSE 5002
 
 CMD ["npm", "start"]
 
