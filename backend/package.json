@@ -14,6 +14,7 @@
     "seed:only": "sequelize-cli db:seed --seed",
     "seed:undo": "sequelize-cli db:seed:undo:all",
     "seed:undo:only": "sequelize-cli db:seed:undo --seed [name]",
+    "seed:demo": "sequelize-cli db:seed --seed 20260805000000-demo-dashboard-data.js",
     "test": "node --test tests/dateTime.test.js"
   },
   "keywords": [],

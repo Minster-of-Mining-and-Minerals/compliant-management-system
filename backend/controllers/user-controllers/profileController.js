@@ -53,7 +53,7 @@ const getProfile = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Profile fetched successfully.",
-      data: user,
+      data: user.get({ plain: true }),
     });
   } catch (error) {
     console.error("Error fetching profile:", error);

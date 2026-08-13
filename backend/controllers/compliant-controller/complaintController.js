@@ -644,7 +644,7 @@ const getComplaints = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Complaints fetched successfully.",
-      data: complaints,
+      data: complaints.map(c => c.get({ plain: true })),
       meta: {
         totalItems: count,
         totalPages: Math.ceil(count / limitInt),
@@ -726,7 +726,7 @@ const getComplaintByUserId = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Complaints fetched successfully.",
-      data: complaints,
+      data: complaints.map(c => c.get({ plain: true })),
       meta: {
         totalItems: count,
         totalPages: Math.ceil(count / limitInt),
@@ -864,7 +864,7 @@ const getComplaintById = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Complaint fetched successfully.",
-      data: complaint,
+      data: complaint.get({ plain: true }),
     });
   } catch (error) {
     console.error(error);
@@ -971,7 +971,7 @@ const getComplaintByTicketingNumber = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Complaint fetched successfully.",
-      data: complaint,
+      data: complaint.get({ plain: true }),
     });
   } catch (error) {
     console.error(error);

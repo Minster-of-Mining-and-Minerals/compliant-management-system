@@ -146,7 +146,7 @@ const getSectorNodes = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Sector nodes fetched successfully",
-      data: nodes,
+      data: nodes.map(n => n.get({ plain: true })),
       meta: {
         totalItems: count,
         totalPages: Math.ceil(count / limitInt),
@@ -297,7 +297,7 @@ const getSectorNodeById = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Sector node fetched successfully",
-      data: node,
+      data: node.get({ plain: true }),
     });
   } catch (error) {
     console.error("Error fetching sector node:", error);
@@ -534,8 +534,8 @@ const getSectorNodeUsers = async (req, res) => {
       success: true,
       message: "Sector node users fetched successfully",
       data: {
-        sector_node: node,
-        users: node.users,
+        sector_node: node.get({ plain: true }),
+        users: node.users ? node.users.map(u => u.get({ plain: true })) : [],
       },
     });
   } catch (error) {
@@ -601,7 +601,7 @@ const getSectorNodeChildrenUsers = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Children sector node users fetched successfully",
-      data: users,
+      data: users.map(u => u.get({ plain: true })),
     });
   } catch (error) {
     console.error("Error fetching children sector node users:", error);

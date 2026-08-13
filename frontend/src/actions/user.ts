@@ -18,7 +18,13 @@ export const login = async (email: string, password: string) => {
 
     // If we get here, signIn succeeded
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
+    // NextAuth signIn in Next.js server actions throws a NEXT_REDIRECT error on success.
+    // We catch it and return success to the client instead of redirecting from the server.
+    if (error?.message === "NEXT_REDIRECT" || error?.digest?.startsWith("NEXT_REDIRECT")) {
+      return { success: true };
+    }
+
     if (error instanceof AuthError) {
       console.error("Auth error type:", error.type);
       console.error("Auth error cause:", error.cause);

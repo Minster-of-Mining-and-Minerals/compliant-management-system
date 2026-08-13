@@ -99,8 +99,8 @@ const login = async (req, res) => {
         phone_number: user.phone_number,
         profile_image: user.profile_image,
         is_first_logged_in: user.is_first_logged_in,
-        sector: user.sectorNode || null,
-        department: user.department || null,
+        sector: user.sectorNode ? user.sectorNode.get({ plain: true }) : null,
+        department: user.department ? user.department.get({ plain: true }) : null,
       },
       roles: userRoles,
       // permissions removed to reduce session payload size

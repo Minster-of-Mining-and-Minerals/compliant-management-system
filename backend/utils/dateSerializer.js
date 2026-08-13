@@ -12,6 +12,13 @@ function serializeDates(value) {
     return toUtc(value);
   }
 
+  // If the object has a custom toJSON method (like Sequelize instances do), call it first.
+  // This prevents infinite recursion on complex objects with circular references.
+  if (typeof value === "object" && typeof value.toJSON === "function") {
+    value = value.toJSON();
+    if (value === null || value === undefined) return value;
+  }
+
   if (Array.isArray(value)) {
     return value.map(serializeDates);
   }
