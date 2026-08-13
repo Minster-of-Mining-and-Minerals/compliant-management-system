@@ -60,7 +60,7 @@ services:
     environment:
       DOMAIN: ${DOMAIN:-10.0.71.199:3002}
     ports:
-      - "8082:80"
+      - "8083:80"
     volumes:
       - ./nginx/nginx.conf.bootstrap:/etc/nginx/templates/nginx.conf.bootstrap:ro
       - ./nginx/nginx.conf.production:/etc/nginx/templates/nginx.conf.production:ro
