@@ -33,9 +33,9 @@ module.exports = {
         );
       }
 
-      // 2. Ensure sectors exist
+      // 2. Ensure level 2 sectors exist (since dashboard queries level 2)
       let sectors = await queryInterface.sequelize.query(
-        `SELECT sector_node_id FROM sector_nodes LIMIT 10`,
+        `SELECT sector_node_id FROM sector_nodes WHERE level = 2 LIMIT 10`,
         { type: Sequelize.QueryTypes.SELECT, transaction }
       );
 
