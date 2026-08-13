@@ -14,7 +14,7 @@ server {
 
 server {
     listen 80;
-    server_name 172.31.102.108;
+    server_name 10.0.71.199;
 
     client_max_body_size 100M;
 
