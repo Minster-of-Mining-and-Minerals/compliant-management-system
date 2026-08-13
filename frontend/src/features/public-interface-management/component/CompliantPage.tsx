@@ -56,8 +56,8 @@ const ComplaintPage = () => {
 
   const t = useTranslations("ComplaintPage");
 
-  // Fix: Extract the data array from the sector nodes response
-  const { data: sectorNodesResponse = {} } = useGetSectorNodesQuery();
+  // Fix: Extract the data array from the sector nodes response (fetch all sectors)
+  const { data: sectorNodesResponse = {} } = useGetSectorNodesQuery({ limit: 1000 });
   const sectorNodesData = sectorNodesResponse?.data || [];
   // console.log("sector nodes", sectorNodesData);
 

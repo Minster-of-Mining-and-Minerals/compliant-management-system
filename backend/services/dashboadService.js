@@ -39,14 +39,11 @@ const getSectorComplaintDashboard = async (sectorNodeId = null) => {
         "name",
         "description",
         "created_at",
-        [
-          Sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM complaints c
-            WHERE c.sector_node_id = "SectorNode"."sector_node_id"
-          )`),
-          "total_complaints",
-        ],
+      attributes: [
+        "sector_node_id",
+        "name",
+        "description",
+        "created_at",
       ],
       include: [
         {
@@ -118,7 +115,7 @@ const getSectorComplaintDashboard = async (sectorNodeId = null) => {
         name: sector.name,
         description: sector.description,
         created_at: sector.created_at,
-        total_complaints: Number(sector.dataValues.total_complaints || 0),
+        total_complaints: (sector.complaints || []).length,
         complaint_categories: Object.values(categoryMap),
       };
     });
@@ -188,15 +185,11 @@ async function getSectorFeedbackDashboard(sectorNodeId = null) {
         "name",
         "description",
         "created_at",
-        [
-          Sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM feedbacks f
-            WHERE f.sector_node_id = "SectorNode"."sector_node_id"
-              AND f.deleted_at IS NULL
-          )`),
-          "total_feedbacks",
-        ],
+      attributes: [
+        "sector_node_id",
+        "name",
+        "description",
+        "created_at",
       ],
       include: [
         {
@@ -268,7 +261,7 @@ async function getSectorFeedbackDashboard(sectorNodeId = null) {
         name: sector.name,
         description: sector.description,
         created_at: sector.created_at,
-        total_complaints: Number(sector.dataValues.total_feedbacks || 0),
+        total_complaints: (sector.feedbacks || []).length,
         complaint_categories: Object.values(ratingMap),
       };
     });
