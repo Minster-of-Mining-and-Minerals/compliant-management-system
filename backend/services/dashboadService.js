@@ -39,11 +39,6 @@ const getSectorComplaintDashboard = async (sectorNodeId = null) => {
         "name",
         "description",
         "created_at",
-      attributes: [
-        "sector_node_id",
-        "name",
-        "description",
-        "created_at",
       ],
       include: [
         {
@@ -180,11 +175,6 @@ async function getSectorFeedbackDashboard(sectorNodeId = null) {
      */
     const sectors = await SectorNode.findAll({
       where: sectorWhere,
-      attributes: [
-        "sector_node_id",
-        "name",
-        "description",
-        "created_at",
       attributes: [
         "sector_node_id",
         "name",
