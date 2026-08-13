@@ -57,7 +57,23 @@ module.exports = {
               updated_at: now,
             }
           ], { transaction });
-          sectorIds.push(sId);
+          
+          const childNames = [`${name} North Branch`, `${name} South Branch`, `${name} Central Branch`];
+          for (const child of childNames) {
+            const childId = uuidv4();
+            await queryInterface.bulkInsert("sector_nodes", [
+              {
+                sector_node_id: childId,
+                name: child,
+                level: 2,
+                parent_id: sId,
+                is_active: true,
+                created_at: now,
+                updated_at: now,
+              }
+            ], { transaction });
+            sectorIds.push(childId);
+          }
         }
       }
 
@@ -95,14 +111,14 @@ module.exports = {
         categoryIds.push(categoryId);
       }
 
-      // 4. Generate 300 complaints
+      // 4. Generate 5000 complaints
       const statuses = ["pending", "under_review", "assigned", "in_progress", "resolved", "rejected", "closed"];
       const complaints = [];
       const nowMs = now.getTime();
-      const sixMonthsMs = 180 * 24 * 60 * 60 * 1000;
+      const oneYearMs = 365 * 24 * 60 * 60 * 1000;
 
-      for (let i = 1; i <= 300; i++) {
-        const date = new Date(nowMs - Math.random() * sixMonthsMs);
+      for (let i = 1; i <= 5000; i++) {
+        const date = new Date(nowMs - Math.random() * oneYearMs);
         const status = statuses[Math.floor(Math.random() * statuses.length)];
         const categoryId = categoryIds[Math.floor(Math.random() * categoryIds.length)];
         const sectorId = sectorIds[Math.floor(Math.random() * sectorIds.length)];
@@ -124,12 +140,12 @@ module.exports = {
       }
 
       await queryInterface.bulkInsert("complaints", complaints, { transaction });
-      console.log(`Inserted 300 demo complaints successfully.`);
+      console.log(`Inserted 5000 demo complaints successfully.`);
 
-      // 5. Generate 200 feedbacks
+      // 5. Generate 3000 feedbacks
       const feedbacks = [];
-      for (let i = 1; i <= 200; i++) {
-        const date = new Date(nowMs - Math.random() * sixMonthsMs);
+      for (let i = 1; i <= 3000; i++) {
+        const date = new Date(nowMs - Math.random() * oneYearMs);
         let rating = 1 + Math.floor(Math.random() * 5);
         if (Math.random() > 0.6) rating = Math.max(rating, 4);
         const sectorId = sectorIds[Math.floor(Math.random() * sectorIds.length)];
@@ -146,7 +162,7 @@ module.exports = {
       }
 
       await queryInterface.bulkInsert("feedbacks", feedbacks, { transaction });
-      console.log(`Inserted 200 demo feedbacks successfully.`);
+      console.log(`Inserted 3000 demo feedbacks successfully.`);
 
       await transaction.commit();
     } catch (error) {
@@ -164,6 +180,10 @@ module.exports = {
       );
       await queryInterface.sequelize.query(
         `DELETE FROM feedbacks WHERE full_name LIKE 'Demo User %'`,
+        { transaction }
+      );
+      await queryInterface.sequelize.query(
+        `DELETE FROM sector_nodes WHERE parent_id IN (SELECT sector_node_id FROM sector_nodes WHERE name IN ('Ministry Head Office', 'Health Bureau', 'Education Bureau', 'Agriculture Bureau'))`,
         { transaction }
       );
       await queryInterface.sequelize.query(
