@@ -160,7 +160,7 @@ module.exports = {
               user_type_id: userTypeId,
               phone_number: "251911000001",
               profile_image: null,
-              is_first_logged_in: true,
+              is_first_logged_in: false,
               last_login_at: null,
               password_changed_at: null,
               is_active: true,
