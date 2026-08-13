@@ -139,8 +139,12 @@ module.exports = {
         });
       }
 
-      await queryInterface.bulkInsert("complaints", complaints, { transaction });
-      console.log(`Inserted 5000 demo complaints successfully.`);
+      const chunkSize = 1000;
+      for (let i = 0; i < complaints.length; i += chunkSize) {
+        const chunk = complaints.slice(i, i + chunkSize);
+        await queryInterface.bulkInsert("complaints", chunk, { transaction });
+      }
+      console.log(`Inserted 5000 demo complaints successfully in chunks.`);
 
       // 5. Generate 3000 feedbacks
       const feedbacks = [];
@@ -161,8 +165,11 @@ module.exports = {
         });
       }
 
-      await queryInterface.bulkInsert("feedbacks", feedbacks, { transaction });
-      console.log(`Inserted 3000 demo feedbacks successfully.`);
+      for (let i = 0; i < feedbacks.length; i += chunkSize) {
+        const chunk = feedbacks.slice(i, i + chunkSize);
+        await queryInterface.bulkInsert("feedbacks", chunk, { transaction });
+      }
+      console.log(`Inserted 3000 demo feedbacks successfully in chunks.`);
 
       await transaction.commit();
     } catch (error) {
