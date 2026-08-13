@@ -33,18 +33,18 @@ module.exports = {
         );
       }
 
-      // 2. Ensure level 2 sectors exist (since dashboard queries level 2)
-      let sectors = await queryInterface.sequelize.query(
-        `SELECT sector_node_id FROM sector_nodes WHERE level = 2 LIMIT 10`,
-        { type: Sequelize.QueryTypes.SELECT, transaction }
+      // 2. ALWAYS create fresh sectors (cleanup old demo sectors first)
+      await queryInterface.sequelize.query(
+        `DELETE FROM sector_nodes WHERE parent_id IN (SELECT sector_node_id FROM sector_nodes WHERE name IN ('Ministry Head Office', 'Health Bureau', 'Education Bureau', 'Agriculture Bureau'))`,
+        { transaction }
+      );
+      await queryInterface.sequelize.query(
+        `DELETE FROM sector_nodes WHERE name IN ('Ministry Head Office', 'Health Bureau', 'Education Bureau', 'Agriculture Bureau')`,
+        { transaction }
       );
 
       const sectorIds = [];
-      if (sectors && sectors.length > 0) {
-        sectorIds.push(...sectors.map(s => s.sector_node_id));
-      } else {
-        // Create demo sectors
-        const demoSectors = ["Ministry Head Office", "Health Bureau", "Education Bureau", "Agriculture Bureau"];
+      const demoSectors = ["Ministry Head Office", "Health Bureau", "Education Bureau", "Agriculture Bureau"];
         for (const name of demoSectors) {
           const sId = uuidv4();
           await queryInterface.bulkInsert("sector_nodes", [
@@ -75,7 +75,6 @@ module.exports = {
             sectorIds.push(childId);
           }
         }
-      }
 
       // 3. Ensure multiple categories exist
       const categoryNames = ["Service Delay", "Staff Behavior", "Infrastructure", "Quality of Service", "Other"];
