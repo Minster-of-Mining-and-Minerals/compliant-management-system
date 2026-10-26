@@ -34,8 +34,13 @@ const baseQueryWithReauth: BaseQueryFn = async (args, api, extraOptions) => {
   const isChangePassword = requestUrl.includes("/change-password");
 
   if (result.error && result.error.status === 401 && !isChangePassword) {
-    console.warn("Unauthorized! Forced logout triggered.");
-    await performLogout();
+    // Only log out users who actually have a session — anonymous visitors on
+    // public pages (complaint, feedback, tracking) must never be sent to login.
+    const session = await getSession();
+    if (session?.accessToken) {
+      console.warn("Unauthorized! Forced logout triggered.");
+      await performLogout();
+    }
   }
   return result;
 };

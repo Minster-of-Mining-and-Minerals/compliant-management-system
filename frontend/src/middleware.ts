@@ -25,8 +25,9 @@ export default function middleware(req: NextRequest) {
     routing.locales.find((l) => pathname.startsWith(`/${l}`)) ??
     routing.defaultLocale;
 
+  // Strip the locale prefix and any trailing slash so "/en/complaint/" matches "/complaint"
   const pathnameWithoutLocale =
-    pathname.replace(new RegExp(`^/${locale}`), "") || "/";
+    pathname.replace(new RegExp(`^/${locale}(?=/|$)`), "").replace(/\/+$/, "") || "/";
 
   // 🔥 FIXED: Check for ANY cookie that starts with session token patterns
   const allCookies = req.cookies.getAll();
