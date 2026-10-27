@@ -122,7 +122,8 @@
       "evidence": "ማስረጃ",
       "evidencePlaceholder": "የሚያግዙ ሰነዶች ወይም ማስረጃዎችን ያስገቡ",
       "optional": "አማራጭ",
-      "noDepartment": "የተለየ ክፍል የለም"
+      "noDepartment": "የተለየ ክፍል የለም",
+      "categoryFallback": "ቅሬታ"
     },
     "toast": {
       "success": {

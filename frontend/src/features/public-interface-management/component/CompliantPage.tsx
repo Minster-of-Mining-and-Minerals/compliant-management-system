@@ -93,6 +93,8 @@ const ComplaintPage = () => {
 
   const t = useTranslations("ComplaintPage");
   const tHome = useTranslations("HomePage");
+  // Labels read "… {category} …"; until a category is picked, use the generic word
+  const categoryLabel = complaintCategoryName || t("details.categoryFallback");
 
   // Fix: Extract the data array from the sector nodes response (fetch all sectors)
   const { data: sectorNodesResponse = {} } = useGetSectorNodesQuery({ limit: 1000 });
@@ -113,7 +115,7 @@ const ComplaintPage = () => {
 
   const steps = [
     t("steps.personal"),
-    t("steps.details", { category: complaintCategoryName }),
+    t("steps.details", { category: categoryLabel }),
     t("steps.review"),
   ];
   const isLastStep = step === steps.length - 1;
@@ -149,7 +151,8 @@ const ComplaintPage = () => {
   };
 
   useEffect(() => {
-    if (complaintCategories.length > 0 && !complaintCategoryId) {
+    // Pre-select only when there is a single category; otherwise the citizen must choose
+    if (complaintCategories.length === 1 && !complaintCategoryId) {
       setComplaintCategoryId(complaintCategories[0].category_id);
       setComplaintCategoryName(complaintCategories[0].name);
     }
@@ -326,9 +329,13 @@ const ComplaintPage = () => {
       ResetForm();
 
       // Reset category to default
-      if (complaintCategories.length > 0) {
+      // Reset the category the same way as on first load
+      if (complaintCategories.length === 1) {
         setComplaintCategoryId(complaintCategories[0].category_id);
         setComplaintCategoryName(complaintCategories[0].name);
+      } else {
+        setComplaintCategoryId("");
+        setComplaintCategoryName("");
       }
     } catch (err: any) {
       console.error("Submission error:", err);
@@ -356,19 +363,19 @@ const ComplaintPage = () => {
     { label: t("details.category"), value: complaintCategoryName },
     { label: t("details.incidentDate"), value: incidentDate },
     {
-      label: t("details.sector", { category: complaintCategoryName }),
+      label: t("details.sector", { category: categoryLabel }),
       value: [sectorName, departmentName].filter(Boolean).join(" › "),
     },
     {
-      label: t("details.personConcerned", { category: complaintCategoryName }),
+      label: t("details.personConcerned", { category: categoryLabel }),
       value: nameOfPersonConcerned,
     },
     {
-      label: t("details.description", { category: complaintCategoryName }),
+      label: t("details.description", { category: categoryLabel }),
       value: complaintDescription,
     },
     {
-      label: t("details.requestedAction", { category: complaintCategoryName }),
+      label: t("details.requestedAction", { category: categoryLabel }),
       value: requestedAction,
     },
   ];
@@ -569,7 +576,7 @@ const ComplaintPage = () => {
               {step === 1 && (
                 <section className={cardClass}>
                   <h2 className="block text-primary font-semibold text-lg mb-4">
-                    {t("details.title", { category: complaintCategoryName })}
+                    {t("details.title", { category: categoryLabel })}
                   </h2>
                   <div className="gap-5 grid grid-cols-1 sm:grid-cols-2 w-full">
                     <div className="w-full">
@@ -612,14 +619,14 @@ const ComplaintPage = () => {
                     </div>
                     <div className="w-full">
                       <label htmlFor="sector" className="block text-sm text-golden-dark">
-                        {t("details.sector", { category: complaintCategoryName })}
+                        {t("details.sector", { category: categoryLabel })}
                         <span className="text-red-500"> *</span>
                       </label>
                       <Select value={sectorId} onValueChange={handleSectorChange} disabled={isSubmitting}>
                         <SelectTrigger id="sector" className="w-full h-12 mt-1" aria-invalid={!!errors.sector}>
                           <SelectValue
                             placeholder={t("details.sectorPlaceholder", {
-                              category: complaintCategoryName,
+                              category: categoryLabel,
                             })}
                           />
                         </SelectTrigger>
@@ -635,7 +642,7 @@ const ComplaintPage = () => {
                     </div>
                     <div className="w-full">
                       <label htmlFor="department" className="block text-sm text-golden-dark">
-                        {t("details.department", { category: complaintCategoryName })}
+                        {t("details.department", { category: categoryLabel })}
                       </label>
                       <Select
                         value={departmentId}
@@ -645,7 +652,7 @@ const ComplaintPage = () => {
                         <SelectTrigger id="department" className="w-full h-12 mt-1">
                           <SelectValue
                             placeholder={t("details.departmentPlaceholder", {
-                              category: complaintCategoryName,
+                              category: categoryLabel,
                             })}
                           />
                         </SelectTrigger>
@@ -661,7 +668,7 @@ const ComplaintPage = () => {
                     </div>
                     <div className="w-full sm:col-span-2">
                       <label htmlFor="nameOfPersonConcerned" className="block text-sm text-golden-dark">
-                        {t("details.personConcerned", { category: complaintCategoryName })}
+                        {t("details.personConcerned", { category: categoryLabel })}
                         <span className="text-gray-500"> ({t("details.optional")})</span>
                       </label>
                       <Input
@@ -670,7 +677,7 @@ const ComplaintPage = () => {
                         name="nameOfPersonConcerned"
                         className={inputClass}
                         placeholder={t("details.personConcernedPlaceholder", {
-                          category: complaintCategoryName,
+                          category: categoryLabel,
                         })}
                         value={nameOfPersonConcerned}
                         aria-invalid={!!errors.personConcerned}
@@ -684,12 +691,12 @@ const ComplaintPage = () => {
                     </div>
                     <div className="w-full sm:col-span-2">
                       <label htmlFor="complaintDescription" className="block text-sm text-golden-dark">
-                        {t("details.description", { category: complaintCategoryName })}
+                        {t("details.description", { category: categoryLabel })}
                         <span className="text-red-500"> *</span>
                       </label>
                       <TextArea
                         placeholder={t("details.descriptionPlaceholder", {
-                          category: complaintCategoryName,
+                          category: categoryLabel,
                         })}
                         rows={6}
                         id="complaintDescription"
@@ -713,12 +720,12 @@ const ComplaintPage = () => {
                     </div>
                     <div className="w-full sm:col-span-2">
                       <label htmlFor="requestedAction" className="block text-sm text-golden-dark">
-                        {t("details.requestedAction", { category: complaintCategoryName })}
+                        {t("details.requestedAction", { category: categoryLabel })}
                         <span className="text-gray-500"> ({t("details.optional")})</span>
                       </label>
                       <TextArea
                         placeholder={t("details.requestedActionPlaceholder", {
-                          category: complaintCategoryName,
+                          category: categoryLabel,
                         })}
                         rows={3}
                         id="requestedAction"
@@ -737,7 +744,7 @@ const ComplaintPage = () => {
                 <>
                   <section className={cardClass}>
                     <h2 className="block text-primary font-semibold text-lg mb-1">
-                      {t("details.evidence", { category: complaintCategoryName })}
+                      {t("details.evidence", { category: categoryLabel })}
                       <span className="ml-2 text-sm font-normal text-gray-500">
                         ({t("details.optional")})
                       </span>
@@ -748,7 +755,7 @@ const ComplaintPage = () => {
                       labelClass="text-sm text-start w-fit font-medium text-[#094C81]"
                       id="attachment"
                       label={t("details.evidencePlaceholder", {
-                        category: complaintCategoryName,
+                        category: categoryLabel,
                       })}
                       value={formValues.attachment_id || []}
                       onChange={(val) => handleChange("attachment_id", val)}
@@ -778,7 +785,7 @@ const ComplaintPage = () => {
                       ))}
                       <div className="py-3 grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4">
                         <dt className="text-sm text-gray-500">
-                          {t("details.evidence", { category: complaintCategoryName })}
+                          {t("details.evidence", { category: categoryLabel })}
                         </dt>
                         <dd className="sm:col-span-2 text-sm text-gray-900">
                           {t("review.files", { count: formValues.attachment_id.length })}
@@ -809,7 +816,7 @@ const ComplaintPage = () => {
                     className="flex-1 sm:flex-none bg-golden-dark20 min-w-32 hover:bg-golden-dark30 h-12 text-base text-gray-600 rounded-md disabled:opacity-70"
                     disabled={isSubmitting}
                   >
-                    {t("buttons.cancel", { category: complaintCategoryName })}
+                    {t("buttons.cancel", { category: categoryLabel })}
                   </Button>
                 </div>
                 {isLastStep ? (
@@ -821,8 +828,8 @@ const ComplaintPage = () => {
                     className="bg-golden-deep sm:min-w-52 hover:bg-golden-deep/90 h-12 text-base text-white rounded-md shadow-md disabled:opacity-70"
                   >
                     {isSubmitting
-                      ? t("buttons.submitting", { category: complaintCategoryName })
-                      : t("buttons.submit", { category: complaintCategoryName })}
+                      ? t("buttons.submitting", { category: categoryLabel })
+                      : t("buttons.submit", { category: categoryLabel })}
                   </Button>
                 ) : (
                   <div className="flex flex-col-reverse sm:flex-row gap-3">

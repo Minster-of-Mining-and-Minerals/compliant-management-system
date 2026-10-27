@@ -9,6 +9,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { useLocale, useTranslations } from "next-intl";
 import { getAppOrigin } from "@/utils/apiUrl";
 import { Link } from "@/i18n/navigation";
+import { copyText } from "@/utils/copyText";
 
 interface TicketSuccessModalProps {
     open: boolean;
@@ -41,12 +42,11 @@ const TicketSuccessModal = ({
     if (!open) return null;
 
     const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(ticketNumber);
+        if (await copyText(ticketNumber)) {
             setCopied(true);
             toast.success(t("copied"));
             setTimeout(() => setCopied(false), 2000);
-        } catch {
+        } else {
             toast.error(t("copyFailed"));
         }
     };

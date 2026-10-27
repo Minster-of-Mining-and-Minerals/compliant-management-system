@@ -177,7 +177,10 @@ const PublicHeader = ({ variant = "light" }: PublicHeaderProps) => {
       {menuOpen && (
         <nav
           id="public-mobile-menu"
-          className="lg:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2 shadow-lg"
+          className={`lg:hidden px-4 pb-4 pt-2 shadow-lg ${isDark
+            ? "border-t border-white/10 bg-primary bg-[url('/images/hero-bg-contours.svg')] bg-cover bg-center"
+            : "border-t border-gray-100 bg-white"
+            }`}
         >
           <ul className="flex flex-col gap-1">
             {tabs.map((tab) => {
@@ -190,9 +193,13 @@ const PublicHeader = ({ variant = "light" }: PublicHeaderProps) => {
                     href={tab.href}
                     aria-current={isActive ? "page" : undefined}
                     className={`flex items-center gap-3 px-3 py-3 rounded-lg text-base font-semibold transition-colors
-                      ${isActive
-                        ? "bg-golden-dark/10 text-golden-deep"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-golden-deep"
+                      ${isDark
+                        ? isActive
+                          ? "bg-white/10 text-golden-bright"
+                          : "text-slate-200 hover:bg-white/10 hover:text-white"
+                        : isActive
+                          ? "bg-golden-dark/10 text-golden-deep"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-golden-deep"
                       }
                     `}
                   >
@@ -205,7 +212,10 @@ const PublicHeader = ({ variant = "light" }: PublicHeaderProps) => {
           </ul>
           <Link
             href="/login"
-            className="mt-3 block w-full text-center px-6 py-3 rounded-lg text-base font-semibold text-white bg-golden-deep hover:bg-golden-deep/90 transition-colors"
+            className={`mt-3 block w-full text-center px-6 py-3 rounded-lg text-base font-semibold transition-colors ${isDark
+              ? "bg-golden-bright text-primary hover:bg-golden-bright/90"
+              : "bg-golden-deep text-white hover:bg-golden-deep/90"
+              }`}
           >
             {t("login")}
           </Link>

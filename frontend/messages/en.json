@@ -122,7 +122,8 @@
       "evidence": "Evidence for the {category}",
       "evidencePlaceholder": "Upload any supporting documents or evidence",
       "optional": "Optional",
-      "noDepartment": "No specific department"
+      "noDepartment": "No specific department",
+      "categoryFallback": "Complaint"
     },
     "toast": {
       "success": {
