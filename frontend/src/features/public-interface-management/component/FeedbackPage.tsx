@@ -10,7 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Star } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
+import PublicPageBanner from "@/components/layout/PublicPageBanner";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
 import { useCreateFeedbackMutation } from "@/redux/api/feedbackApi";
@@ -91,25 +93,19 @@ const FeedbackPage = () => {
   };
 
   return (
-    <main className="flex flex-col min-h-screen z-10 relative justify-center items-center border py-16">
-      <div className="border px-5 md:px-10 lg:px-20 py-10 shadow-md bg-white rounded-md">
-        <div className="mb-8 border-gray-200 pb-4 ">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {t("title")}
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 text-break-words">
-            {t("description")}
-          </p>
-        </div>
-        <div className="">
-          <div className=" ">
-            <form className="flex-col w-full gap-5 flex" onSubmit={handleSubmit}>
-              <div className="w-full md:w-3/4 gap-10">
-                <div className="flex flex-col gap-2">
+    <>
+    <PublicPageBanner title={t("title")} subtitle={t("description")} breadcrumb={t("title")} />
+
+    <main className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 -mt-20 pb-16">
+      <div className="grid grid-cols-3 gap-6 lg:gap-8 items-start">
+        <div className="col-span-3 lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8 shadow-xl shadow-slate-900/10">
+            <form className="flex-col w-full gap-6 flex" onSubmit={handleSubmit}>
+              <div className="w-full flex flex-col gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="w-full">
                     <label
-                      htmlFor="departmentReceivingComplaint"
-                      className="block text-sm text-golden-dark"
+                      htmlFor="feedbackSector"
+                      className="block text-sm font-medium text-slate-700"
                     >
                       {t("fields.sector")}
                       <span className="text-gray-500"> {t("fields.sectorOptional")}</span>
@@ -119,7 +115,7 @@ const FeedbackPage = () => {
                       onValueChange={handleSectorChange}
                       disabled={sectorsLoading || isSubmitting}
                     >
-                      <SelectTrigger className="w-full h-12 mt-1">
+                      <SelectTrigger id="feedbackSector" className="w-full h-12 mt-1">
                         <SelectValue placeholder={
                           sectorsLoading ? t("loading.sectors") : t("fields.sectorPlaceholder")
                         } />
@@ -149,7 +145,7 @@ const FeedbackPage = () => {
                   <div className="w-full">
                     <label
                       htmlFor="fullName"
-                      className="block text-sm text-golden-dark"
+                      className="block text-sm font-medium text-slate-700"
                     >
                       {t("fields.fullName")}
                       <span className="text-gray-500"> {t("fields.fullNameOptional")}</span>
@@ -158,90 +154,106 @@ const FeedbackPage = () => {
                       type="text"
                       id="fullName"
                       name="fullName"
-                      className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
+                      autoComplete="name"
+                      className="mt-1 w-full h-12 rounded-md text-base sm:text-sm"
                       placeholder={t("fields.fullNamePlaceholder")}
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       disabled={isSubmitting}
                     />
                   </div>
-                  <div className="w-full">
-                    <div className="w-full">
-                      <label
-                        htmlFor="feedbackDescription"
-                        className="block text-sm text-golden-dark"
-                      >
-                        {t("fields.feedbackDescription")}
-                        <span className="text-red-500"> *</span>
-                      </label>
-                      <TextArea
-                        placeholder={t("fields.feedbackPlaceholder")}
-                        rows={6}
-                        id="feedbackDescription"
-                        className="mt-1 w-full rounded-md text-sm focus:border-none"
-                        value={feedbackDescription}
-                        onChange={(val) => setFeedbackDescription(val)}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  </div>
                 </div>
                 <div className="w-full">
-                  <label className="block text-sm text-golden-dark mb-1">
-                    {t("fields.rating")}
+                  <label
+                    htmlFor="feedbackDescription"
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    {t("fields.feedbackDescription")}
                     <span className="text-red-500"> *</span>
                   </label>
+                  <TextArea
+                    placeholder={t("fields.feedbackPlaceholder")}
+                    rows={6}
+                    id="feedbackDescription"
+                    className="mt-1 w-full rounded-md text-base sm:text-sm focus:border-none"
+                    value={feedbackDescription}
+                    onChange={(val) => setFeedbackDescription(val)}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <fieldset className="w-full">
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">
+                    {t("fields.rating")}
+                    <span className="text-red-500"> *</span>
+                  </legend>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
                         type="button"
                         onClick={() => setRating(star)}
-                        className="focus:outline-none disabled:opacity-50"
+                        aria-label={`${star} / 5`}
+                        aria-pressed={star <= rating}
+                        className={`flex h-12 w-12 items-center justify-center rounded-xl border transition-colors focus:outline-none focus:ring-2 focus:ring-golden-deep disabled:opacity-50
+                          ${star <= rating ? "border-golden-bright bg-golden-dark/10" : "border-slate-300 bg-white hover:bg-slate-50"}`}
                         disabled={isSubmitting}
                       >
                         <Star
-                          className={`h-7 w-7 transition-colors ${star <= rating
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-300"
+                          className={`h-6 w-6 transition-colors ${star <= rating
+                            ? "fill-golden-deep text-golden-deep"
+                            : "text-slate-300"
                             }`}
                         />
                       </button>
                     ))}
-                    <span className="ml-2 text-sm text-gray-600">
+                    <span className="ml-2 text-sm font-semibold text-golden-deep">
                       {rating > 0 ? `${rating} / 5` : ""}
                     </span>
                   </div>
-                  <span className="text-sm text-gray-500">
+                  <span className="mt-1 block text-sm text-gray-500">
                     {rating === 0 ? t("fields.selectRating") : ""}
                   </span>
-                </div>
+                </fieldset>
               </div>
 
-              <div className="flex justify-start gap-2 md:gap-4 mt-6 w-full flex-col md:flex-row">
-                <Button
-                  type="submit"
-                  className="bg-golden-dark w-full md:w-0 md:min-w-52 hover:bg-golden-darkHover h-12 text-base text-white py-1 rounded-md shadow-md disabled:opacity-70"
-                  disabled={isSubmitting || !feedbackDescription.trim() || rating === 0}
-                >
-                  {isSubmitting ? t("actions.submitting") : t("actions.submit")}
-                </Button>
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t border-slate-200">
                 <Button
                   type="button"
                   onClick={handleCancel}
-                  className="bg-golden-dark20 w-full md:w-0 md:min-w-40 hover:bg-golden-dark30 h-12 text-base text-gray-600 py-2 rounded-md disabled:opacity-70"
+                  className="bg-white border border-slate-300 sm:min-w-32 hover:bg-slate-50 h-12 text-base text-slate-700 rounded-md disabled:opacity-70"
                   disabled={isSubmitting}
                   variant="outline"
                 >
                   {t("actions.cancel")}
                 </Button>
+                <Button
+                  type="submit"
+                  className="bg-golden-deep sm:min-w-52 hover:bg-golden-deep/90 h-12 text-base text-white rounded-md shadow-md disabled:opacity-70"
+                  disabled={isSubmitting || !feedbackDescription.trim() || rating === 0}
+                >
+                  {isSubmitting ? t("actions.submitting") : t("actions.submit")}
+                </Button>
               </div>
             </form>
-          </div>
         </div>
+
+        <aside className="col-span-3 lg:col-span-1 flex flex-col gap-4 lg:sticky lg:top-28">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-base font-bold text-slate-900">{t("aside.title")}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">{t("aside.text")}</p>
+            <Link
+              href="/complaint"
+              className="mt-3 inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
+            >
+              {t("aside.cta")}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </aside>
       </div>
     </main>
+    </>
   );
 };
 

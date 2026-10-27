@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, Edit, Trash, Plus } from "lucide-react";
+import { Eye, Clock } from "lucide-react";
 import Link from "next/link";
 import { DataTable } from "@/features/template/component/tableList/DataTable";
 import { TableLayout } from "@/features/template/component/tableList/TableLayout";
@@ -15,7 +15,8 @@ import {
   useDeleteComplaintMutation,
 } from "@/redux/api/complaintApi";
 import { Complaint } from "@/redux/types/complaint";
-import { formatStatus } from "@/utils/statusFormatter";
+import { daysSince, formatStatus } from "@/utils/statusFormatter";
+import { OVERDUE_AFTER_DAYS } from "@/components/dashboard/NeedsAttention";
 import { formatDate } from "@/utils/date";
 import { useGetUserTypesQuery } from "@/redux/api/userApi";
 import { useSession } from "next-auth/react";
@@ -28,6 +29,17 @@ export interface ComplaintTableProps {
 }
 
 type InternalScope = "all" | "against_me" | "my_department" | "sector";
+
+// Quick status tabs shown above the table ("" = all)
+const STATUS_TABS: { label: string; value: string }[] = [
+  { label: "All", value: "" },
+  { label: "Pending", value: "pending" },
+  { label: "Assigned", value: "assigned" },
+  { label: "In Progress", value: "in_progress" },
+  { label: "Resolved", value: "resolved" },
+  { label: "Rejected", value: "rejected" },
+  { label: "Closed", value: "closed" },
+];
 
 const INTERNAL_SCOPE_OPTIONS: { label: string; value: InternalScope }[] = [
   { label: "Against Me", value: "against_me" },
@@ -54,13 +66,13 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   
-  /* Filters */
-  const [statusFilter, setStatusFilter] = useState("");
-  const [internalScope, setInternalScope] = useState<InternalScope>("against_me");
-  const isInternalTab = userType === "internal";
-
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
+
+  /* Filters (status can be preset from the URL, e.g. ?status=pending from the dashboard) */
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "");
+  const [internalScope, setInternalScope] = useState<InternalScope>("against_me");
+  const isInternalTab = userType === "internal";
 
   const { data: response, isLoading, isError } = useGetComplaintsQuery({
     compliant_type_id: userTypeId,
@@ -76,7 +88,7 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
   // Reset page index when search or scope changes
   useEffect(() => {
     setPageIndex(0);
-  }, [searchQuery, internalScope]);
+  }, [searchQuery, internalScope, statusFilter]);
 
   const data = response?.data ?? [];
   const totalPages = response?.meta?.totalPages ?? 0;
@@ -184,13 +196,34 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
         formatDate(row.getValue("created_at")),
     },
     {
+      id: "age",
+      header: "Waiting",
+      cell: ({ row }) => {
+        const c = row.original;
+        const isOpen = !["resolved", "closed", "rejected"].includes(c.status);
+        if (!isOpen) return <span className="text-sm text-gray-400">—</span>;
+        const age = daysSince(c.created_at);
+        const isOverdue = age >= OVERDUE_AFTER_DAYS;
+        return (
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-semibold ${isOverdue ? "text-red-600" : "text-gray-500"}`}
+            title={isOverdue ? `Waiting more than ${OVERDUE_AFTER_DAYS} days` : undefined}
+          >
+            <Clock className="h-3.5 w-3.5" />
+            {age === 0 ? "Today" : `${age} day${age === 1 ? "" : "s"}`}
+            {isOverdue && <span className="ml-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] uppercase">Overdue</span>}
+          </span>
+        );
+      },
+    },
+    {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
         const complaintId = row.original.complaint_id;
         return (
           <div className="flex items-center gap-1">
-            <Button onClick={() => router.push(`/compliants/${complaintId}`)} variant="ghost" size="icon">
+            <Button onClick={() => router.push(`/compliants/${complaintId}`)} variant="ghost" size="icon" aria-label="View complaint">
               <Eye className="h-4 w-4" />
             </Button>
             {/* <Button variant="ghost" size="icon">
@@ -215,6 +248,23 @@ export default function ComplaintTable({ sideActions, userType = "internal" }: C
       filters={filters}
       filterColumnsPerRow={1}
     >
+      <div role="tablist" aria-label="Filter by status" className="flex gap-1 mb-4 px-1 overflow-x-auto border-b border-gray-200">
+        {STATUS_TABS.map((tab) => {
+          const isActive = statusFilter === tab.value;
+          return (
+            <button
+              key={tab.value || "all"}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setStatusFilter(tab.value)}
+              className={`whitespace-nowrap px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${isActive ? "border-golden-dark text-golden-dark" : "border-transparent text-gray-500 hover:text-gray-800"}`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
       {isInternalTab && (
         <div className="flex flex-wrap gap-2 mb-4 px-1">
           {INTERNAL_SCOPE_OPTIONS.map((option) => (

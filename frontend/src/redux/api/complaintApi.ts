@@ -24,6 +24,7 @@ export const complaintApi = baseApi.injectEndpoints({
         category_id?: string;
         search?: string;
         scope?: "all" | "against_me" | "my_department" | "sector";
+        sort?: "newest" | "oldest";
         user_id?: string;
       }) | void
     >({

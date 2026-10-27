@@ -49,6 +49,12 @@ const nextConfig = {
         // Proxy all other /api routes to the backend
         destination: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:4000/api'}/:path*`,
       },
+      {
+        // Uploaded files (attachments) are served by the backend. In production nginx
+        // routes /uploads before it reaches Next.js; locally this proxy does the same.
+        source: '/uploads/:path*',
+        destination: `${process.env.BACKEND_INTERNAL_URL || 'http://localhost:4000'}/uploads/:path*`,
+      },
     ];
   },
 };

@@ -1,8 +1,11 @@
 import { baseApi } from "../baseApi";
 import {
+  ComplaintOverview,
+  DashboardOverviewParams,
   DashboardQueryParams,
   DashboardResponse,
   DashboardSummary,
+  FeedbackOverview,
 } from "../types/dashboard";
 
 export const dashboardApi = baseApi.injectEndpoints({
@@ -61,6 +64,25 @@ export const dashboardApi = baseApi.injectEndpoints({
       },
     }),
 
+    // Aggregated overview for one dashboard tab (counts only, computed on the server)
+    getComplaintOverview: builder.query<ComplaintOverview, Omit<DashboardOverviewParams, "type">>({
+      query: (params) => ({
+        url: "/dashboard/overview",
+        params: { ...params, type: "complaint" },
+      }),
+      providesTags: ["Dashboard"],
+      transformResponse: (response: any): ComplaintOverview => response.data,
+    }),
+
+    getFeedbackOverview: builder.query<FeedbackOverview, Omit<DashboardOverviewParams, "type" | "category_id">>({
+      query: (params) => ({
+        url: "/dashboard/overview",
+        params: { ...params, type: "feedback" },
+      }),
+      providesTags: ["Dashboard"],
+      transformResponse: (response: any): FeedbackOverview => response.data,
+    }),
+
     // Get Dashboard Summary Only
     getDashboardSummary: builder.query<DashboardSummary, void>({
       query: () => ({
@@ -88,4 +110,6 @@ export const {
   useLazyGetDashboardStatsQuery,
   useRefreshDashboardStatsMutation,
   useGetDashboardSummaryQuery,
+  useGetComplaintOverviewQuery,
+  useGetFeedbackOverviewQuery,
 } = dashboardApi;

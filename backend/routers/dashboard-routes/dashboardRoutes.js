@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
   getDashboardStats,
+  getDashboardOverview,
 } = require("../../controllers/dashboard-controllers/dashboardController");
 const { authenticateToken } = require("../../middlewares/authMiddleware");
 
@@ -159,5 +160,36 @@ const { authenticateToken } = require("../../middlewares/authMiddleware");
  *                   example: "Error message details"
  */
 router.get("/stats", authenticateToken, getDashboardStats);
+
+/**
+ * @swagger
+ * /api/dashboard/overview:
+ *   get:
+ *     summary: Aggregated dashboard data for one tab (counts only)
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema: { type: string, enum: [complaint, feedback] }
+ *       - in: query
+ *         name: period
+ *         schema: { type: string, enum: [7d, 30d, 90d, year, all] }
+ *       - in: query
+ *         name: sector_id
+ *         schema: { type: string }
+ *         description: Limit to one sector (must be within the user's scope)
+ *       - in: query
+ *         name: category_id
+ *         schema: { type: string }
+ *         description: Complaint category (complaint tab only)
+ *     responses:
+ *       200:
+ *         description: KPIs, trend, per-sector / per-category / per-status counts (or rating data for feedback)
+ *       403:
+ *         description: Sector outside the user's scope
+ */
+router.get("/overview", authenticateToken, getDashboardOverview);
 
 module.exports = router;

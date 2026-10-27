@@ -1,7 +1,13 @@
 import React, { forwardRef, type FC } from "react";
 import { cn } from "@/lib/utils";
 
-interface InputProps {
+// Extra native attributes (autoComplete, inputMode, aria-*, onKeyDown, ...) are passed straight to <input>
+type NativeInputProps = Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type" | "value" | "onChange" | "min" | "max" | "step" | "defaultValue"
+>;
+
+interface InputProps extends NativeInputProps {
   type?: "text" | "number" | "email" | "password" | "date" | "time" | string;
   id?: string;
   name?: string;
@@ -39,6 +45,7 @@ const Input: FC<InputProps> = forwardRef<HTMLInputElement, InputProps>(
       error = false,
       hint,
       required = false,
+      ...rest
     },
     ref
   ) => {
@@ -80,6 +87,7 @@ const Input: FC<InputProps> = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="relative">
         <input
+          {...rest}
           ref={ref}
           type={type}
           id={id}

@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BiToggleLeft, BiToggleRight } from "react-icons/bi";
 import {
   Select,
   SelectContent,
@@ -19,10 +18,43 @@ import { useTranslations } from "next-intl";
 import { useCreateComplaintMutation } from "@/redux/api/complaintApi";
 import TicketSuccessModal from "@/components/common/modals/ComplaintSuccess";
 import { todayDateInputValue } from "@/utils/date";
+import { ArrowRight, Check, ChevronLeft, ChevronRight, EyeOff, ShieldCheck } from "lucide-react";
+import PublicPageBanner from "@/components/layout/PublicPageBanner";
+import { Link } from "@/i18n/navigation";
 
 interface ComplaintFormValues {
   attachment_id: File[];
 }
+
+type FieldErrors = Partial<
+  Record<
+    | "fullName"
+    | "email"
+    | "phoneNumber"
+    | "category"
+    | "sector"
+    | "description"
+    | "personConcerned",
+    string
+  >
+>;
+
+const DESCRIPTION_MIN = 10;
+const DESCRIPTION_MAX = 2000;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// text-base on phones: iOS zooms into any field with text smaller than 16px
+const inputClass =
+  "mt-1 w-full h-12 rounded-md text-base sm:text-sm border-golden-dark focus:border-none";
+// Form sections sit inside the single white page card, so they carry no frame of their own
+const cardClass = "flex flex-col w-full";
+
+const FieldError = ({ message }: { message?: string }) =>
+  message ? (
+    <p role="alert" className="mt-1 text-xs text-red-600">
+      {message}
+    </p>
+  ) : null;
 
 const ComplaintPage = () => {
   // Basic form fields
@@ -31,7 +63,6 @@ const ComplaintPage = () => {
   const [departmentId, setDepartmentId] = useState("");
   const [complaintDescription, setComplaintDescription] = useState("");
   const [isPersonalInfoOpen, setIsPersonalInfoOpen] = useState(true);
-  const [isTogglingPersonalInfo, setIsTogglingPersonalInfo] = useState(false);
   const [complaintCategoryId, setComplaintCategoryId] = useState("");
   const [complaintCategoryName, setComplaintCategoryName] = useState("");
   const [formValues, setFormValues] = useState<ComplaintFormValues>({
@@ -39,6 +70,7 @@ const ComplaintPage = () => {
   });
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [ticketNumber, setTicketNumber] = useState("");
+  const [submittedSectorName, setSubmittedSectorName] = useState("");
 
   // Personal Info Fields (matching CreateComplaintPayload)
   const [fullName, setFullName] = useState("");
@@ -48,22 +80,26 @@ const ComplaintPage = () => {
   const [subCity, setSubCity] = useState("");
   const [woreda, setWoreda] = useState("");
   const [sectorName, setSectorName] = useState("");
+  const [departmentName, setDepartmentName] = useState("");
 
   // Additional Fields (matching CreateComplaintPayload)
   const [incidentDate, setIncidentDate] = useState("");
   const [nameOfPersonConcerned, setNameOfPersonConcerned] = useState("");
   const [requestedAction, setRequestedAction] = useState("");
 
+  // Wizard state
+  const [step, setStep] = useState(0);
+  const [errors, setErrors] = useState<FieldErrors>({});
+
   const t = useTranslations("ComplaintPage");
+  const tHome = useTranslations("HomePage");
 
   // Fix: Extract the data array from the sector nodes response (fetch all sectors)
   const { data: sectorNodesResponse = {} } = useGetSectorNodesQuery({ limit: 1000 });
   const sectorNodesData = sectorNodesResponse?.data || [];
-  // console.log("sector nodes", sectorNodesData);
 
   const root = sectorNodesData.filter((item) => item.parent_id === null);
   const sectors = root.flatMap((rootItem) => rootItem.children || []);
-  // console.log("sectors", sectors);
 
   // Fix: Extract the data array from the categories response
   const { data: complaintCategoriesResponse = {} } = useGetComplaintCategoriesQuery({
@@ -71,17 +107,36 @@ const ComplaintPage = () => {
     type: "external",
   });
   const complaintCategories = complaintCategoriesResponse?.data || [];
-  // console.log("categories", complaintCategories);
 
   const [createComplaint, { isLoading: isSubmitting }] =
     useCreateComplaintMutation();
 
+  const steps = [
+    t("steps.personal"),
+    t("steps.details", { category: complaintCategoryName }),
+    t("steps.review"),
+  ];
+  const isLastStep = step === steps.length - 1;
+
+  const clearError = (field: keyof FieldErrors) =>
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+
   const handleSectorChange = (value: string) => {
     setSectorId(value);
     setDepartmentId("");
-    setSectorName("");
+    setDepartmentName("");
     const selectedSector = sectorNodesData.find((item) => item.sector_node_id === value);
+    setSectorName(selectedSector?.name || "");
     setDepartments(selectedSector?.children || []);
+    clearError("sector");
+  };
+
+  const handleDepartmentChange = (value: string) => {
+    setDepartmentId(value);
+    const selectedDepartment = departments.find(
+      (dept: any) => dept.sector_node_id === value,
+    ) as any;
+    setDepartmentName(selectedDepartment?.name || "");
   };
 
   const handleComplaintCategoryChange = (value: string) => {
@@ -90,14 +145,7 @@ const ComplaintPage = () => {
     );
     setComplaintCategoryId(value);
     setComplaintCategoryName(selectedCategory?.name || "");
-  };
-
-  const handlePersonalInfoToggle = () => {
-    setIsTogglingPersonalInfo(true);
-    setIsPersonalInfoOpen((prev) => !prev);
-    setTimeout(() => {
-      setIsTogglingPersonalInfo(false);
-    }, 200);
+    clearError("category");
   };
 
   useEffect(() => {
@@ -116,7 +164,9 @@ const ComplaintPage = () => {
 
   const ResetForm = () => {
     setSectorId("");
+    setSectorName("");
     setDepartmentId("");
+    setDepartmentName("");
     setComplaintDescription("");
     setFullName("");
     setEmail("");
@@ -128,26 +178,92 @@ const ComplaintPage = () => {
     setNameOfPersonConcerned("");
     setRequestedAction("");
     setFormValues({ attachment_id: [] });
+    setErrors({});
+    setStep(0);
+  };
+
+  // ----------------- VALIDATION (mirrors backend complaintValidator) -----------------
+  // shareDetails: whether step 1's personal details are being submitted (and so must be valid)
+  const validateStep = (stepIndex: number, shareDetails = isPersonalInfoOpen): FieldErrors => {
+    const next: FieldErrors = {};
+
+    if (stepIndex === 0 && shareDetails) {
+      if (fullName.trim() && fullName.trim().length < 3) {
+        next.fullName = t("validation.fullNameMin");
+      }
+      if (email.trim() && !EMAIL_PATTERN.test(email.trim())) {
+        next.email = t("validation.emailInvalid");
+      }
+      const phone = phoneNumber.trim();
+      if (phone && (phone.length < 7 || phone.length > 20)) {
+        next.phoneNumber = t("validation.phoneInvalid");
+      }
+    }
+
+    if (stepIndex === 1) {
+      if (!complaintCategoryId) next.category = t("validation.categoryRequired");
+      if (!sectorId) next.sector = t("validation.sectorDepartmentRequired");
+      if (!complaintDescription.trim()) {
+        next.description = t("validation.descriptionRequired");
+      } else if (complaintDescription.trim().length < DESCRIPTION_MIN) {
+        next.description = t("validation.descriptionMin", { min: DESCRIPTION_MIN });
+      }
+      const concerned = nameOfPersonConcerned.trim();
+      if (concerned && concerned.length < 10) {
+        next.personConcerned = t("validation.personConcernedMin");
+      }
+    }
+
+    return next;
+  };
+
+  const goNext = () => {
+    // "Next" on step 1 means the citizen is sharing their details
+    if (step === 0) setIsPersonalInfoOpen(true);
+    const stepErrors = validateStep(step, step === 0 ? true : isPersonalInfoOpen);
+    setErrors(stepErrors);
+    if (Object.keys(stepErrors).length > 0) {
+      toast.error(t("toast.error.errors"));
+      return;
+    }
+    setStep((s) => Math.min(s + 1, steps.length - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Skip personal details: the complaint is sent without name/contact/location
+  const continueAnonymously = () => {
+    setIsPersonalInfoOpen(false);
+    setErrors({});
+    setStep(1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goBack = () => {
+    setStep((s) => Math.max(s - 1, 0));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Native form submit (e.g. Enter key) only ever moves forward — the complaint is
+  // sent exclusively by clicking the final Submit button (handleSubmit below).
+  // Otherwise the click on "Next" can land on the Submit button that replaces it.
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLastStep) goNext();
   };
 
   // ----------------- SUBMIT HANDLER -----------------
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!isLastStep || isSubmitting) return;
 
-    // Validation
-    if (!complaintDescription.trim()) {
-      toast.error(t("validation.descriptionRequired"));
-      return;
-    }
-
-    if (!sectorId) {
-      toast.error(t("validation.sectorDepartmentRequired"));
-      return;
-    }
-
-    if (!complaintCategoryId) {
-      toast.error(t("validation.categoryRequired"));
-      return;
+    // Re-check every step before sending
+    for (const index of [0, 1]) {
+      const stepErrors = validateStep(index);
+      if (Object.keys(stepErrors).length > 0) {
+        setErrors(stepErrors);
+        setStep(index);
+        toast.error(t("toast.error.errors"));
+        return;
+      }
     }
 
     try {
@@ -200,11 +316,10 @@ const ComplaintPage = () => {
         attachment_ids: attachment_ids,
       };
 
-      // console.log("Submitting payload:", payload);
-
       const result = await createComplaint(payload).unwrap();
 
       setTicketNumber(result?.ticketing_code);
+      setSubmittedSectorName(sectorName);
       setShowTicketModal(true);
 
       toast.success(t("toast.success.submitted"));
@@ -223,373 +338,411 @@ const ComplaintPage = () => {
     }
   };
 
+  const reviewRows: Array<{ label: string; value: string }> = [
+    {
+      label: t("personalInfo.title"),
+      value:
+        isPersonalInfoOpen && (fullName.trim() || phoneNumber.trim() || email.trim())
+          ? [fullName, phoneNumber, email].filter((v) => v.trim()).join(" · ")
+          : t("review.anonymous"),
+    },
+    {
+      label: t("personalInfo.city"),
+      value:
+        isPersonalInfoOpen && (city.trim() || subCity.trim() || woreda.trim())
+          ? [city, subCity, woreda].filter((v) => v.trim()).join(", ")
+          : "",
+    },
+    { label: t("details.category"), value: complaintCategoryName },
+    { label: t("details.incidentDate"), value: incidentDate },
+    {
+      label: t("details.sector", { category: complaintCategoryName }),
+      value: [sectorName, departmentName].filter(Boolean).join(" › "),
+    },
+    {
+      label: t("details.personConcerned", { category: complaintCategoryName }),
+      value: nameOfPersonConcerned,
+    },
+    {
+      label: t("details.description", { category: complaintCategoryName }),
+      value: complaintDescription,
+    },
+    {
+      label: t("details.requestedAction", { category: complaintCategoryName }),
+      value: requestedAction,
+    },
+  ];
+
   return (
     <>
-      <main className="flex flex-col min-h-screen z-10 relative mx-auto px-4 sm:px-6 lg:px-20 pt-32 pb-16">
-        <div className="mb-8 border-gray-200 pb-4">
-          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-          <p className="mt-2 text-sm text-gray-600 max-w-2xl">{t("subtitle")}</p>
+      <PublicPageBanner title={t("title")} subtitle={t("subtitle")} breadcrumb={t("title")}>
+        <div className="mt-6 flex flex-wrap gap-2.5 text-sm font-medium">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-golden-bright/40 bg-[#04263A]/55 px-3 py-1.5 text-golden-bright">
+            <ShieldCheck className="h-4 w-4" />
+            {tHome("trust.secure")}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-golden-bright/40 bg-[#04263A]/55 px-3 py-1.5 text-golden-bright">
+            <EyeOff className="h-4 w-4" />
+            {tHome("trust.anonymous")}
+          </span>
         </div>
-        <div className="grid grid-cols-3 gap-8">
-          <div className="col-span-3 md:col-span-2">
-            <form className="flex-col w-full gap-10 flex" onSubmit={handleSubmit}>
-              <div className="flex flex-col rounded-md w-full shadow-md px-10 pt-5 pb-10">
-                <div className="flex justify-between">
-                  <h1 className="block text-primary font-semibold text-lg">
-                    {t("personalInfo.title")}
-                    <span className="ml-2 text-sm font-normal text-gray-500">
-                      {t("personalInfo.optional")}
-                    </span>
-                  </h1>
+      </PublicPageBanner>
 
-                  <button
-                    type="button"
-                    className={`p-0 transition-all duration-200 ${isPersonalInfoOpen ? "text-golden-dark" : "text-gray-400"
-                      }`}
-                    onClick={handlePersonalInfoToggle}
-                    disabled={isTogglingPersonalInfo}
-                    title={
-                      isPersonalInfoOpen
-                        ? "Hide personal information"
-                        : "Show personal information"
-                    }
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 -mt-20 pb-16">
+        <div className="grid grid-cols-3 gap-6 lg:gap-8 items-start">
+          <div className="col-span-3 lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8 shadow-xl shadow-slate-900/10">
+        {/* Step indicator */}
+        <ol className="mb-6 pb-6 border-b border-slate-200 flex items-center w-full" aria-label={t("steps.label")}>
+          {steps.map((label, index) => {
+            const isDone = index < step;
+            const isCurrent = index === step;
+            return (
+              <li
+                key={index}
+                className={`flex items-center ${index < steps.length - 1 ? "flex-1" : ""}`}
+                aria-current={isCurrent ? "step" : undefined}
+              >
+                <div className="flex flex-col sm:flex-row items-center gap-2">
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors
+                      ${isDone ? "bg-golden-deep text-white" : ""}
+                      ${isCurrent ? "bg-golden-deep text-white ring-4 ring-golden-dark/15" : ""}
+                      ${!isDone && !isCurrent ? "bg-gray-100 text-gray-500 border border-gray-200" : ""}
+                    `}
                   >
-                    {isTogglingPersonalInfo ? (
-                      <div className="w-10 h-10 flex items-center justify-center">
-                        <div className="h-6 w-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    {isDone ? <Check className="h-4 w-4" /> : index + 1}
+                  </span>
+                  {/* Labels don't fit side by side on phones: visible from sm, screen-reader only below */}
+                  <span
+                    className={`sr-only sm:not-sr-only text-sm font-medium text-center ${isCurrent ? "text-golden-deep" : "text-gray-500"}`}
+                  >
+                    {label}
+                  </span>
+                </div>
+                {index < steps.length - 1 && (
+                  <span
+                    className={`mx-2 sm:mx-4 h-0.5 flex-1 rounded ${index < step ? "bg-golden-deep" : "bg-gray-200"}`}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+        <p aria-hidden className="sm:hidden -mt-3 mb-6 text-sm font-semibold text-golden-deep">
+          {t("steps.mobile", { current: step + 1, total: steps.length, label: steps[step] })}
+        </p>
+
+            <form className="flex-col w-full gap-8 flex" onSubmit={handleFormSubmit} noValidate>
+              {/* STEP 1 — Personal information */}
+              {step === 0 && (
+                <section className={cardClass}>
+                  <div>
+                    <h2 className="block text-primary font-semibold text-lg">
+                      {t("personalInfo.title")}
+                      <span className="ml-2 text-sm font-normal text-gray-500">
+                        {t("personalInfo.optional")}
+                      </span>
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-500">{t("personalInfo.shareHint")}</p>
+                  </div>
+
+                    <div className="mt-4 p-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+                      <div className="w-full">
+                        <label htmlFor="fullName" className="block text-sm text-golden-dark">
+                          {t("personalInfo.fullName")}
+                        </label>
+                        <Input
+                          type="text"
+                          id="fullName"
+                          name="fullName"
+                          autoComplete="name"
+                          className={inputClass}
+                          placeholder={t("personalInfo.fullNamePlaceholder")}
+                          value={fullName}
+                          aria-invalid={!!errors.fullName}
+                          onChange={(e) => {
+                            setFullName(e.target.value);
+                            clearError("fullName");
+                          }}
+                          disabled={isSubmitting}
+                        />
+                        <FieldError message={errors.fullName} />
                       </div>
-                    ) : isPersonalInfoOpen ? (
-                      <BiToggleRight className="h-10 w-10 transition-transform duration-300 scale-100" />
-                    ) : (
-                      <BiToggleLeft className="h-10 w-10 transition-transform duration-300 scale-90" />
-                    )}
-                  </button>
-                </div>
-                <div
-                  className={`mt-4 p-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full
-                  overflow-hidden transition-all duration-500 ease-in-out
-                  ${isPersonalInfoOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}
-                `}
-                >
-                  <div className="w-full">
-                    <label
-                      htmlFor="fullName"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("personalInfo.fullName")}
-                      <span className="text-gray-500"></span>
-                    </label>
-                    <Input
-                      type="text"
-                      id="fullName"
-                      name="fullName"
-                      className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                      placeholder={t("personalInfo.fullNamePlaceholder")}
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      disabled={isSubmitting}
-                    />
+                      <div className="w-full">
+                        <label htmlFor="phoneNumber" className="block text-sm text-golden-dark">
+                          {t("personalInfo.phone")}
+                        </label>
+                        <Input
+                          type="tel"
+                          id="phoneNumber"
+                          name="phoneNumber"
+                          autoComplete="tel"
+                          inputMode="tel"
+                          className={inputClass}
+                          placeholder={t("personalInfo.phonePlaceholder")}
+                          value={phoneNumber}
+                          aria-invalid={!!errors.phoneNumber}
+                          onChange={(e) => {
+                            setPhoneNumber(e.target.value);
+                            clearError("phoneNumber");
+                          }}
+                          disabled={isSubmitting}
+                        />
+                        <FieldError message={errors.phoneNumber} />
+                      </div>
+                      <div className="w-full">
+                        <label htmlFor="email" className="block text-sm text-golden-dark">
+                          {t("personalInfo.email")}
+                        </label>
+                        <Input
+                          type="email"
+                          id="email"
+                          name="email"
+                          autoComplete="email"
+                          className={inputClass}
+                          placeholder={t("personalInfo.emailPlaceholder")}
+                          value={email}
+                          aria-invalid={!!errors.email}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            clearError("email");
+                          }}
+                          disabled={isSubmitting}
+                        />
+                        <FieldError message={errors.email} />
+                      </div>
+                      <div className="w-full">
+                        <label htmlFor="city" className="block text-sm text-golden-dark">
+                          {t("personalInfo.city")}
+                        </label>
+                        <Input
+                          type="text"
+                          id="city"
+                          name="city"
+                          className={inputClass}
+                          placeholder={t("personalInfo.cityPlaceholder")}
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                      <div className="w-full">
+                        <label htmlFor="subCity" className="block text-sm text-golden-dark">
+                          {t("personalInfo.subCity")}
+                        </label>
+                        <Input
+                          type="text"
+                          id="subCity"
+                          name="subCity"
+                          className={inputClass}
+                          placeholder={t("personalInfo.subCityPlaceholder")}
+                          value={subCity}
+                          onChange={(e) => setSubCity(e.target.value)}
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                      <div className="w-full">
+                        <label htmlFor="woreda" className="block text-sm text-golden-dark">
+                          {t("personalInfo.woreda")}
+                        </label>
+                        <Input
+                          type="text"
+                          id="woreda"
+                          name="woreda"
+                          className={inputClass}
+                          placeholder={t("personalInfo.woredaPlaceholder")}
+                          value={woreda}
+                          onChange={(e) => setWoreda(e.target.value)}
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                    </div>
+
+                  <div className="mt-6 flex items-start gap-3 rounded-lg bg-golden-dark/5 border border-golden-dark/20 p-4 text-sm text-gray-700">
+                    <ShieldCheck className="h-5 w-5 shrink-0 text-golden-deep" />
+                    <p>{t("personalInfo.anonymousTip")}</p>
                   </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="phoneNumber"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("personalInfo.phone")}
-                      <span className="text-gray-500"></span>
-                    </label>
-                    <Input
-                      type="text"
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                      placeholder={t("personalInfo.phonePlaceholder")}
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="email"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("personalInfo.email")}
-                      <span className="text-gray-500"></span>
-                    </label>
-                    <Input
-                      type="text"
-                      id="email"
-                      name="email"
-                      className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                      placeholder={t("personalInfo.emailPlaceholder")}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="city"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("personalInfo.city")}
-                      <span className="text-gray-500"></span>
-                    </label>
-                    <Input
-                      type="text"
-                      id="city"
-                      name="city"
-                      className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                      placeholder={t("personalInfo.cityPlaceholder")}
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="subCity"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("personalInfo.subCity")}
-                      <span className="text-gray-500"></span>
-                    </label>
-                    <Input
-                      type="text"
-                      id="subCity"
-                      name="subCity"
-                      className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                      placeholder={t("personalInfo.subCityPlaceholder")}
-                      value={subCity}
-                      onChange={(e) => setSubCity(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="woreda"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("personalInfo.woreda")}
-                      <span className="text-gray-500"></span>
-                    </label>
-                    <Input
-                      type="text"
-                      id="woreda"
-                      name="woreda"
-                      className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                      placeholder={t("personalInfo.woredaPlaceholder")}
-                      value={woreda}
-                      onChange={(e) => setWoreda(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col rounded-md w-full shadow-md px-10 pt-5 pb-10">
-                <div className="flex justify-between items-center mb-4">
-                  <h1 className="block text-primary font-semibold text-lg">
+                </section>
+              )}
+
+              {/* STEP 2 — Complaint details */}
+              {step === 1 && (
+                <section className={cardClass}>
+                  <h2 className="block text-primary font-semibold text-lg mb-4">
                     {t("details.title", { category: complaintCategoryName })}
-                  </h1>
-                  <div className="min-w-40">
-                    <label
-                      htmlFor="departmentReceivingComplaint"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("details.category")}
-                      <span className="text-red-500"> *</span>
-                    </label>
-                    <Select
-                      value={complaintCategoryId}
-                      onValueChange={handleComplaintCategoryChange}
-                      disabled={isSubmitting}
-                    >
-                      <SelectTrigger className="w-full h-12 mt-1">
-                        <SelectValue
-                          placeholder={t("details.categoryPlaceholder")}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {complaintCategories.map((category) => (
-                          <SelectItem
-                            key={category.category_id}
-                            value={category.category_id}
-                          >
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  </h2>
+                  <div className="gap-5 grid grid-cols-1 sm:grid-cols-2 w-full">
+                    <div className="w-full">
+                      <label htmlFor="category" className="block text-sm text-golden-dark">
+                        {t("details.category")}
+                        <span className="text-red-500"> *</span>
+                      </label>
+                      <Select
+                        value={complaintCategoryId}
+                        onValueChange={handleComplaintCategoryChange}
+                        disabled={isSubmitting}
+                      >
+                        <SelectTrigger id="category" className="w-full h-12 mt-1" aria-invalid={!!errors.category}>
+                          <SelectValue placeholder={t("details.categoryPlaceholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {complaintCategories.map((category) => (
+                            <SelectItem key={category.category_id} value={category.category_id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError message={errors.category} />
+                    </div>
+                    <div className="w-full">
+                      <label htmlFor="dateOfIncident" className="block text-sm text-golden-dark">
+                        {t("details.incidentDate")}
+                      </label>
+                      <Input
+                        type="date"
+                        id="dateOfIncident"
+                        name="dateOfIncident"
+                        max={todayDateInputValue()}
+                        className="mt-1 w-full h-12 rounded-md text-base sm:text-sm border-golden-dark focus:border-none"
+                        value={incidentDate}
+                        onChange={(e) => setIncidentDate(e.target.value)}
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <div className="w-full">
+                      <label htmlFor="sector" className="block text-sm text-golden-dark">
+                        {t("details.sector", { category: complaintCategoryName })}
+                        <span className="text-red-500"> *</span>
+                      </label>
+                      <Select value={sectorId} onValueChange={handleSectorChange} disabled={isSubmitting}>
+                        <SelectTrigger id="sector" className="w-full h-12 mt-1" aria-invalid={!!errors.sector}>
+                          <SelectValue
+                            placeholder={t("details.sectorPlaceholder", {
+                              category: complaintCategoryName,
+                            })}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sectors.map((sector) => (
+                            <SelectItem key={sector.sector_node_id} value={sector.sector_node_id}>
+                              {sector.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError message={errors.sector} />
+                    </div>
+                    <div className="w-full">
+                      <label htmlFor="department" className="block text-sm text-golden-dark">
+                        {t("details.department", { category: complaintCategoryName })}
+                      </label>
+                      <Select
+                        value={departmentId}
+                        onValueChange={handleDepartmentChange}
+                        disabled={!sectorId || isSubmitting}
+                      >
+                        <SelectTrigger id="department" className="w-full h-12 mt-1">
+                          <SelectValue
+                            placeholder={t("details.departmentPlaceholder", {
+                              category: complaintCategoryName,
+                            })}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">{t("details.noDepartment")}</SelectItem>
+                          {departments.map((dept: any) => (
+                            <SelectItem key={dept.sector_node_id} value={dept.sector_node_id}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-full sm:col-span-2">
+                      <label htmlFor="nameOfPersonConcerned" className="block text-sm text-golden-dark">
+                        {t("details.personConcerned", { category: complaintCategoryName })}
+                        <span className="text-gray-500"> ({t("details.optional")})</span>
+                      </label>
+                      <Input
+                        type="text"
+                        id="nameOfPersonConcerned"
+                        name="nameOfPersonConcerned"
+                        className={inputClass}
+                        placeholder={t("details.personConcernedPlaceholder", {
+                          category: complaintCategoryName,
+                        })}
+                        value={nameOfPersonConcerned}
+                        aria-invalid={!!errors.personConcerned}
+                        onChange={(e) => {
+                          setNameOfPersonConcerned(e.target.value);
+                          clearError("personConcerned");
+                        }}
+                        disabled={isSubmitting}
+                      />
+                      <FieldError message={errors.personConcerned} />
+                    </div>
+                    <div className="w-full sm:col-span-2">
+                      <label htmlFor="complaintDescription" className="block text-sm text-golden-dark">
+                        {t("details.description", { category: complaintCategoryName })}
+                        <span className="text-red-500"> *</span>
+                      </label>
+                      <TextArea
+                        placeholder={t("details.descriptionPlaceholder", {
+                          category: complaintCategoryName,
+                        })}
+                        rows={6}
+                        id="complaintDescription"
+                        maxLength={DESCRIPTION_MAX}
+                        className="mt-1 w-full rounded-md text-base sm:text-sm focus:border-none"
+                        value={complaintDescription}
+                        onChange={(val) => {
+                          setComplaintDescription(val);
+                          clearError("description");
+                        }}
+                        disabled={isSubmitting}
+                      />
+                      <div className="flex justify-between gap-4">
+                        <FieldError message={errors.description} />
+                        <span
+                          className={`ml-auto mt-1 text-xs ${complaintDescription.trim().length < DESCRIPTION_MIN ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          {complaintDescription.length}/{DESCRIPTION_MAX}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full sm:col-span-2">
+                      <label htmlFor="requestedAction" className="block text-sm text-golden-dark">
+                        {t("details.requestedAction", { category: complaintCategoryName })}
+                        <span className="text-gray-500"> ({t("details.optional")})</span>
+                      </label>
+                      <TextArea
+                        placeholder={t("details.requestedActionPlaceholder", {
+                          category: complaintCategoryName,
+                        })}
+                        rows={3}
+                        id="requestedAction"
+                        className="mt-1 w-full rounded-md text-base sm:text-sm border-golden-dark focus:border-none"
+                        value={requestedAction}
+                        onChange={(val) => setRequestedAction(val)}
+                        disabled={isSubmitting}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="mt-4 gap-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
-                  <div className="w-full">
-                    <label
-                      htmlFor="woreda"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("details.incidentDate")}
-                      <span className="text-gray-500"></span>
-                    </label>
-                    <Input
-                      type="date"
-                      id="dateOfIncident"
-                      name="dateOfIncident"
-                      className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                      placeholder={t("details.incidentDatePlaceholder")}
-                      value={incidentDate}
-                      onChange={(e) => setIncidentDate(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="departmentReceivingComplaint"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("details.sector", { category: complaintCategoryName })}
-                      <span className="text-red-500"> *</span>
-                    </label>
-                    <Select
-                      value={sectorId}
-                      onValueChange={handleSectorChange}
-                      disabled={isSubmitting}
-                    >
-                      <SelectTrigger className="w-full h-12 mt-1">
-                        <SelectValue
-                          placeholder={t("details.sectorPlaceholder", {
-                            category: complaintCategoryName,
-                          })}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sectors.map((sector) => (
-                          <SelectItem
-                            key={sector.sector_node_id}
-                            value={sector.sector_node_id}
-                          >
-                            {sector.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="departmentReceivingComplaint"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("details.department", {
-                        category: complaintCategoryName,
-                      })}
-                    </label>
-                    <Select
-                      value={departmentId}
-                      onValueChange={setDepartmentId}
-                      disabled={!sectorId || isSubmitting}
-                    >
-                      <SelectTrigger className="w-full h-12 mt-1">
-                        <SelectValue
-                          placeholder={t("details.departmentPlaceholder", {
-                            category: complaintCategoryName,
-                          })}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No specific department</SelectItem>
-                        {departments.map((dept) => (
-                          <SelectItem
-                            key={dept.sector_node_id}
-                            value={dept.sector_node_id}
-                          >
-                            {dept.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="nameOfPersonConcerned"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("details.personConcerned", {
-                        category: complaintCategoryName,
-                      })}
-                      <span className="text-gray-500">
-                        {" "}
-                        ({t("details.optional")})
-                      </span>
-                    </label>
-                    <Input
-                      type="text"
-                      id="nameOfPersonConcerned"
-                      name="nameOfPersonConcerned"
-                      className="mt-1 w-full h-10 rounded-md text-sm border-golden-dark focus:border-none"
-                      placeholder={t("details.personConcernedPlaceholder", {
-                        category: complaintCategoryName,
-                      })}
-                      value={nameOfPersonConcerned}
-                      onChange={(e) => setNameOfPersonConcerned(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="complaintDescription"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("details.description", {
-                        category: complaintCategoryName,
-                      })}
-                      <span className="text-red-500"> *</span>
-                    </label>
-                    <TextArea
-                      placeholder={t("details.descriptionPlaceholder", {
-                        category: complaintCategoryName,
-                      })}
-                      rows={3}
-                      id="complaintDescription"
-                      className="mt-1 w-full rounded-md text-sm focus:border-none"
-                      value={complaintDescription}
-                      onChange={(val) => setComplaintDescription(val)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="requestedAction"
-                      className="block text-sm text-golden-dark"
-                    >
-                      {t("details.requestedAction", {
-                        category: complaintCategoryName,
-                      })}
-                      <span className="text-gray-500">
-                        {" "}
-                        ({t("details.optional")})
-                      </span>
-                    </label>
-                    <TextArea
-                      placeholder={t("details.requestedActionPlaceholder", {
-                        category: complaintCategoryName,
-                      })}
-                      rows={3}
-                      id="requestedAction"
-                      className="mt-1 w-full rounded-md text-sm border-golden-dark focus:border-none"
-                      value={requestedAction}
-                      onChange={(val) => setRequestedAction(val)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <label
-                      htmlFor="evidence"
-                      className="block text-sm text-golden-dark"
-                    >
+                </section>
+              )}
+
+              {/* STEP 3 — Evidence & review */}
+              {step === 2 && (
+                <>
+                  <section className={cardClass}>
+                    <h2 className="block text-primary font-semibold text-lg mb-1">
                       {t("details.evidence", { category: complaintCategoryName })}
-                      <span className="text-gray-500"> (Optional)</span>
-                    </label>
+                      <span className="ml-2 text-sm font-normal text-gray-500">
+                        ({t("details.optional")})
+                      </span>
+                    </h2>
+                    <p className="mb-4 text-sm text-gray-500">{t("review.evidenceHint")}</p>
                     <FileUploadField
                       className=""
                       labelClass="text-sm text-start w-fit font-medium text-[#094C81]"
@@ -601,42 +754,107 @@ const ComplaintPage = () => {
                       onChange={(val) => handleChange("attachment_id", val)}
                       disabled={isSubmitting}
                     />
-                  </div>
-                </div>
-              </div>
+                  </section>
 
-              <div className="flex justify-end gap-4 mt-6">
-                <Button
-                  onClick={() => {
-                    ResetForm();
-                  }}
-                  type="button"
-                  className="bg-golden-dark20 min-w-40 hover:bg-golden-dark30 h-12 text-base text-gray-600 py-2 rounded-md disabled:opacity-70"
-                  disabled={isSubmitting}
-                >
-                  {t("buttons.cancel", { category: complaintCategoryName })}
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={
-                    isSubmitting ||
-                    !complaintCategoryId ||
-                    !sectorId ||
-                    !complaintDescription.trim()
-                  }
-                  className="bg-golden-dark min-w-52 hover:bg-golden-darkHover h-12 text-base text-white py-1 rounded-md shadow-md disabled:opacity-70"
-                >
-                  {isSubmitting
-                    ? t("buttons.submitting", { category: complaintCategoryName })
-                    : t("buttons.submit", { category: complaintCategoryName })}
-                </Button>
+                  <section className={cardClass}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-primary font-semibold text-lg">{t("review.title")}</h2>
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        className="text-sm font-medium text-golden-dark hover:underline"
+                      >
+                        {t("review.edit")}
+                      </button>
+                    </div>
+                    <dl className="divide-y divide-gray-100">
+                      {reviewRows.map((row) => (
+                        <div key={row.label} className="py-3 grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4">
+                          <dt className="text-sm text-gray-500">{row.label}</dt>
+                          <dd className="sm:col-span-2 text-sm text-gray-900 whitespace-pre-line break-words">
+                            {row.value?.trim() ? row.value : <span className="text-gray-400">—</span>}
+                          </dd>
+                        </div>
+                      ))}
+                      <div className="py-3 grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4">
+                        <dt className="text-sm text-gray-500">
+                          {t("details.evidence", { category: complaintCategoryName })}
+                        </dt>
+                        <dd className="sm:col-span-2 text-sm text-gray-900">
+                          {t("review.files", { count: formValues.attachment_id.length })}
+                        </dd>
+                      </div>
+                    </dl>
+                  </section>
+                </>
+              )}
+
+              {/* Navigation */}
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+                <div className="flex gap-3">
+                  {step > 0 && (
+                    <Button
+                      type="button"
+                      onClick={goBack}
+                      disabled={isSubmitting}
+                      className="flex-1 sm:flex-none bg-white border border-gray-200 min-w-32 hover:bg-gray-50 h-12 text-base text-gray-700 rounded-md"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      {t("buttons.back")}
+                    </Button>
+                  )}
+                  <Button
+                    onClick={ResetForm}
+                    type="button"
+                    className="flex-1 sm:flex-none bg-golden-dark20 min-w-32 hover:bg-golden-dark30 h-12 text-base text-gray-600 rounded-md disabled:opacity-70"
+                    disabled={isSubmitting}
+                  >
+                    {t("buttons.cancel", { category: complaintCategoryName })}
+                  </Button>
+                </div>
+                {isLastStep ? (
+                  <Button
+                    key="submit"
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="bg-golden-deep sm:min-w-52 hover:bg-golden-deep/90 h-12 text-base text-white rounded-md shadow-md disabled:opacity-70"
+                  >
+                    {isSubmitting
+                      ? t("buttons.submitting", { category: complaintCategoryName })
+                      : t("buttons.submit", { category: complaintCategoryName })}
+                  </Button>
+                ) : (
+                  <div className="flex flex-col-reverse sm:flex-row gap-3">
+                    {step === 0 && (
+                      <Button
+                        key="anonymous"
+                        type="button"
+                        onClick={continueAnonymously}
+                        className="bg-white border border-primary/30 sm:min-w-48 hover:bg-slate-50 h-12 text-base text-primary rounded-md"
+                      >
+                        <EyeOff className="h-4 w-4 mr-2" />
+                        {t("buttons.continueAnonymously")}
+                      </Button>
+                    )}
+                    <Button
+                      key="next"
+                      type="button"
+                      onClick={goNext}
+                      className="bg-golden-deep sm:min-w-40 hover:bg-golden-deep/90 h-12 text-base text-white rounded-md shadow-md"
+                    >
+                      {t("buttons.next")}
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </form>
           </div>
-          <div className="col-span-3 md:col-span-1">
-            <div className="sticky top-20 border border-gray-200 rounded-lg p-6 shadow-lg">
-              <h2 className="text-lg text-gray-900 mb-4">{t("tips.title")}</h2>
-              <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
+          <aside className="col-span-3 lg:col-span-1 flex flex-col gap-4 lg:sticky lg:top-28">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-base font-bold text-slate-900 mb-3">{t("tips.title")}</h2>
+              <ul className="list-disc pl-5 text-sm leading-relaxed text-slate-600 space-y-1.5">
                 <li>{t("tips.items.0")}</li>
                 <li>{t("tips.items.1")}</li>
                 <li>{t("tips.items.2")}</li>
@@ -644,14 +862,25 @@ const ComplaintPage = () => {
                 <li>{t("tips.items.4")}</li>
               </ul>
             </div>
-          </div>
+            <div className="rounded-2xl bg-primary p-6 text-white">
+              <h2 className="text-base font-bold">{tHome("quickTrack.title")}</h2>
+              <p className="mt-1.5 text-sm text-slate-300">{tHome("quickTrack.subtitle")}</p>
+              <Link
+                href="/track-complaint"
+                className="mt-3 inline-flex items-center gap-1.5 font-semibold text-golden-bright hover:underline"
+              >
+                {tHome("actions.track")}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </aside>
         </div>
       </main>
       <TicketSuccessModal
         open={showTicketModal}
         onClose={() => setShowTicketModal(false)}
         ticketNumber={ticketNumber}
-        sectorName={sectorName}
+        sectorName={submittedSectorName}
         submittedAt={todayDateInputValue()}
       />
     </>

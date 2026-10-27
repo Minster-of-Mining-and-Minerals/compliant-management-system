@@ -11,6 +11,10 @@ const config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        // Latin text uses Noto Sans; Amharic (Ethiopic) glyphs fall through to Noto Sans Ethiopic
+        sans: ["var(--font-noto-sans)", "var(--font-noto-ethiopic)", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -78,6 +82,9 @@ const config = {
           dark70: "hsl(var(--golden-dark-70))",
           dark80: "hsl(var(--golden-dark-80))",
           dark90: "hsl(var(--golden-dark-90))",
+          // Accessible gold for text/buttons on white (5:1 with white text) and bright gold for use on navy
+          deep: "hsl(var(--golden-deep))",
+          bright: "hsl(var(--golden-bright))",
         },
       },
       borderRadius: {

@@ -466,8 +466,10 @@ const getComplaints = async (req, res) => {
   try {
     // ====== 1. Determine User Role and Access Scope ======
     const user_id = req.user?.user_id;
-    const { status, sector_node_id, category_id, compliant_type_id, search, scope, page = 1, limit = 10 } =
+    const { status, sector_node_id, category_id, compliant_type_id, search, scope, sort, page = 1, limit = 10 } =
       req.query;
+    // sort=oldest lists the longest-waiting complaints first (dashboard "needs attention")
+    const sortDirection = sort === "oldest" ? "ASC" : "DESC";
     
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const limitInt = parseInt(limit);
@@ -636,7 +638,7 @@ const getComplaints = async (req, res) => {
           attributes: ["category_id", "name"],
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [["created_at", sortDirection]],
       limit: limitInt,
       offset: offset,
     });

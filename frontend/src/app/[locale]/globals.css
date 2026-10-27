@@ -41,7 +41,9 @@
     /* White */
     --sidebar-foreground: 201 85% 18%;
     /* golden colors */
-    --golden-dark: 45, 80%, 40%;
+    --golden-dark: 45 80% 40%;
+    --golden-deep: 44 82% 30%;
+    --golden-bright: 43 74% 66%;
     --golden-metallic: 43, 85%, 55%, 10%;
     --golden-soft: 42, 90%, 60%;
     --golden-classic: 45, 100%, 50%;

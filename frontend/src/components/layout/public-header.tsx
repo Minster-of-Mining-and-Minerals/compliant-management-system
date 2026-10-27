@@ -1,16 +1,35 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, MessageSquare } from "lucide-react";
+import {
+  AlertTriangle,
+  Home,
+  Menu,
+  MessageSquare,
+  Search,
+  X,
+} from "lucide-react";
 import LocaleSwitcher from "@/components/common/LanguageSwitcher/LocaleSwitcher";
 import { useTranslations } from "next-intl";
 
-const PublicHeader = () => {
+interface PublicHeaderProps {
+  /** "dark" sits on the navy home hero; "light" is the default for inner pages */
+  variant?: "light" | "dark";
+}
+
+const PublicHeader = ({ variant = "light" }: PublicHeaderProps) => {
   const pathname = usePathname(); // e.g., "/en/complaint"
   const t = useTranslations("PublicHeader");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const isDark = variant === "dark";
+
+  // Close the mobile menu whenever the route changes
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   // Helper to remove locale prefix from pathname
   const normalizePathname = (path: string) => {
@@ -27,7 +46,7 @@ const PublicHeader = () => {
     {
       label: t("tabs.home"),
       href: "/",
-      icon: MessageSquare,
+      icon: Home,
     },
     {
       label: t("tabs.complaint"),
@@ -42,60 +61,76 @@ const PublicHeader = () => {
     {
       label: t("tabs.trackComplaint"),
       href: "/track-complaint",
-      icon: AlertTriangle,
-    }
+      icon: Search,
+    },
   ];
 
   return (
-    <header className="w-full z-20 bg-white/80 backdrop-blur-md shadow-md border-b border-gray-100 fixed top-0 left-0">
-      <div className="mx-auto px-6 lg:px-8 py-4 flex items-center justify-between">
+    <header
+      className={`w-full z-30 fixed top-0 left-0 ${isDark
+        ? "bg-primary text-white border-b border-white/10"
+        : "bg-white/90 backdrop-blur-md shadow-md border-b border-gray-100"
+        }`}
+    >
+      {/* Ethiopian flag stripe */}
+      <div aria-hidden className="grid h-1 grid-cols-3">
+        <span className="bg-[#078930]" />
+        <span className="bg-[#FCDD09]" />
+        <span className="bg-[#DA121A]" />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <Image
-            src="/logo-only.png"
-            alt="Logo"
-            width={40}
-            height={40}
-            className="object-contain"
-          />
-          <div>
-            <h1 className="text-base font-semibold text-golden-dark tracking-wide hidden sm:block">
+        <Link href="/" className="flex items-center gap-3 min-w-0">
+          <span
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${isDark ? "bg-white" : ""}`}
+          >
+            <Image
+              src="/logo-only.png"
+              alt="Logo"
+              width={40}
+              height={40}
+              className={`object-contain ${isDark ? "h-8 w-8" : "h-10 w-10"}`}
+            />
+          </span>
+          <div className="min-w-0 leading-tight">
+            <p
+              className={`text-sm sm:text-[0.9375rem] font-bold tracking-wide truncate ${isDark ? "text-white" : "text-golden-deep"}`}
+            >
               የማዕድን ሚኒስቴር
-            </h1>
-            <h1 className="text-base font-semibold text-golden-dark tracking-wide -mt-[5px] hidden sm:block">
-              Minister of Mining
-            </h1>
+            </p>
+            <p
+              className={`text-xs sm:text-[0.8125rem] truncate ${isDark ? "text-slate-300" : "font-semibold text-golden-deep"}`}
+            >
+              {t("logoLine1")}
+            </p>
           </div>
-        </div>
+        </Link>
 
-        {/* Right Section */}
-        <div className="flex items-center gap-6">
-          {/* Locale Switcher */}
-          <LocaleSwitcher />
-
-          {/* Tabs */}
-          <nav className="flex items-center gap-4">
+        {/* Desktop navigation */}
+        <div className="hidden lg:flex items-center gap-6">
+          <nav className="flex items-center gap-1">
             {tabs.map((tab) => {
               const isActive = normalizedPath === tab.href;
-              const Icon = tab.icon;
 
               return (
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`relative flex items-center gap-2 px-3 py-1 rounded-md text-sm font-semibold transition-all duration-200
-                    ${isActive
-                      ? "text-golden-dark rounded-b-none border-b-0"
-                      : "text-gray-500 hover:text-golden-dark"
+                  aria-current={isActive ? "page" : undefined}
+                  className={`relative px-3 py-2 text-sm font-semibold transition-colors
+                    ${isDark
+                      ? isActive ? "text-white" : "text-slate-300 hover:text-white"
+                      : isActive ? "text-golden-deep" : "text-gray-500 hover:text-golden-deep"
                     }
                   `}
                 >
-                  {/* Tab label */}
                   <span>{tab.label}</span>
 
                   {/* Active underline */}
                   <span
-                    className={`absolute -bottom-[1px] left-0 h-[2px] w-full bg-golden-dark transition-transform duration-300
+                    className={`absolute bottom-0 left-3 right-3 h-[2px] transition-transform duration-300
+                      ${isDark ? "bg-golden-bright" : "bg-golden-deep"}
                       ${isActive ? "scale-x-100" : "scale-x-0"}
                     `}
                   />
@@ -104,18 +139,78 @@ const PublicHeader = () => {
             })}
           </nav>
 
-          {/* Login Button */}
+          <LocaleSwitcher />
+
           <Link
             href="/login"
-            className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white 
-              bg-golden-dark hover:bg-golden-darkHover 
-              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary 
-              transition-all duration-200 shadow-sm"
+            className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm
+              focus:outline-none focus:ring-2 focus:ring-offset-2
+              ${isDark
+                ? "bg-golden-bright text-primary hover:bg-golden-bright/90 focus:ring-golden-bright focus:ring-offset-primary"
+                : "bg-golden-deep text-white hover:bg-golden-deep/90 focus:ring-golden-deep"
+              }`}
           >
             {t("login")}
           </Link>
         </div>
+
+        {/* Mobile controls */}
+        <div className="flex lg:hidden items-center gap-2">
+          <LocaleSwitcher />
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-controls="public-mobile-menu"
+            aria-label={menuOpen ? t("closeMenu") : t("openMenu")}
+            className={`p-2.5 rounded-lg focus:outline-none focus:ring-2 ${isDark
+              ? "text-white hover:bg-white/10 focus:ring-golden-bright"
+              : "text-golden-deep hover:bg-gray-100 focus:ring-primary"
+              }`}
+          >
+            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <nav
+          id="public-mobile-menu"
+          className="lg:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2 shadow-lg"
+        >
+          <ul className="flex flex-col gap-1">
+            {tabs.map((tab) => {
+              const isActive = normalizedPath === tab.href;
+              const Icon = tab.icon;
+
+              return (
+                <li key={tab.href}>
+                  <Link
+                    href={tab.href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`flex items-center gap-3 px-3 py-3 rounded-lg text-base font-semibold transition-colors
+                      ${isActive
+                        ? "bg-golden-dark/10 text-golden-deep"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-golden-deep"
+                      }
+                    `}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {tab.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          <Link
+            href="/login"
+            className="mt-3 block w-full text-center px-6 py-3 rounded-lg text-base font-semibold text-white bg-golden-deep hover:bg-golden-deep/90 transition-colors"
+          >
+            {t("login")}
+          </Link>
+        </nav>
+      )}
     </header>
   );
 };

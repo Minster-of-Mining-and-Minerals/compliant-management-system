@@ -14,6 +14,7 @@ interface TextareaProps {
   success?: boolean;
   hint?: string;
   id?: string;
+  maxLength?: number;
 }
 
 const TextArea: FC<TextareaProps> = ({
@@ -28,6 +29,7 @@ const TextArea: FC<TextareaProps> = ({
   success = false,
   hint = "",
   id,
+  maxLength,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (onChange) onChange(e.target.value);
@@ -78,6 +80,7 @@ const TextArea: FC<TextareaProps> = ({
     <div className="relative">
       <textarea
         id={id}
+        maxLength={maxLength}
         rows={rows}
         placeholder={placeholder}
         value={value}

@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Trash2, Upload, Loader2, Eye, X } from "lucide-react";
@@ -211,9 +212,10 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      {/* Modal */}
-      {previewFile && showPreview && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      {/* Modal — portaled to <body> so a parent stacking context (e.g. a z-10 page
+          container) can't push it underneath the fixed header */}
+      {previewFile && showPreview && createPortal(
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] p-4 relative overflow-auto">
             <button
               className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200"
@@ -246,7 +248,8 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
               <p className="text-gray-600">Cannot preview this file type.</p>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

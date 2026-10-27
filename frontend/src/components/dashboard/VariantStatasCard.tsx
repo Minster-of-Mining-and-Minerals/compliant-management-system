@@ -16,8 +16,6 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { ChartContainer, ChartConfig } from "../ui/chart";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { Badge } from "../ui/badge";
 import React from "react";
 import { Button } from "../ui/button";
 import { useGetDashboardStatsQuery } from "@/redux/api/dashboardApi";
@@ -39,6 +37,15 @@ const ratingLabels: Record<number, string> = {
   3: "⭐⭐⭐ 3 Stars",
   4: "⭐⭐⭐⭐ 4 Stars",
   5: "⭐⭐⭐⭐⭐ 5 Stars",
+};
+
+// Tailwind only generates classes it can see in full, so the column count can't be built as `lg:grid-cols-${n}`
+const LG_GRID_COLS: Record<number, string> = {
+  1: "lg:grid-cols-1",
+  2: "lg:grid-cols-2",
+  3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4",
+  5: "lg:grid-cols-5",
 };
 
 interface Props {
@@ -293,7 +300,13 @@ export default function VariantStatasCard({ dataType = "complaint" }: Props) {
       <Card className="hover:shadow-lg transition-all duration-300 border-border/50 p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-sm text-gray-500 mb-2">No data available</p>
+            <p className="text-sm text-gray-600 mb-3">Could not load statistics.</p>
+            <Button
+              onClick={() => refetch()}
+              className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              Retry
+            </Button>
           </div>
         </div>
       </Card>
@@ -415,8 +428,8 @@ export default function VariantStatasCard({ dataType = "complaint" }: Props) {
         </div>
       </div>
 
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(currentStats.length, 5)} gap-6 relative`}>
-        {currentStats.map((item, index) => {
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${LG_GRID_COLS[Math.min(currentStats.length, 5)] ?? "lg:grid-cols-3"} gap-4`}>
+        {currentStats.map((item) => {
           const chartData = [
             { name: item.title, value: 100, fill: "hsl(var(--muted))" },
             { name: item.title, value: item.percent, fill: item.color },
@@ -431,7 +444,7 @@ export default function VariantStatasCard({ dataType = "complaint" }: Props) {
 
           return (
             <React.Fragment key={item.id}>
-              <div className="relative">
+              <div className="relative rounded-xl border border-slate-200 bg-white">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-medium text-primary">
@@ -446,47 +459,8 @@ export default function VariantStatasCard({ dataType = "complaint" }: Props) {
                     <div className="text-3xl text-primary font-bold tracking-tight">
                       {item.value.toLocaleString()}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        status="outline"
-                        className={`rounded-full border-0 ${item.status === "positive"
-                          ? "bg-green-50 text-green-700"
-                          : "bg-red-50 text-red-700"
-                          }`}
-                        style={{
-                          backgroundColor:
-                            item.status === "positive"
-                              ? `${item.color
-                                .replace("hsl", "hsla")
-                                .replace(")", ", 0.1)")}`
-                              : `${item.color
-                                .replace("hsl", "hsla")
-                                .replace(")", ", 0.1)")}`,
-                          color: item.color,
-                          borderColor: `${item.color
-                            .replace("hsl", "hsla")
-                            .replace(")", ", 0.2)")}`,
-                        }}
-                      >
-                        {item.status === "positive" ? (
-                          <ArrowUpRight
-                            className="h-3 w-3"
-                            style={{ color: item.color }}
-                          />
-                        ) : (
-                          <ArrowDownRight
-                            className="h-3 w-3"
-                            style={{ color: item.color }}
-                          />
-                        )}
-                      </Badge>
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: item.color }}
-                      >
-                        {item.change}
-                      </span>
-                    </div>
+                    {/* Share of the filtered total (period-over-period change is not computed yet) */}
+                    <p className="text-sm text-slate-500">{item.percent}% of total</p>
                   </div>
                   {/* Radial Chart */}
                   <ChartContainer
@@ -537,27 +511,6 @@ export default function VariantStatasCard({ dataType = "complaint" }: Props) {
                   </ChartContainer>
                 </CardContent>
               </div>
-
-              {/* Vertical line separator between cards on desktop */}
-              {index < currentStats.length - 1 && (
-                <>
-                  <div
-                    className={`hidden lg:block absolute top-1/2 transform -translate-y-1/2 w-[1px] h-4/5 bg-gray-300`}
-                    style={{
-                      left: `${((index + 1) / currentStats.length) * 100}%`,
-                    }}
-                  ></div>
-
-                  {index === 0 && currentStats.length > 1 && (
-                    <div className="hidden sm:block lg:hidden absolute top-1/2 left-1/2 transform -translate-y-1/2 w-[1px] h-4/5 bg-gray-300"></div>
-                  )}
-                </>
-              )}
-
-              {/* Horizontal line separator between cards on mobile */}
-              {index < currentStats.length - 1 && (
-                <div className="block sm:hidden w-full h-[1px] bg-gray-300 my-4"></div>
-              )}
             </React.Fragment>
           );
         })}
