@@ -77,7 +77,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
         <div className="p-6 border-b">
-          <h3 className="text-xl font-bold text-[#094C81]">
+          <h3 className="text-xl font-bold text-primary">
             Permission Matrix
           </h3>
         </div>
@@ -93,7 +93,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
         <div className="p-6 border-b">
-          <h3 className="text-xl font-bold text-[#094C81]">
+          <h3 className="text-xl font-bold text-primary">
             Permission Matrix
           </h3>
         </div>
@@ -108,18 +108,18 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
       <div className="p-6 border-b">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-[#094C81]">
+          <h3 className="text-xl font-bold text-primary">
             Permission Matrix
           </h3>
 
           <div className="flex gap-4">
             <div className="flex items-center space-x-2 text-sm">
-              <span className="text-[#094C81]">Selected:</span>
-              <span className="font-semibold text-[#094C81]">
+              <span className="text-primary">Selected:</span>
+              <span className="font-semibold text-primary">
                 {getSelectedPermissionsCount()}
               </span>
-              <span className="text-[#094C81]">/</span>
-              <span className="text-[#094C81]">
+              <span className="text-primary">/</span>
+              <span className="text-primary">
                 {getTotalPermissionsCount()}
               </span>
             </div>
@@ -168,9 +168,9 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                       className="p-1 hover:bg-gray-200 rounded"
                     >
                       {isExpanded ? (
-                        <ChevronDown className="h-5 w-5 text-[#094C81] hover:text-[#073954]" />
+                        <ChevronDown className="h-5 w-5 text-primary hover:text-primary/90" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 text-[#094C81] hover:text-[#073954]" />
+                        <ChevronRight className="h-5 w-5 text-primary hover:text-primary/90" />
                       )}
                     </button>
                     <div className="p-2 text-golden-dark  rounded-lg  ">
@@ -179,17 +179,17 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-[#094C81] capitalize">
+                      <h3 className="font-semibold text-primary capitalize">
                         {group.resource.replace(/_/g, " ")}
                       </h3>
-                      <p className="text-sm text-[#094C81]">
+                      <p className="text-sm text-primary">
                         {group.permissions.length} permissions available
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
                     <span
-                      className={`px-2 py-1 text-xs font-medium border rounded-full text-[#094C81] ${getSelectionStatusClass(
+                      className={`px-2 py-1 text-xs font-medium border rounded-full text-primary ${getSelectionStatusClass(
                         selectionStatus
                       )}`}
                     >
@@ -252,7 +252,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                     permissionMatrix[group.resource]?.[
                                       permission.action
                                     ]
-                                      ? "bg-golden-dark border-golden-dark"
+                                      ? "bg-primary border-primary"
                                       : "border-golden-dark"
                                   }`}
                                 >

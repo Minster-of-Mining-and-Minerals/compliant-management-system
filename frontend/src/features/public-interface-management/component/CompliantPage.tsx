@@ -770,7 +770,7 @@ const ComplaintPage = () => {
                     <p className="mb-4 text-sm text-gray-500">{t("review.evidenceHint")}</p>
                     <FileUploadField
                       className=""
-                      labelClass="text-sm text-start w-fit font-medium text-[#094C81]"
+                      labelClass="text-sm text-start w-fit font-medium text-primary"
                       id="attachment"
                       label={t("details.evidencePlaceholder", {
                         category: categoryLabel,

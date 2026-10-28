@@ -30,16 +30,17 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    --sidebar-primary: 201 85% 18%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 201 85% 95%;
-    --sidebar-accent-foreground: 201 85% 18%;
-    --sidebar-border: 0 0% 89.8%;
-    --sidebar-ring: 201 85% 18%;
+    /* Admin sidebar: navy with gold accents (layout A4) */
+    --sidebar-primary: 43 74% 66%;
+    --sidebar-primary-foreground: 201 85% 18%;
+    --sidebar-accent: 201 60% 25%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 201 50% 26%;
+    --sidebar-ring: 43 74% 66%;
 
-    --sidebar-background: 0 0% 100%;
-    /* White */
-    --sidebar-foreground: 201 85% 18%;
+    --sidebar-background: 201 85% 18%;
+    /* Navy (same as --primary) */
+    --sidebar-foreground: 210 40% 92%;
     /* golden colors */
     --golden-dark: 45 80% 40%;
     --golden-deep: 44 82% 30%;

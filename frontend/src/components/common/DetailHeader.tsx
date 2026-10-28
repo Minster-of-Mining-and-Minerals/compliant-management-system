@@ -31,7 +31,7 @@ const DetailHeader = ({
               {crumb.link ? (
                 <Link
                   href={crumb.link}
-                  className="text-[#094C81] hover:font-medium hover:text-[#073954]"
+                  className="text-primary hover:font-medium hover:text-primary/90"
                 >
                   {crumb.title}
                 </Link>
@@ -53,7 +53,7 @@ const DetailHeader = ({
       <button
         onClick={() => router.back()}
         className="inline-flex items-center gap-2 rounded-md bg-slate-200 px-5 py-1
-          text-[#094C81] transition-colors hover:bg-slate-300 hover:text-[#073954]"
+          text-primary transition-colors hover:bg-slate-300 hover:text-primary/90"
       >
         <ArrowLeft className="h-4 w-4" />
         <span>Back</span>

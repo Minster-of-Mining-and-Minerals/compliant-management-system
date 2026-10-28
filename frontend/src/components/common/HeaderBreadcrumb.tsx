@@ -6,7 +6,8 @@ import { breadcrumbConfig } from "../../utils/breadcrumbConfig";
 import { useBreadcrumbTitle } from "../../providers/BreadcrumbProvider";
 import Link from "next/link";
 
-const HeaderBreadcrumb = () => {
+// "dark" = navy admin top bar: a small trail of parent pages above the current page as a title
+const HeaderBreadcrumb = ({ variant = "light" }: { variant?: "light" | "dark" } = {}) => {
     const pathname = usePathname();
     const params = useParams();
     const { dynamicBreadcrumb, dynamicTitles } = useBreadcrumbTitle();
@@ -101,6 +102,33 @@ const HeaderBreadcrumb = () => {
 
     const breadcrumbs = getBreadcrumbs();
 
+    if (variant === "dark") {
+        const parents = breadcrumbs.slice(0, -1);
+        const current = breadcrumbs[breadcrumbs.length - 1];
+        return (
+            <div className="flex min-w-0 flex-col leading-tight">
+                {parents.length > 0 && (
+                    <nav aria-label="Breadcrumb" className="flex items-center gap-1 truncate text-xs text-slate-400">
+                        {parents.map((crumb, index) => (
+                            <span key={index} className="flex items-center gap-1">
+                                {crumb.path ? (
+                                    <Link href={withLocale(crumb.path)} className="hover:text-white hover:underline">
+                                        {crumb.title}
+                                    </Link>
+                                ) : (
+                                    <span>{crumb.title}</span>
+                                )}
+                                <ChevronRightIcon aria-hidden className="h-3 w-3" />
+                            </span>
+                        ))}
+                    </nav>
+                )}
+                {current && (
+                    <span className="truncate text-lg font-bold text-white">{current.title}</span>
+                )}
+            </div>
+        );
+    }
 
     return (
         <nav className="flex items-center gap-1.5 text-base">
@@ -109,7 +137,7 @@ const HeaderBreadcrumb = () => {
                     {crumb.path ? (
                         <Link
                             href={withLocale(crumb.path)}
-                            className="text-[#094C81] hover:font-medium hover:text-[#073954]"
+                            className="text-primary hover:font-medium hover:text-primary/90"
                         >
                             {crumb.title}
                         </Link>

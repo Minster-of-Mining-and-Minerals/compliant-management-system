@@ -227,12 +227,12 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
         >
             <div className="bg-white p-6 rounded-2xl w-full max-w-[800px] shadow-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-[#094C81]">
+                    <h2 className="text-xl font-semibold text-primary">
                         Create Internal Complaint
                     </h2>
                     <button
                         onClick={handleClose}
-                        className="text-[#094C81] hover:text-gray-600 transition"
+                        className="text-primary hover:text-gray-600 transition"
                     >
                         <XIcon className="w-6 h-6 cursor-pointer" />
                     </button>
@@ -415,7 +415,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                             </label>
                             <FileUploadField
                                 className=""
-                                labelClass="text-sm text-start w-fit font-medium text-[#094C81]"
+                                labelClass="text-sm text-start w-fit font-medium text-primary"
                                 id="attachment"
                                 label="Upload files"
                                 value={formValues.attachment_id || []}
@@ -429,7 +429,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                         <Button
                             onClick={handleClose}
                             type="button"
-                            className="bg-golden-dark20 min-w-40 hover:bg-golden-dark30 h-12 text-base text-gray-600 py-2 rounded-md disabled:opacity-70"
+                            className="bg-white border border-slate-300 min-w-40 hover:bg-slate-50 h-12 text-base text-primary py-2 rounded-md disabled:opacity-70"
                             disabled={isSubmitting}
                         >
                             Cancel
@@ -443,7 +443,7 @@ const CreateMyComplaint = ({ isOpen, onClose, sector_node_id }: CreateMyComplain
                                 (targetType === "person" && !targetUserId) ||
                                 (targetType === "department" && !targetDepartmentId)
                             }
-                            className="bg-golden-dark min-w-52 hover:bg-golden-darkHover h-12 text-base text-white py-1 rounded-md shadow-md disabled:opacity-70"
+                            className="bg-primary min-w-52 hover:bg-primary/90 h-12 text-base text-white py-1 rounded-md shadow-md disabled:opacity-70"
                         >
                             {isSubmitting ? "Submitting..." : "Submit Complaint"}
                         </Button>

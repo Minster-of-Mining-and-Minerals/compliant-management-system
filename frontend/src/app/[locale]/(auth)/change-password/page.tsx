@@ -197,7 +197,7 @@ function ChangePasswordForm({ isFirstLogin }: { isFirstLogin: boolean }) {
 
         <Button
           type="submit"
-          className="w-full bg-golden-dark hover:bg-golden-dark/90 h-14 text-xl text-white font-semibold rounded-md shadow-md transition-all duration-200 mt-6"
+          className="w-full bg-primary hover:bg-primary/90 h-14 text-xl text-white font-semibold rounded-md shadow-md transition-all duration-200 mt-6"
           disabled={isLoading}
         >
           {isLoading ? "Processing..." : "Update & Log Out"}

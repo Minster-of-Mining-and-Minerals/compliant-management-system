@@ -6,12 +6,18 @@ import {
   User2,
   Shield,
   Key,
+  Building2,
+  Tags,
+  AlertTriangle,
+  MessageSquare,
 } from "lucide-react";
 
 export type NavItem = {
   title: string;
   url: string;
   icon: any;
+  /** Sidebar group heading for top-level items (consecutive items with the same section share one heading) */
+  section?: string;
   anyPermissions?: PermissionKey[];
   allPermissions?: PermissionKey[];
   onlyPermissions?: PermissionKey[];
@@ -23,41 +29,57 @@ export const NAVIGATION: NavItem[] = [
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
+    section: "Overview",
     anyPermissions: ["DASHBOARD:VIEW"],
   },
   {
-    title: "Feedbacks",
-    url: "/feedbacks",
-    icon: ClipboardCheck,
-    anyPermissions: ["FEEDBACK:READ"],
+    title: "Complaints",
+    url: "/compliants",
+    icon: AlertTriangle,
+    section: "Complaints",
+    anyPermissions: ["COMPLAINT:READ_ALL"],
   },
   {
     title: "My Complaints",
     url: "/my-complaints",
     icon: ClipboardCheck,
+    section: "Complaints",
     anyPermissions: ["COMPLAINT:READ_OWN"],
   },
   {
-    title: "Compliants",
-    url: "/compliants",
-    icon: ClipboardCheck,
-    anyPermissions: ["COMPLAINT:READ_ALL"],
+    title: "Feedbacks",
+    url: "/feedbacks",
+    icon: MessageSquare,
+    section: "Complaints",
+    anyPermissions: ["FEEDBACK:READ"],
   },
   {
     title: "Base Data",
+    section: "Administration",
     url: "/basedata",
     icon: FileText,
-    allPermissions: [
-      "SECTOR:READ",
-      "SECTOR:UPDATE",
-      "COMPLAINT_CATEGORIES:READ",
-      "COMPLAINT_CATEGORIES:UPDATE",
+    // Shown if the user can see either section; each child is filtered by its own permission
+    anyPermissions: ["SECTOR:READ", "COMPLAINT_CATEGORIES:READ"],
+    children: [
+      {
+        title: "Sectors",
+        url: "/basedata/sectors",
+        icon: Building2,
+        allPermissions: ["SECTOR:READ"],
+      },
+      {
+        title: "Complaint Categories",
+        url: "/basedata/complaint-categories",
+        icon: Tags,
+        allPermissions: ["COMPLAINT_CATEGORIES:READ"],
+      },
     ],
   },
   {
     title: "Users",
     url: "/users",
     icon: User2,
+    section: "Administration",
     anyPermissions: ["USERS:READ", "ROLES:READ", "PERMISSIONS:READ"],
     children: [
       {

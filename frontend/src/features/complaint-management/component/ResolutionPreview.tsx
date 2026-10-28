@@ -81,14 +81,14 @@ export default function ResolutionPreview({
                     <Button
                         onClick={onClose}
                         disabled={isLoading}
-                        className="px-5 py-2 rounded-md bg-golden-dark20 border text-primary hover:bg-golden-dark30"
+                        className="px-5 py-2 rounded-md bg-white border border-slate-300 text-primary hover:bg-slate-50"
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-5 py-2 rounded-md bg-golden-dark text-white font-semibold disabled:opacity-50"
+                        className="px-5 py-2 rounded-md bg-primary text-white hover:bg-primary/90 font-semibold disabled:opacity-50"
                     >
                         {isLoading ? "Submitting..." : "Confirm"}
                     </Button>

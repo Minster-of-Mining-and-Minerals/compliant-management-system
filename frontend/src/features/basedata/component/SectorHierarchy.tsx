@@ -266,8 +266,8 @@ const HierarchyD3Tree: React.FC<HierarchyD3TreeProps> = ({
     return (
       <div className="flex items-center justify-center py-12 min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#094C81] mx-auto mb-4"></div>
-          <p className="text-[#1E516A] text-lg">Loading hierarchy tree...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-primary text-lg">Loading hierarchy tree...</p>
         </div>
       </div>
     );
@@ -301,11 +301,11 @@ const HierarchyD3Tree: React.FC<HierarchyD3TreeProps> = ({
           {/* Root Node Selector - Only shown when multiple root nodes exist */}
           {rootOptions.length > 1 && (
             <div className="w-[350px] rounded-lg p-4">
-              <Label className="text-secondary text-sm font-medium">
+              <Label className="text-slate-700 text-sm font-medium">
                 Select Root Node
               </Label>
               <Select value={selectedRootId} onValueChange={setSelectedRootId}>
-                <SelectTrigger className="w-full h-10 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none">
+                <SelectTrigger className="w-full h-10 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-primary focus:border-transparent transition-all duration-200 outline-none">
                   <SelectValue placeholder="Select a root node to display" />
                 </SelectTrigger>
                 <SelectContent>
@@ -362,7 +362,7 @@ const HierarchyD3Tree: React.FC<HierarchyD3TreeProps> = ({
               {/* Controls Info Panel */}
               <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-2 border border-gray-200">
                 <div className="text-xs text-gray-600 space-y-1">
-                  <p className="font-semibold text-[#094C81] mb-2">Controls:</p>
+                  <p className="font-semibold text-primary mb-2">Controls:</p>
                   <p>• Scroll to zoom</p>
                   <p>• Drag to pan</p>
                   <p>• Click nodes to expand/collapse</p>

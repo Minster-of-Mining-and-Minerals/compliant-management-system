@@ -114,7 +114,8 @@ const NotificationItem = ({
 
 /* ================= DROPDOWN ================= */
 
-export default function NotificationDropdown() {
+// "dark" = trigger styled for the navy admin top bar
+export default function NotificationDropdown({ variant = "light" }: { variant?: "light" | "dark" } = {}) {
   const { data: session } = useSession();
   const router = useRouter();
   const { can } = usePermissions();
@@ -166,14 +167,19 @@ export default function NotificationDropdown() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative h-10 w-10 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-50 transition-all shadow-sm active:scale-95"
+        aria-label="Notifications"
+        className={
+          variant === "dark"
+            ? "relative h-10 w-10 rounded-lg border border-white/25 flex items-center justify-center bg-transparent hover:bg-white/10 transition-all active:scale-95"
+            : "relative h-10 w-10 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-50 transition-all shadow-sm active:scale-95"
+        }
       >
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm border border-white">
+          <span className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm border ${variant === "dark" ? "border-primary" : "border-white"}`}>
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
-        <Bell className="w-5 h-5 text-gray-500" />
+        <Bell className={`w-5 h-5 ${variant === "dark" ? "text-white" : "text-gray-500"}`} />
       </button>
 
       <Dropdown

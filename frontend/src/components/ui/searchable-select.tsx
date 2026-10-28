@@ -71,30 +71,30 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             ...provided,
             minHeight: '36px',
             border: state.isFocused
-              ? '1px solid #0c4A6b'
+              ? '1px solid #073A55'
               : error
                 ? '1px solid #dc2626'
                 : '1px solid #d1d5db',
             borderRadius: '6px',
             boxShadow: state.isFocused
-              ? '0 0 0 1px #0c4A6b'
+              ? '0 0 0 1px #073A55'
               : error
                 ? '0 0 0 1px #dc2626'
                 : 'none',
             '&:hover': {
-              border: '1px solid #0c4A6b',
+              border: '1px solid #073A55',
             },
           }),
           option: (provided, state) => ({
             ...provided,
             backgroundColor: state.isSelected
-              ? '#0c4A6b'
+              ? '#073A55'
               : state.isFocused
                 ? '#f3f4f6'
                 : 'transparent',
             color: state.isSelected ? 'white' : '#374151',
             '&:hover': {
-              backgroundColor: state.isSelected ? '#0c4A6b' : '#f3f4f6',
+              backgroundColor: state.isSelected ? '#073A55' : '#f3f4f6',
             },
           }),
           menu: (provided) => ({
@@ -103,7 +103,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           }),
           multiValue: (provided) => ({
             ...provided,
-            backgroundColor: '#0c4A6b',
+            backgroundColor: '#073A55',
             color: 'white',
           }),
           multiValueLabel: (provided) => ({

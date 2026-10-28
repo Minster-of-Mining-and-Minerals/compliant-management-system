@@ -134,10 +134,10 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       <div className="bg-white p-6 rounded-2xl w-full max-w-[700px] shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-[#094C81]">Create User</h2>
+          <h2 className="text-xl font-semibold text-primary">Create User</h2>
           <button
             onClick={handleClose}
-            className="text-[#094C81] hover:text-gray-600 transition"
+            className="text-primary hover:text-gray-600 transition"
           >
             <XIcon className="w-6 h-6 cursor-pointer" />
           </button>
@@ -157,11 +157,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 <Select
                   value={sectorId} onValueChange={handleSectorChange} disabled={isLoading}
                 >
-                  <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-[#094C81] bg-white">
+                  <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-primary bg-white">
                     <SelectValue placeholder="Select Sector" />
                   </SelectTrigger>
 
-                  <SelectContent className="text-[#094C81] bg-white max-h-64 overflow-y-auto">
+                  <SelectContent className="text-primary bg-white max-h-64 overflow-y-auto">
                     {sectors.map((s: any) => (
                       <SelectItem
                         key={s.sector_node_id}
@@ -185,11 +185,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 onValueChange={setDepartmentId}
                 disabled={!sectorId || isLoading}
               >
-                <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-[#094C81] bg-white">
+                <SelectTrigger className="w-full h-12 border border-golden-dark focus:ring focus:ring-golden-dark focus:border-transparent rounded-md transition-all duration-200 outline-none px-4 py-3 text-primary bg-white">
                   <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
 
-                <SelectContent className="text-[#094C81] bg-white max-h-64 overflow-y-auto">
+                <SelectContent className="text-primary bg-white max-h-64 overflow-y-auto">
                   {departments.map((dept) => (
                     <SelectItem
                       key={dept.sector_node_id}
@@ -247,7 +247,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full max-h-28 min-h-12 h-fit border border-golden-dark p-2 rounded-md mt-1 text-[#094C81] bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-golden-dark   transition-all duration-200"
+                    className="w-full max-h-28 min-h-12 h-fit border border-golden-dark p-2 rounded-md mt-1 text-primary bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-golden-dark   transition-all duration-200"
                   >
                     <div className="flex flex-wrap items-center gap-2 w-full">
                       {selectedRoles.length === 0 && (
@@ -266,7 +266,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                         return (
                           <span
                             key={roleId}
-                            className="inline-flex items-center gap-1 rounded-sm justify-center bg-[#094C81]/10 text-[#094C81] pl-2  text-xs"
+                            className="inline-flex items-center gap-1 rounded-sm justify-center bg-primary/10 text-primary pl-2  text-xs"
                           >
                             <span className="truncate max-w-[120px] py-1">
                               {r.name}
@@ -308,7 +308,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                           onClick={() => {
                             setSelectedRoles((prev) => [...prev, r.role_id]);
                           }}
-                          className="w-full text-left px-3 py-2 text-sm text-[#094C81] hover:bg-[#094C81]/10 rounded-md cursor-pointer transition-colors"
+                          className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-primary/10 rounded-md cursor-pointer transition-colors"
                         >
                           <span className="block truncate">{r.name}</span>
                         </button>

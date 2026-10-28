@@ -81,7 +81,7 @@ export function DelegateRepresentativeModal({ isOpen, onClose, representativeId 
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={isLoading}>Cancel</Button>
-          <Button onClick={handleDelegate} disabled={!validUntil || isLoading} className="bg-[#1E516A]">
+          <Button onClick={handleDelegate} disabled={!validUntil || isLoading} className="bg-primary">
             {isLoading ? "Delegating..." : "Delegate"}
           </Button>
         </DialogFooter>

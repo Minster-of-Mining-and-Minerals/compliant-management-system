@@ -157,7 +157,7 @@ export default function ForgotPasswordPage() {
                     />
                     <Button
                       type="submit"
-                      className="w-full bg-golden-dark hover:bg-golden-dark/90 h-14 text-xl text-white font-semibold rounded-md shadow-md mt-6"
+                      className="w-full bg-primary hover:bg-primary/90 h-14 text-xl text-white font-semibold rounded-md shadow-md mt-6"
                       disabled={requesting}
                     >
                       {requesting ? "Sending OTP..." : "Send OTP"}
@@ -195,7 +195,7 @@ export default function ForgotPasswordPage() {
                     />
                     <Button
                       type="submit"
-                      className="w-full bg-golden-dark hover:bg-golden-dark/90 h-14 text-xl text-white font-semibold rounded-md shadow-md mt-6"
+                      className="w-full bg-primary hover:bg-primary/90 h-14 text-xl text-white font-semibold rounded-md shadow-md mt-6"
                       disabled={verifying}
                     >
                       {verifying ? "Verifying..." : "Verify OTP"}
@@ -268,7 +268,7 @@ export default function ForgotPasswordPage() {
                     />
                     <Button
                       type="submit"
-                      className="w-full bg-golden-dark hover:bg-golden-dark/90 h-14 text-xl text-white font-semibold rounded-md shadow-md mt-6"
+                      className="w-full bg-primary hover:bg-primary/90 h-14 text-xl text-white font-semibold rounded-md shadow-md mt-6"
                       disabled={resetting}
                     >
                       {resetting ? "Resetting..." : "Reset Password"}

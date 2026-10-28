@@ -66,7 +66,7 @@ function BaseDataCard01() {
                   </div>
 
                   {/* Action */}
-                  <Button variant="outline" size="default" className="rounded-lg bg-golden-dark px-7 text-white gap-1 hover:bg-golden-darkHover hover:text-white ">
+                  <Button size="default" className="rounded-lg px-7 gap-1">
                     {/* <Eye className="h-4 w-4" /> */}
                     View
                   </Button>

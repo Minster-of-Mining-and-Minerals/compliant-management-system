@@ -68,8 +68,8 @@ function DetailCard({ item }: { item: DetailCardItem }) {
         </div>
 
         {/* Footer – Compact date row (matches deleted/created style) */}
-        <div className="flex items-center gap-2 text-xs text-secondary">
-          <Calendar className="h-4 w-4 text-secondary" />
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <Calendar className="h-4 w-4 text-slate-500" />
           <span className="font-medium">Date:</span>
           <span>
             {formatDate(item.date)}

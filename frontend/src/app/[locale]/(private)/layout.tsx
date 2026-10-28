@@ -45,9 +45,9 @@ export default function PrivateLayout({
     <SidebarProvider>
       {/* Only show sidebar if they have completed first login */}
       {!isFirstLogin && <AppSidebar />}
-      <SidebarInset>
+      <SidebarInset className="bg-slate-100">
         <Header title={""} />
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <RouteGuard>{children}</RouteGuard>
         </div>
       </SidebarInset>

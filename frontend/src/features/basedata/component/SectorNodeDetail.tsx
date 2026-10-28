@@ -174,7 +174,7 @@ export default function SectorNodeDetail() {
             </div>
             {!head ? (
               <PermissionGuard requireAll={["SECTOR_REPRESENTATIVE:CREATE"]}>
-                <Button variant="default" className="shrink-0 bg-[#D4AF37] hover:bg-[#B3932F] text-white" onClick={() => openAssignModal(true)}>
+                <Button variant="default" className="shrink-0" onClick={() => openAssignModal(true)}>
                   <UserPlus className="w-4 h-4 mr-2" />
                   Assign Head
                 </Button>

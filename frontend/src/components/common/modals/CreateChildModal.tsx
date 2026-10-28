@@ -135,7 +135,7 @@ export function CreateChildModal({
                 placeholder="Enter sector description (optional)"
                 value={description}
                 onChange={(val) => setDescription(val)}
-                className="w-full min-h-[80px] border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none resize-none"
+                className="w-full min-h-[80px] border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-primary focus:border-transparent transition-all duration-200 outline-none resize-none"
                 disabled={isCreatingNode}
               />
             </div>
@@ -156,7 +156,7 @@ export function CreateChildModal({
             <Button
               type="submit"
               disabled={isCreatingNode || !name.trim()}
-              className="bg-golden-dark px-7 flex items-center justify-center hover:bg-golden-darkHover text-white"
+              className="bg-primary px-7 flex items-center justify-center hover:bg-primary/90 text-white"
             >
               {isCreatingNode ? "Creating..." : "Create"}
             </Button>

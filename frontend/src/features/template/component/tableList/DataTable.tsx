@@ -76,19 +76,21 @@ export function DataTable<TData, TValue>({
 	});
 
 	return (
-		<div className="overflow-auto w-full">
-			<Table className="border-separate border-spacing-y-2.5 min-w-full">
+		<div className="w-full space-y-3">
+			{/* System table style: white card, navy header, plain rows with light dividers */}
+			<div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+			<Table className="min-w-full">
 				<TableHeader>
 					{table.getHeaderGroups().map((headerGroup) => (
 						<TableRow
 							key={headerGroup.id}
-							className="bg-golden-dark hover:bg-golden-darkHover rounded-md overflow-clip"
+							className="border-0 bg-primary hover:bg-primary"
 						>
 							{headerGroup.headers.map((header) => {
 								return (
 									<TableHead
 										key={header.id}
-										className="text-primary-foreground font-bold first:rounded-l-md last:rounded-r-md py-5"
+										className="h-11 px-4 text-xs font-semibold text-white"
 									>
 										{header.isPlaceholder
 											? null
@@ -102,43 +104,31 @@ export function DataTable<TData, TValue>({
 						</TableRow>
 					))}
 				</TableHeader>
-				<TableBody className="divide-none max-h-[500px] overflow-y-scroll">
+				<TableBody>
 					{table.getRowModel().rows?.length ? (
-						table.getRowModel().rows.map((row, i) => (
+						table.getRowModel().rows.map((row) => (
 							<TableRow
 								key={row.id}
 								data-state={row.getIsSelected() ? "selected" : undefined}
-								className={`
-                                           bg-white shadow-sm transition-shadow duration-200
-                                            even:bg-[#F7F9FF]
-                                            ${i === 0
-										? "first:rounded-t-lg"
-										: "rounded-lg"
-									}
-                                            ${i ===
-										table.getRowModel().rows.length -
-										1
-										? "last:rounded-b-lg"
-										: "rounded-xl"
-									}
-                                           `}
+								className="border-b border-slate-100 bg-white transition-colors even:bg-slate-50/70 hover:bg-slate-100/70 data-[state=selected]:bg-primary/5"
 							>
 								{row.getVisibleCells().map((cell) => (
-									<TableCell key={cell.id} className="px-4 py-3.5">
+									<TableCell key={cell.id} className="px-4 py-3">
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
 									</TableCell>
 								))}
 							</TableRow>
 						))
 					) : (
-						<TableRow>
-							<TableCell colSpan={columns.length} className="h-24 text-center">
+						<TableRow className="hover:bg-transparent">
+							<TableCell colSpan={columns.length} className="h-24 text-center text-slate-500">
 								No results.
 							</TableCell>
 						</TableRow>
 					)}
 				</TableBody>
 			</Table>
+			</div>
 			<div className="flex flex-wrap pb-1 justify-end items-center gap-2">
 				<div>
 					<Select

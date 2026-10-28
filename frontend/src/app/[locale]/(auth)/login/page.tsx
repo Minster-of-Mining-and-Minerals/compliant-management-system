@@ -147,7 +147,7 @@ export default function ExternalLogin() {
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full bg-golden-dark hover:bg-golden-darkHover h-14  text-xl text-white py-2 rounded-md shadow-md"
+                className="w-full bg-primary hover:bg-primary/90 h-14  text-xl text-white py-2 rounded-md shadow-md"
               >
                 {isLoading ? "Logging In..." : "Log In"}
               </button>

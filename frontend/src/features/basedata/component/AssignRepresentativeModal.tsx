@@ -94,7 +94,7 @@ export function AssignRepresentativeModal({ isOpen, onClose, sectorNodeId, isHea
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={submitting}>Cancel</Button>
-          <Button onClick={handleAssign} disabled={!selectedUser || submitting} className="bg-[#1E516A]">
+          <Button onClick={handleAssign} disabled={!selectedUser || submitting} className="bg-primary">
             {submitting ? "Assigning..." : "Assign"}
           </Button>
         </DialogFooter>

@@ -9,15 +9,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-golden-dark text-primary-foreground hover:bg-golden-darkHover",
+        // System colours (admin): navy = main action, gold = highlighted action, red = destructive
+        default: "bg-primary text-white hover:bg-primary/90",
+        accent: "bg-golden-deep text-white hover:bg-golden-deep/90",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/30",
         outline:
-          "border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border border-slate-300 bg-white text-primary shadow-sm hover:bg-slate-50 hover:text-primary",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-slate-100 text-primary hover:bg-slate-200",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+          "text-primary hover:bg-slate-100 hover:text-primary",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

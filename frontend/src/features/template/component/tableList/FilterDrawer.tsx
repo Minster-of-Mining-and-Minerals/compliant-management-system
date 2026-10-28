@@ -311,7 +311,7 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
           <div key={field.key} className="space-y-2">
             <Label
               htmlFor={field.key}
-              className="text-xs font-medium text-secondary uppercase tracking-wide"
+              className="text-xs font-medium text-gray-700 uppercase tracking-wide"
             >
               {field.label}
             </Label>
@@ -435,7 +435,7 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
       >
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold   text-secondary">
+            <h3 className="text-sm font-semibold text-primary">
               Filters
             </h3>
           </div>

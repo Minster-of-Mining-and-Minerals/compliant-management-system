@@ -1,42 +1,28 @@
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { NavUser } from "./nav-user";
-import { Button } from "@/components/ui/button";
-import { Bell } from "lucide-react";
-import { useSession } from "next-auth/react";
 import NotificationDropdown from "./NotificationDropdown";
 import HeaderBreadcrumb from "../common/HeaderBreadcrumb";
-import { useGetProfileQuery } from "@/redux/api/profileApi";
 
 interface HeaderProps {
   title?: string;
 }
 
-
-
+/**
+ * Navy admin top bar (layout A4): sidebar toggle, breadcrumb + page title, notifications.
+ * The profile lives in the sidebar footer (SidebarUserCard).
+ */
 export function Header({ title }: HeaderProps) {
-  const notificationCount = 3; // Replace with actual notification count
-  const { data: session } = useSession();
-  const { data: profileResponse, isLoading: isLoadingProfile } = useGetProfileQuery();
-  const userData = {
-    name: session?.user?.name ?? "User",
-    email: session?.user?.email ?? "",
-    avatar: profileResponse?.data?.profileImage?.file_path ?? undefined,
-  };
-  // console.log(profileResponse);
-
   return (
-    <header className="flex z-30 sticky shadow-md top-2 border h-16 shrink-0 items-center gap-2 px-4 rounded-xl bg-sidebar text-sidebar-foreground m-2 mb-0">
-      <SidebarTrigger className="-ml-1" />
-      <HeaderBreadcrumb />
-      <div className="ml-auto flex items-center gap-2">
-        {/* Notification Button */}
-        <div className="flex items-center gap-2 2xsm:gap-3">
-          {/* <ThemeToggleButton /> */}
-          <NotificationDropdown />
+    <header className="sticky top-0 z-30 flex shrink-0 flex-col bg-primary text-white">
+      {/* Matches the height of the sidebar's flag stripe */}
+      <div aria-hidden className="h-1" />
+      <div className="flex h-16 items-center gap-3 border-b-[3px] border-golden-bright px-4 sm:px-6">
+        <SidebarTrigger className="h-10 w-10 shrink-0 rounded-lg bg-white/10 text-white hover:bg-white/20 hover:text-white" />
+        <HeaderBreadcrumb variant="dark" />
+        <div className="ml-auto flex items-center gap-2">
+          <NotificationDropdown variant="dark" />
         </div>
-        <NavUser user={userData} />
       </div>
     </header>
   );

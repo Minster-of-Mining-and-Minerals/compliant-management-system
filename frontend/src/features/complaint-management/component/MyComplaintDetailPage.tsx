@@ -267,7 +267,7 @@ export default function MyComplaintDetailPage() {
                 {/* Attachments */}
                 {complaintFiles.length > 0 && (
                   <div className="bg-white   border-[#BFD7EA] rounded-lg py-4">
-                    <h4 className="font-semibold text-[#1E516A] mb-3">
+                    <h4 className="font-semibold text-primary mb-3">
                       Complaint Attachments ({complaintFiles.length})
                     </h4>
 
@@ -345,7 +345,7 @@ export default function MyComplaintDetailPage() {
                   <div className="flex items-center justify-between mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                     <div className="flex items-center gap-3">
                       <div>
-                        <h3 className="text-[#1E516A] font-bold text-lg">
+                        <h3 className="text-primary font-bold text-lg">
                           Resolutions
                         </h3>
                         <p className="text-sm text-gray-600">
@@ -382,7 +382,7 @@ export default function MyComplaintDetailPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                               <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-4">
-                                <p className="font-semibold text-[#1E516A] text-sm mb-1">
+                                <p className="font-semibold text-primary text-sm mb-1">
                                   Resolution Summary
                                 </p>
                                 <p className="text-gray-600 text-sm">
@@ -392,7 +392,7 @@ export default function MyComplaintDetailPage() {
                               </div>
 
                               <div className="bg-slate-50 border border-[#DCE7F1] rounded-lg p-4">
-                                <p className="font-semibold text-[#1E516A] text-sm mb-1">
+                                <p className="font-semibold text-primary text-sm mb-1">
                                   Resolver Contact
                                 </p>
                                 <p className="text-gray-700 text-sm">
@@ -407,7 +407,7 @@ export default function MyComplaintDetailPage() {
                             {/* Attachments (same style as complaint attachments) */}
                             {resolutionFiles.length > 0 && (
                               <div>
-                                <h5 className="font-semibold text-[#1E516A] mb-3">
+                                <h5 className="font-semibold text-primary mb-3">
                                   Attachments ({resolutionFiles.length})
                                 </h5>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -434,7 +434,7 @@ export default function MyComplaintDetailPage() {
 
               {(showConfirmActions || showRejectActions) && (
                 <div className="mt-6 border border-[#BFD7EA] rounded-xl p-6 bg-white shadow-sm">
-                  <h4 className="font-semibold text-[#1E516A] mb-2">
+                  <h4 className="font-semibold text-primary mb-2">
                     Resolution feedback
                   </h4>
                   <p className="text-sm text-gray-600 mb-4">
@@ -482,7 +482,7 @@ export default function MyComplaintDetailPage() {
               <div className="bg-white rounded-lg w-full max-w-6xl h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex justify-between items-center p-4 border-b">
-                  <h3 className="text-lg font-semibold text-[#1E516A]">
+                  <h3 className="text-lg font-semibold text-primary">
                     {fileViewerState.files[fileViewerState.index].name}
                   </h3>
                   <button

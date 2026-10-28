@@ -166,7 +166,7 @@ export default function DepartmentAssignmentPreview({
 
                 {isLoading || isLoadingAssignments ? (
                     <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E516A]"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                 ) : isErrorById || isErrorAll ? (
                     <div className="text-center py-8 text-red-500">
@@ -247,7 +247,7 @@ export default function DepartmentAssignmentPreview({
                                                         onClick={() => handleAssign(department)}
                                                         disabled={isAssigning}
                                                         className="flex-1 text-white py-2 px-3 rounded-md text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        style={{ backgroundColor: '#1E516A' }}
+                                                        style={{ backgroundColor: '#073A55' }} // system navy
                                                     >
                                                         {isAssigning ? (
                                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

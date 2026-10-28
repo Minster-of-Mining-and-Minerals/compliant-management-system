@@ -80,7 +80,7 @@ export default function AssignmentPreview({
                 <div className="flex gap-3">
                     <Button
                         onClick={onClose}
-                        className="flex-1 h-11 bg-golden-dark20 text-gray-700 py-3 rounded-lg font-semibold hover:bg-golden-dark30 transition-colors duration-200"
+                        className="flex-1 h-11 bg-white border border-slate-300 text-primary hover:bg-slate-50 py-3 rounded-lg font-semibold transition-colors duration-200"
                     >
                         Cancel
                     </Button>

@@ -366,7 +366,7 @@ export function CreateSectorModal({
                                         id="sector-description"
                                         placeholder="Enter sector description"
                                         value={description}
-                                        className="w-full  border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
+                                        className="w-full  border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-primary focus:border-transparent transition-all duration-200 outline-none"
                                         onChange={(val) => setDescription(val)}
                                     />
                                     <Label htmlFor="sector-name-am" className="block text-sm text-primary font-medium mt-3 mb-2">
@@ -388,7 +388,7 @@ export function CreateSectorModal({
                                         id="sector-description-am"
                                         placeholder="የዘርፉ መግለጫ"
                                         value={descriptionAm}
-                                        className="w-full  border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
+                                        className="w-full  border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-primary focus:border-transparent transition-all duration-200 outline-none"
                                         onChange={(val) => setDescriptionAm(val)}
                                     />
                                 </div>
@@ -452,7 +452,7 @@ export function CreateSectorModal({
                         <Button
                             type="submit"
                             disabled={isCreatingNode || !name.trim()}
-                            className="bg-golden-dark hover:bg-golden-darkHover text-white"
+                            className="bg-primary hover:bg-primary/90 text-white"
                         >
                             {isCreatingNode ? "Creating..." : "Create "}
                         </Button>

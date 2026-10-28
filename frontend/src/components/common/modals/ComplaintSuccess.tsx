@@ -145,7 +145,7 @@ const TicketSuccessModal = ({
                 <div className="border-t px-6 py-4 flex flex-col sm:flex-row gap-3">
                     <Button
                         asChild
-                        className="flex-1 h-11 bg-golden-dark text-white hover:bg-golden-darkHover"
+                        className="flex-1 h-11 bg-golden-deep text-white hover:bg-golden-deep/90"
                     >
                         <Link href={trackingPath}>
                             <Search className="w-4 h-4 mr-2" />
@@ -153,7 +153,7 @@ const TicketSuccessModal = ({
                         </Link>
                     </Button>
                     <Button
-                        className="flex-1 h-11 bg-white text-golden-dark hover:bg-golden-dark20 hover:text-golden-dark border-golden-dark border"
+                        className="flex-1 h-11 bg-white text-golden-deep hover:bg-golden-dark/10 hover:text-golden-deep border-golden-deep border"
                         onClick={handleDownloadImage}
                     >
                         <Download className="w-4 h-4 mr-2" />

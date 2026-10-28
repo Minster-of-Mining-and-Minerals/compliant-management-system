@@ -139,7 +139,7 @@ export default function UserAssignmentPreview({
 
                 {isLoadingUsers || isLoadingAssignments ? (
                     <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E516A]"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                 ) : isError ? (
                     <div className="text-center py-8 text-red-500">
