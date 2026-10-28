@@ -22,6 +22,14 @@ export const performLogout = async (callbackUrl: string = "/login") => {
     }
   }
 
-  // 3. Use next-auth/react signOut for complete session clearing and redirect
-  await signOut({ callbackUrl, redirect: true });
+  // 3. Clear the session with next-auth, but redirect ourselves. next-auth builds its
+  //    redirect URL from NEXTAUTH_URL, which sends users to that host (e.g. the internal
+  //    IP) when they reached the site through a different address.
+  try {
+    await signOut({ redirect: false });
+  } finally {
+    if (typeof window !== "undefined") {
+      window.location.href = callbackUrl;
+    }
+  }
 };
