@@ -13,6 +13,7 @@ import {
   DashboardSkeleton,
   EmptyState,
   KpiCard,
+  NoSectorsState,
   Panel,
   formatNumber,
 } from "./DashboardWidgets";
@@ -63,6 +64,7 @@ export default function FeedbackDashboard({ filters, setFilters }: Props) {
 
   if (isError) return <>{filterBar}<DashboardError onRetry={refetch} /></>;
   if (isLoading || !data) return <>{filterBar}<DashboardSkeleton cards={4} /></>;
+  if (data.empty) return <>{filterBar}<NoSectorsState /></>;
 
   const k = data.kpis;
 

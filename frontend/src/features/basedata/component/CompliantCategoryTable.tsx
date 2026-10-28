@@ -18,10 +18,12 @@ import { ComplaintCategory } from "@/redux/types/complaintCategory";
 import Loading01 from "@/features/template/component/Loading/Loading01";
 import { formatDate } from "@/utils/date";
 import { CreateComplaintCategoryModal } from "@/components/common/modals/CreateComplaintCategoryModal";
+import EditCategoryModal from "./EditCategoryModal";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-export const columns: ColumnDef<ComplaintCategory>[] = [
+// A function so the row actions can open the table-level edit modal
+export const getColumns = (onEdit: (category: ComplaintCategory) => void): ColumnDef<ComplaintCategory>[] => [
     {
         accessorKey: "type",
         header: "Type",
@@ -35,9 +37,15 @@ export const columns: ColumnDef<ComplaintCategory>[] = [
         accessorKey: "name",
         header: "Category Name",
         cell: ({ row }) => (
-            <span className="font-medium text-primary">
-                {row.getValue("name")}
-            </span>
+            <div className="flex flex-col">
+                <span className="font-medium text-primary">{row.getValue("name")}</span>
+                {/* Amharic name (or a hint that it's missing, so admins can fill it in) */}
+                {row.original.name_am ? (
+                    <span lang="am" className="text-xs text-muted-foreground">{row.original.name_am}</span>
+                ) : (
+                    <span className="text-xs italic text-amber-600">No Amharic name</span>
+                )}
+            </div>
         ),
     },
     {
@@ -104,6 +112,8 @@ export const columns: ColumnDef<ComplaintCategory>[] = [
                         variant="ghost"
                         size="icon"
                         title="Edit Category"
+                        aria-label="Edit category"
+                        onClick={() => onEdit(category)}
                     >
                         <Edit className="h-4 w-4" />
                     </Button>
@@ -195,6 +205,7 @@ export default function ComplaintCategoryTable() {
     const [pageIndex, setPageIndex] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [isModalOpen, setModalOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<ComplaintCategory | null>(null);
 
     // Filter states
     const [statusFilter, setStatusFilter] = useState("");
@@ -285,7 +296,7 @@ export default function ComplaintCategoryTable() {
                 filterColumnsPerRow={2}
             >
                 <DataTable
-                    columns={columns}
+                    columns={getColumns(setEditingCategory)}
                     data={categories}
                     totalPageCount={totalPages}
                     handlePagination={handlePagination}
@@ -298,6 +309,7 @@ export default function ComplaintCategoryTable() {
                 isOpen={isModalOpen}
                 onClose={() => setModalOpen(false)}
             />
+            <EditCategoryModal category={editingCategory} onClose={() => setEditingCategory(null)} />
         </>
     );
 }

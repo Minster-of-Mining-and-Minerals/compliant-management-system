@@ -17,7 +17,8 @@ import { getFileUrl, getFileType } from "@/utils/fileUrl";
 import { useGetComplaintByTicketingCodeQuery } from "@/redux/api/complaintApi";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedName } from "@/utils/localizedName";
 import { formatDate, formatTime } from "@/utils/date";
 import PublicPageBanner from "@/components/layout/PublicPageBanner";
 
@@ -56,8 +57,10 @@ interface Complaint {
   request?: string;
   is_anonymous: boolean;
 
+  // Bilingual: name (English) + optional name_am (Amharic)
   assignedSector?: {
     name: string;
+    name_am?: string | null;
   };
 
   assignedTo?: { full_name: string } | null;
@@ -65,6 +68,7 @@ interface Complaint {
 
   category?: {
     name: string;
+    name_am?: string | null;
   };
 
   user?: {
@@ -199,6 +203,8 @@ const AttachmentViewerModal = ({ isOpen, onClose, selectedFile }: AttachmentView
 
 const StatusTimeline = ({ complaint }: { complaint: Complaint }) => {
   const t = useTranslations("ComplaintTrackPage");
+  const locale = useLocale();
+  const sectorName = localizedName(complaint.assignedSector, locale);
   const stage = STATUS_STAGE[complaint.status] ?? 0;
   const isRejected = complaint.status === "rejected";
   const latestResolution = complaint.resolution?.[complaint.resolution.length - 1];
@@ -212,8 +218,8 @@ const StatusTimeline = ({ complaint }: { complaint: Complaint }) => {
     },
     {
       title: t("timeline.underReview"),
-      description: complaint.assignedSector?.name
-        ? t("timeline.underReviewDesc", { sector: complaint.assignedSector.name })
+      description: sectorName
+        ? t("timeline.underReviewDesc", { sector: sectorName })
         : t("timeline.underReviewDescNoSector"),
     },
     {
@@ -292,6 +298,7 @@ const StatusTimeline = ({ complaint }: { complaint: Complaint }) => {
 
 const ComplaintTrackPage = () => {
   const t = useTranslations("ComplaintTrackPage");
+  const locale = useLocale();
   const [trackingId, setTrackingId] = useState("");
   const [inputError, setInputError] = useState("");
   const [selectedFile, setSelectedFile] = useState<{ url: string; name: string; type: string } | null>(null);
@@ -434,8 +441,8 @@ const ComplaintTrackPage = () => {
                 </div>
 
                 <div className="md:col-span-3 grid grid-cols-2 gap-6 content-start md:border-l md:border-slate-100 md:pl-8">
-                  <InfoItem label={t("details.sector")} value={complaint.assignedSector?.name} />
-                  <InfoItem label={t("details.category")} value={complaint.category?.name} />
+                  <InfoItem label={t("details.sector")} value={localizedName(complaint.assignedSector, locale)} />
+                  <InfoItem label={t("details.category")} value={localizedName(complaint.category, locale)} />
                   <InfoItem label={t("details.submittedAt")} value={formatDate(complaint.created_at)} />
                   <InfoItem label={t("details.time")} value={formatTime(complaint.created_at)} />
                 </div>

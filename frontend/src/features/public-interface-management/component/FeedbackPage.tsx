@@ -13,7 +13,8 @@ import {
 import { ArrowRight, Star } from "lucide-react";
 import PublicPageBanner from "@/components/layout/PublicPageBanner";
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedName } from "@/utils/localizedName";
 import { useGetSectorNodesQuery } from "@/redux/api/sectorNodeApi";
 import { useCreateFeedbackMutation } from "@/redux/api/feedbackApi";
 import { toast } from "sonner";
@@ -24,9 +25,10 @@ const FeedbackPage = () => {
   const [feedbackDescription, setFeedbackDescription] = useState("");
   const [rating, setRating] = useState<number>(0);
   const t = useTranslations("Feedback");
+  const locale = useLocale();
 
   // RTK Queries - Fix: Extract data from response
-  const { data: sectorNodesResponse = {}, isLoading: sectorsLoading, isError: sectorsError } = useGetSectorNodesQuery();
+  const { data: sectorNodesResponse = {}, isLoading: sectorsLoading, isError: sectorsError } = useGetSectorNodesQuery({ limit: 1000 }); // paginated (default 10) — the picker needs every sector
   const sectorNodesData = sectorNodesResponse?.data || [];
 
   const [createFeedback, { isLoading: isSubmitting }] = useCreateFeedbackMutation();
@@ -135,7 +137,7 @@ const FeedbackPage = () => {
                               key={sector.sector_node_id}
                               value={sector.sector_node_id}
                             >
-                              {sector.name}
+                              {localizedName(sector, locale)}
                             </SelectItem>
                           ))
                         )}

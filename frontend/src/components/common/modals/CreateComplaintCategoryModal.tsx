@@ -23,6 +23,9 @@ export const CreateComplaintCategoryModal: React.FC<
 > = ({ isOpen, onClose }) => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    // Amharic name/description — optional, the public pages fall back to English
+    const [nameAm, setNameAm] = useState("");
+    const [descriptionAm, setDescriptionAm] = useState("");
     const [type, setType] = useState<"internal" | "external">("internal");
 
 
@@ -39,6 +42,8 @@ export const CreateComplaintCategoryModal: React.FC<
             name: name.trim(),
             type,
             ...(description && { description: description.trim() }),
+            ...(nameAm.trim() && { name_am: nameAm.trim() }),
+            ...(descriptionAm.trim() && { description_am: descriptionAm.trim() }),
         };
 
         try {
@@ -55,6 +60,8 @@ export const CreateComplaintCategoryModal: React.FC<
     const handleClose = () => {
         setName("");
         setDescription("");
+        setNameAm("");
+        setDescriptionAm("");
         onClose();
     };
 
@@ -108,7 +115,7 @@ export const CreateComplaintCategoryModal: React.FC<
                         </div>
                         <div className="w-full space-y-2">
                             <Label className="text-sm font-medium text-golden-dark">
-                                Category Name <span className="text-red-500">*</span>
+                                Category Name (English) <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 value={name}
@@ -121,14 +128,42 @@ export const CreateComplaintCategoryModal: React.FC<
 
 
                     <div className="space-y-2">
+                        <Label htmlFor="category-name-am" className="text-sm font-medium text-golden-dark">
+                            ስም (አማርኛ) <span className="font-normal text-gray-500">— optional</span>
+                        </Label>
+                        <Input
+                            id="category-name-am"
+                            lang="am"
+                            value={nameAm}
+                            onChange={(e) => setNameAm(e.target.value)}
+                            placeholder="ለምሳሌ፦ የአገልግሎት መዘግየት"
+                            className="border border-golden-dark px-4 rounded-md focus:ring focus:ring-golden-dark"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
                         <Label className="text-sm font-medium text-golden-dark">
-                            Description
+                            Description (English)
                         </Label>
                         <TextArea
                             rows={3}
                             value={description}
                             onChange={(val) => setDescription(val)}
                             placeholder="Optional description"
+                            className="border border-golden-dark px-4 rounded-md focus:ring focus:ring-golden-dark"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="category-description-am" className="text-sm font-medium text-golden-dark">
+                            መግለጫ (አማርኛ) <span className="font-normal text-gray-500">— optional</span>
+                        </Label>
+                        <TextArea
+                            id="category-description-am"
+                            rows={3}
+                            value={descriptionAm}
+                            onChange={(val) => setDescriptionAm(val)}
+                            placeholder="Optional"
                             className="border border-golden-dark px-4 rounded-md focus:ring focus:ring-golden-dark"
                         />
                     </div>

@@ -21,6 +21,14 @@ const createComplaintCategorySchema = Joi.object({
     "string.max": "Description must not exceed 500 characters.",
   }),
 
+  // Amharic (optional, any script — falls back to the English name/description)
+  name_am: Joi.string().allow(null, "").max(100).optional().messages({
+    "string.max": "Amharic name must not exceed 100 characters.",
+  }),
+  description_am: Joi.string().allow(null, "").max(500).optional().messages({
+    "string.max": "Amharic description must not exceed 500 characters.",
+  }),
+
   type: Joi.string().min(3).max(500).required().messages({
     "string.empty": "Type must be selected.",
   }),
@@ -46,6 +54,13 @@ const updateComplaintCategorySchema = Joi.object({
 
   description: Joi.string().allow(null, "").max(500).optional().messages({
     "string.max": "Description must not exceed 500 characters.",
+  }),
+
+  name_am: Joi.string().allow(null, "").max(100).optional().messages({
+    "string.max": "Amharic name must not exceed 100 characters.",
+  }),
+  description_am: Joi.string().allow(null, "").max(500).optional().messages({
+    "string.max": "Amharic description must not exceed 500 characters.",
   }),
 
   is_active: Joi.boolean().optional().messages({

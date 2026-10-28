@@ -17,7 +17,7 @@ import { SectorNode } from "@/redux/types/sectorNode";
  * // Returns: [{ structure_node_id: "1", ..., children: [{ structure_node_id: "2", ... }] }]
  */
 export function buildSectorTree(nodes: SectorNode[]): SectorNode[] {
-  if (!nodes || nodes.length === 0) {
+  if (!Array.isArray(nodes) || nodes.length === 0) {
     return [];
   }
 

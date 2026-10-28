@@ -41,6 +41,9 @@ export function CreateSectorModal({
 
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    // Amharic name/description — optional, the public pages fall back to English
+    const [nameAm, setNameAm] = useState("");
+    const [descriptionAm, setDescriptionAm] = useState("");
 
     // Track if parent is selected (for showing fields with animation)
     const isParentSelected = parent_sector_node_id !== null && parent_sector_node_id !== undefined
@@ -51,6 +54,7 @@ export function CreateSectorModal({
     const { data: parentNodesData, isFetching: isFetchingParents } =
         useGetSectorNodesQuery({
             is_active: true,
+            limit: 1000, // the list is paginated (default 10); the parent picker needs every sector
         });
 
     const [createNode, { isLoading: isCreatingNode }] =
@@ -58,7 +62,8 @@ export function CreateSectorModal({
 
     if (!isOpen) return null;
 
-    const allNodes = parentNodesData || [];
+    // The query returns { data, meta }; the tree needs the array
+    const allNodes = parentNodesData?.data ?? [];
     const tree = buildSectorTree(allNodes);
     // Get current level nodes based on navigation stack
     const getCurrentLevelNodes = () => {
@@ -132,6 +137,8 @@ export function CreateSectorModal({
     const handleClose = () => {
         setName("");
         setDescription("");
+        setNameAm("");
+        setDescriptionAm("");
         onClose();
     };
 
@@ -148,6 +155,8 @@ export function CreateSectorModal({
             const response = await createNode({
                 name,
                 description,
+                name_am: nameAm.trim() || null,
+                description_am: descriptionAm.trim() || null,
                 parent_id: selectedParentNode || parent_sector_node_id || null,
             }).unwrap();
             // console.log(response, "response");
@@ -155,6 +164,8 @@ export function CreateSectorModal({
                 toast.success("Sector created!");
                 setName("");
                 setDescription("");
+                setNameAm("");
+                setDescriptionAm("");
                 resetNavigation();
                 setHasSelectedParent(false);
                 handleClose();
@@ -330,7 +341,7 @@ export function CreateSectorModal({
                         {!parent_sector_node_id && (
                             <div
                                 className={`flex flex-col gap-4 px-3 transition-all duration-500 ease-in-out overflow-hidden ${isParentSelected
-                                    ? `w-1/2 opacity-100 max-h-[500px] translate-x-0`
+                                    ? `w-1/2 opacity-100 max-h-[900px] translate-x-0`
                                     : `w-0 opacity-0 max-h-0 translate-x-[-20px] pointer-events-none`
                                     }`}
                             >
@@ -358,6 +369,28 @@ export function CreateSectorModal({
                                         className="w-full  border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
                                         onChange={(val) => setDescription(val)}
                                     />
+                                    <Label htmlFor="sector-name-am" className="block text-sm text-primary font-medium mt-3 mb-2">
+                                        ስም (አማርኛ) <span className="text-gray-500 font-normal">— optional</span>
+                                    </Label>
+                                    <Input
+                                        id="sector-name-am"
+                                        lang="am"
+                                        placeholder="የዘርፉ ስም"
+                                        value={nameAm}
+                                        className="w-full h-10 border border-golden-dark "
+                                        onChange={(e) => setNameAm(e.target.value)}
+                                    />
+                                    <Label htmlFor="sector-description-am" className="block text-sm text-primary font-medium mt-3 mb-2">
+                                        መግለጫ (አማርኛ) <span className="text-gray-500 font-normal">— optional</span>
+                                    </Label>
+                                    <TextArea
+                                        rows={3}
+                                        id="sector-description-am"
+                                        placeholder="የዘርፉ መግለጫ"
+                                        value={descriptionAm}
+                                        className="w-full  border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-[#094C81] focus:border-transparent transition-all duration-200 outline-none"
+                                        onChange={(val) => setDescriptionAm(val)}
+                                    />
                                 </div>
 
                             </div>
@@ -378,6 +411,19 @@ export function CreateSectorModal({
                                         className="w-full h-10 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-primary focus:border-transparent transition-all duration-200 outline-none"
                                         onChange={(e) => setName(e.target.value)}
                                         required
+                                    />
+                                </div>
+                                <div className="flex-1 w-full ">
+                                    <Label htmlFor="child-sector-name-am" className="block text-sm text-primary font-medium mb-2">
+                                        ስም (አማርኛ) <span className="text-gray-500 font-normal">— optional</span>
+                                    </Label>
+                                    <Input
+                                        id="child-sector-name-am"
+                                        lang="am"
+                                        placeholder="የዘርፉ ስም"
+                                        value={nameAm}
+                                        className="w-full h-10 border border-gray-300 px-4 py-3 rounded-md focus:ring focus:ring-primary focus:border-transparent transition-all duration-200 outline-none"
+                                        onChange={(e) => setNameAm(e.target.value)}
                                     />
                                 </div>
 

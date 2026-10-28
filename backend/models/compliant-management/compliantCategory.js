@@ -28,6 +28,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      // Amharic name/description (optional — the app falls back to `name` / `description`)
+      name_am: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      description_am: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       is_active: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,

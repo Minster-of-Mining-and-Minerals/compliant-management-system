@@ -10,7 +10,7 @@ const { Op } = require("sequelize");
 const createComplaintCategory = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { name, description, type } = req.body;
+    const { name, description, name_am, description_am, type } = req.body;
 
     // ===== Check duplicate name =====
     const existingCategory = await ComplaintCategory.findOne({
@@ -33,6 +33,8 @@ const createComplaintCategory = async (req, res) => {
         name,
         type,
         description: description || null,
+        name_am: name_am?.trim() || null,
+        description_am: description_am || null,
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
@@ -79,6 +81,7 @@ const getComplaintCategories = async (req, res) => {
     if (search) {
       whereClause[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
+        { name_am: { [Op.iLike]: `%${search}%` } },
         { description: { [Op.iLike]: `%${search}%` } },
         sequelize.where(
           sequelize.cast(sequelize.col("ComplaintCategory.type"), "TEXT"),

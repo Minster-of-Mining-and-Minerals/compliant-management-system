@@ -12,6 +12,10 @@ const createSectorNodeSchema = Joi.object({
 
   description: Joi.string().allow(null, "").optional(),
 
+  // Amharic (optional — falls back to the English name/description)
+  name_am: Joi.string().max(255).allow(null, "").optional(),
+  description_am: Joi.string().allow(null, "").optional(),
+
   parent_id: Joi.string()
     .allow(null, "")
     .custom((value, helpers) => {
@@ -47,6 +51,8 @@ const createSectorNodeSchema = Joi.object({
 const updateSectorNodeSchema = Joi.object({
   name: Joi.string().min(3).max(255).optional(),
   description: Joi.string().allow(null, "").optional(),
+  name_am: Joi.string().max(255).allow(null, "").optional(),
+  description_am: Joi.string().allow(null, "").optional(),
   parent_id: Joi.string()
     .allow(null, "")
     .custom((value, helpers) => {

@@ -279,9 +279,36 @@ const getDashboardOverview = async ({ type, userSectorId, sectorId, categoryId, 
     filters: { sectors, categories },
   };
 
-  // No sectors in scope → empty but well-formed result
+  // No sectors in scope (e.g. a fresh database) → same shape as a real result, all zeros
   if (ids.length === 0) {
-    return { ...meta, empty: true };
+    const emptyKpis = { total: 0, previous_total: null, change_percent: null };
+    return type === "feedback"
+      ? {
+          ...meta,
+          empty: true,
+          kpis: { ...emptyKpis, avg_rating: null, satisfied_percent: null, unsatisfied_percent: null },
+          by_rating: [5, 4, 3, 2, 1].map((rating) => ({ rating, count: 0 })),
+          trend: [],
+          by_sector: [],
+          low_ratings: [],
+        }
+      : {
+          ...meta,
+          empty: true,
+          kpis: {
+            ...emptyKpis,
+            open: 0,
+            resolved: 0,
+            rejected: 0,
+            overdue: 0,
+            overdue_after_days: OVERDUE_AFTER_DAYS,
+            avg_resolution_days: null,
+          },
+          by_status: {},
+          trend: [],
+          by_sector: [],
+          by_category: [],
+        };
   }
 
   const data =

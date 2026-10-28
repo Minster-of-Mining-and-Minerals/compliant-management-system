@@ -7,6 +7,8 @@
 /backend/uploads/
 /backend/public/uploads/
 /backend/tmp/
+# Database snapshots (contain password hashes and personal data)
+/backend/backups/
 # Logs
 logs/
 *.log

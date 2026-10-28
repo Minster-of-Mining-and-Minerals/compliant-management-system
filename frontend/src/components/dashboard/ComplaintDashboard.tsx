@@ -12,6 +12,7 @@ import {
   DashboardError,
   DashboardSkeleton,
   KpiCard,
+  NoSectorsState,
   Panel,
   StatusSplit,
   formatNumber,
@@ -57,6 +58,7 @@ export default function ComplaintDashboard({ filters, setFilters }: Props) {
 
   if (isError) return <>{filterBar}<DashboardError onRetry={refetch} /></>;
   if (isLoading || !data) return <>{filterBar}<DashboardSkeleton cards={5} /></>;
+  if (data.empty) return <>{filterBar}<NoSectorsState /></>;
 
   const k = data.kpis;
   const isAllTime = filters.period === "all";

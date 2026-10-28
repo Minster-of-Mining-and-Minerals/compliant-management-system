@@ -6,8 +6,10 @@ export interface SectorNode {
   sector_node_id: string; // Unique ID
   parent_id?: string | null; // Parent node ID (nullable)
   head_id?: string | null; // Added head_id
-  name: string; // Node name
-  description?: string | null; // Optional description
+  name: string; // Node name (English)
+  description?: string | null; // Optional description (English)
+  name_am?: string | null; // Amharic name (optional, falls back to name)
+  description_am?: string | null; // Amharic description (optional)
   level: number; // Hierarchy level
   is_active: boolean; // Active status
   created_at: string; // ISO date string
@@ -25,6 +27,8 @@ export interface CreateSectorNodePayload {
   parent_id?: string | null;
   name: string;
   description?: string | null;
+  name_am?: string | null;
+  description_am?: string | null;
   level?: number;
   is_active?: boolean;
 }
@@ -37,6 +41,8 @@ export interface UpdateSectorNodePayload {
   head_id?: string | null;
   name?: string;
   description?: string | null;
+  name_am?: string | null;
+  description_am?: string | null;
   level?: number;
   is_active?: boolean;
 }

@@ -14,7 +14,8 @@ import { useEffect, useState } from "react";
 import { FileUploadField } from "@/components/ui/FileUploadField";
 import { useGetComplaintCategoriesQuery } from "@/redux/api/complaintCategoryApi";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedName } from "@/utils/localizedName";
 import { useCreateComplaintMutation } from "@/redux/api/complaintApi";
 import TicketSuccessModal from "@/components/common/modals/ComplaintSuccess";
 import { todayDateInputValue } from "@/utils/date";
@@ -92,9 +93,9 @@ const ComplaintPage = () => {
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const t = useTranslations("ComplaintPage");
+  // Categories / sectors / departments are stored in English + Amharic
+  const locale = useLocale();
   const tHome = useTranslations("HomePage");
-  // Labels read "… {category} …"; until a category is picked, use the generic word
-  const categoryLabel = complaintCategoryName || t("details.categoryFallback");
 
   // Fix: Extract the data array from the sector nodes response (fetch all sectors)
   const { data: sectorNodesResponse = {} } = useGetSectorNodesQuery({ limit: 1000 });
@@ -109,6 +110,23 @@ const ComplaintPage = () => {
     type: "external",
   });
   const complaintCategories = complaintCategoriesResponse?.data || [];
+
+  // Names shown on the form are looked up from the selected IDs on every render, so they
+  // follow the current language (and fresh data) instead of the text saved when picked.
+  const displayCategoryName = localizedName(
+    complaintCategories.find((c: any) => c.category_id === complaintCategoryId),
+    locale,
+  );
+  const displaySectorName = localizedName(
+    sectorNodesData.find((s: any) => s.sector_node_id === sectorId),
+    locale,
+  );
+  const displayDepartmentName = localizedName(
+    (departments as any[]).find((d) => d.sector_node_id === departmentId),
+    locale,
+  );
+  // Labels read "… {category} …"; until a category is picked, use the generic word
+  const categoryLabel = displayCategoryName || t("details.categoryFallback");
 
   const [createComplaint, { isLoading: isSubmitting }] =
     useCreateComplaintMutation();
@@ -128,7 +146,7 @@ const ComplaintPage = () => {
     setDepartmentId("");
     setDepartmentName("");
     const selectedSector = sectorNodesData.find((item) => item.sector_node_id === value);
-    setSectorName(selectedSector?.name || "");
+    setSectorName(localizedName(selectedSector, locale));
     setDepartments(selectedSector?.children || []);
     clearError("sector");
   };
@@ -138,7 +156,7 @@ const ComplaintPage = () => {
     const selectedDepartment = departments.find(
       (dept: any) => dept.sector_node_id === value,
     ) as any;
-    setDepartmentName(selectedDepartment?.name || "");
+    setDepartmentName(localizedName(selectedDepartment, locale));
   };
 
   const handleComplaintCategoryChange = (value: string) => {
@@ -146,7 +164,7 @@ const ComplaintPage = () => {
       (cat) => cat.category_id === value,
     );
     setComplaintCategoryId(value);
-    setComplaintCategoryName(selectedCategory?.name || "");
+    setComplaintCategoryName(localizedName(selectedCategory, locale));
     clearError("category");
   };
 
@@ -154,9 +172,9 @@ const ComplaintPage = () => {
     // Pre-select only when there is a single category; otherwise the citizen must choose
     if (complaintCategories.length === 1 && !complaintCategoryId) {
       setComplaintCategoryId(complaintCategories[0].category_id);
-      setComplaintCategoryName(complaintCategories[0].name);
+      setComplaintCategoryName(localizedName(complaintCategories[0], locale));
     }
-  }, [complaintCategories, complaintCategoryId]);
+  }, [complaintCategories, complaintCategoryId, locale]);
 
   const handleChange = (field: keyof ComplaintFormValues, value: any) => {
     setFormValues((prev) => ({
@@ -322,7 +340,7 @@ const ComplaintPage = () => {
       const result = await createComplaint(payload).unwrap();
 
       setTicketNumber(result?.ticketing_code);
-      setSubmittedSectorName(sectorName);
+      setSubmittedSectorName(displaySectorName);
       setShowTicketModal(true);
 
       toast.success(t("toast.success.submitted"));
@@ -332,7 +350,7 @@ const ComplaintPage = () => {
       // Reset the category the same way as on first load
       if (complaintCategories.length === 1) {
         setComplaintCategoryId(complaintCategories[0].category_id);
-        setComplaintCategoryName(complaintCategories[0].name);
+        setComplaintCategoryName(localizedName(complaintCategories[0], locale));
       } else {
         setComplaintCategoryId("");
         setComplaintCategoryName("");
@@ -360,11 +378,11 @@ const ComplaintPage = () => {
           ? [city, subCity, woreda].filter((v) => v.trim()).join(", ")
           : "",
     },
-    { label: t("details.category"), value: complaintCategoryName },
+    { label: t("details.category"), value: displayCategoryName },
     { label: t("details.incidentDate"), value: incidentDate },
     {
       label: t("details.sector", { category: categoryLabel }),
-      value: [sectorName, departmentName].filter(Boolean).join(" › "),
+      value: [displaySectorName, displayDepartmentName].filter(Boolean).join(" › "),
     },
     {
       label: t("details.personConcerned", { category: categoryLabel }),
@@ -595,7 +613,7 @@ const ComplaintPage = () => {
                         <SelectContent>
                           {complaintCategories.map((category) => (
                             <SelectItem key={category.category_id} value={category.category_id}>
-                              {category.name}
+                              {localizedName(category, locale)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -633,7 +651,7 @@ const ComplaintPage = () => {
                         <SelectContent>
                           {sectors.map((sector) => (
                             <SelectItem key={sector.sector_node_id} value={sector.sector_node_id}>
-                              {sector.name}
+                              {localizedName(sector, locale)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -660,7 +678,7 @@ const ComplaintPage = () => {
                           <SelectItem value="none">{t("details.noDepartment")}</SelectItem>
                           {departments.map((dept: any) => (
                             <SelectItem key={dept.sector_node_id} value={dept.sector_node_id}>
-                              {dept.name}
+                              {localizedName(dept, locale)}
                             </SelectItem>
                           ))}
                         </SelectContent>

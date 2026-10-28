@@ -903,12 +903,13 @@ const getComplaintByTicketingNumber = async (req, res) => {
         {
           model: SectorNode,
           as: "assignedSector",
-          attributes: ["sector_node_id", "name"],
+          // name_am: the public tracking page shows names in the visitor's language
+          attributes: ["sector_node_id", "name", "name_am"],
         },
         {
           model: ComplaintCategory,
           as: "category",
-          attributes: ["category_id", "name"],
+          attributes: ["category_id", "name", "name_am"],
         },
         {
           model: ComplaintSectorAssignment,

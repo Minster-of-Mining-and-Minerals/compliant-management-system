@@ -73,6 +73,17 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
 
+      // Amharic name/description (optional — the app falls back to `name` / `description`)
+      name_am: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+
+      description_am: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+
       head_id: {
         type: DataTypes.UUID,
         allowNull: true,

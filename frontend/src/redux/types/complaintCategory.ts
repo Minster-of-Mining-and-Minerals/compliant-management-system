@@ -8,8 +8,10 @@ export interface Complaint {
 
 export interface ComplaintCategory {
   category_id: string;
-  name: string;
-  description: string | null;
+  name: string; // English
+  description: string | null; // English
+  name_am?: string | null; // Amharic (optional, falls back to name)
+  description_am?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -19,6 +21,8 @@ export interface ComplaintCategory {
 export interface CreateComplaintCategoryPayload {
   name: string;
   description?: string;
+  name_am?: string;
+  description_am?: string;
   is_active?: boolean;
   type: string;
 }
@@ -26,6 +30,8 @@ export interface CreateComplaintCategoryPayload {
 export interface UpdateComplaintCategoryPayload {
   name?: string;
   description?: string;
+  name_am?: string;
+  description_am?: string;
   is_active?: boolean;
 }
 

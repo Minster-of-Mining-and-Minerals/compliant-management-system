@@ -52,7 +52,7 @@ export default function DepartmentAssignmentPreview({
         data: sectorsAllResponse,
         isLoading: isLoadingAll,
         isError: isErrorAll,
-    } = useGetSectorNodesQuery(undefined, {
+    } = useGetSectorNodesQuery({ limit: 1000 }, { // paginated (default 10) — need every sector here
         skip: !!sector_id, // skip if sector_id exists
     });
 

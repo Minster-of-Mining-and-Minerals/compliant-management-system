@@ -10,7 +10,7 @@ import {
   SelectContent,
   SelectValue,
 } from "@/components/ui/select";
-import { shortenText } from "@/utils/shortenText";
+import { useRouter } from "next/navigation";
 import { SectorNode } from "@/redux/types/sectorNode";
 import { CustomNodeProps, D3TreeNode, HierarchyD3TreeProps } from "@/types/d3treeNode";
 import { CreateChildModal } from "@/components/common/modals/CreateChildModal";
@@ -29,10 +29,13 @@ function convertToD3Tree(node: SectorNode): D3TreeNode {
     name: node.name || "Unnamed",
     attributes: {
       sector_node_id: node.sector_node_id,
+      name_am: node.name_am ?? null,
       description: node.description || "",
       parent_id: node.parent_id ?? null,
       level: node.level,
       is_active: node.is_active,
+      child_count: node.children?.length ?? 0,
+      head_name: node.head?.full_name ?? null,
     },
     children: node.children?.length
       ? node.children.map(convertToD3Tree)
@@ -49,32 +52,46 @@ function convertToD3Tree(node: SectorNode): D3TreeNode {
  * - Active/Inactive status badge
  * - Action buttons (Details, Add Child)
  */
+// Card size (the tree's nodeSize/separation below leave room for it)
+const CARD_W = 300;
+const CARD_H = 160;
+
+/** Depth in the tree → what the public forms call it (top level → sector → department) */
+const depthLabel = (depth: number) =>
+  depth === 0 ? "TOP LEVEL" : depth === 1 ? "SECTOR" : "DEPARTMENT";
+
 const CustomNode: React.FC<CustomNodeProps> = ({
   nodeDatum,
   toggleNode,
   onAddChild,
+  onDetails,
+  onEdit,
 }) => {
+  const { sector_node_id, name_am, is_active: isActive, child_count = 0, head_name } = nodeDatum.attributes;
   const hasChildren = !!nodeDatum.children?.length;
-  const isActive = nodeDatum.attributes.is_active;
   const isCollapsed = nodeDatum.__rd3t?.collapsed ?? false;
+  const depth = nodeDatum.__rd3t?.depth ?? 0;
 
-  // Handle Add Child button click
-  const handleAddChild = (e: React.MouseEvent) => {
+  // Buttons sit inside the zoom/pan surface: keep clicks from reaching it
+  const run = (fn?: (id: string) => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onAddChild) {
-      onAddChild(nodeDatum.attributes.sector_node_id);
-    }
+    fn?.(sector_node_id);
   };
+
+  const meta = [
+    child_count === 0 ? "No departments" : `${child_count} department${child_count === 1 ? "" : "s"}`,
+    head_name ? `Head: ${head_name}` : "No head assigned",
+  ].join(" · ");
 
   return (
     <g>
       {/* Expand / Collapse Button - Only shown for nodes with children */}
       {hasChildren && (
-        <g transform={`translate(-160, -70)`}>
-          <foreignObject x={-10} y={-10} width={20} height={20}>
+        <g transform={`translate(0, ${CARD_H / 2 + 6})`}>
+          <foreignObject x={-12} y={-12} width={24} height={24}>
             <button
               onClick={toggleNode}
-              className="w-5 h-5 rounded-full bg-golden-dark hover:bg-golden-dark text-white font-semibold flex items-center justify-center transition-colors duration-200 cursor-pointer text-sm"
+              className="w-6 h-6 rounded-full bg-primary text-white font-bold flex items-center justify-center shadow ring-2 ring-white cursor-pointer text-sm"
               aria-label={isCollapsed ? "Expand node" : "Collapse node"}
             >
               {isCollapsed ? "+" : "−"}
@@ -83,54 +100,64 @@ const CustomNode: React.FC<CustomNodeProps> = ({
         </g>
       )}
 
-      {/* Node Card */}
-      <foreignObject x={-150} y={-90} width={300} height={150}>
-        <div className="w-full h-full bg-white rounded-2xl border border-gray-200 shadow-lg hover:border-secondary hover:shadow-xl transition-all duration-200 cursor-pointer p-5 flex flex-col justify-between">
-          {/* Header: Name and Status */}
-          <div className="flex items-start justify-between mb-3">
-            <h3 className="text-golden-dark text-base font-semibold flex-1 pr-2 line-clamp-2">
-              {nodeDatum.name.length > 28
-                ? `${nodeDatum.name.substring(0, 28)}...`
-                : nodeDatum.name}
-            </h3>
-            {/* Active/Inactive Status Badge */}
-            <span
-              className={`px-3 py-1 flex items-center justify-center rounded-full text-xs font-semibold text-white whitespace-nowrap ${isActive ? "bg-green-100" : "bg-red-100"
-                }`}
-            >
-              {isActive ? (
-                <span className="text-green-900 text-xs font-semibold">
-                  Active
-                </span>
-              ) : (
-                <span className="text-red-900 text-xs font-semibold">
-                  Inactive
-                </span>
-              )}
+      {/* Node Card (option B: navy header) */}
+      <foreignObject x={-CARD_W / 2} y={-CARD_H / 2} width={CARD_W} height={CARD_H}>
+        <div className="w-full h-full flex flex-col overflow-hidden rounded-[14px] border border-slate-300 bg-white shadow-md">
+          {/* Header: level + status */}
+          <div
+            className={`flex items-center justify-between px-3 py-1.5 text-[11px] font-semibold tracking-wide text-white ${depth === 0 ? "bg-primary" : "bg-[#0B4F72]"}`}
+          >
+            <span>{depthLabel(depth)} · LEVEL {depth + 1}</span>
+            <span className={`inline-flex items-center gap-1.5 ${isActive ? "text-green-200" : "text-red-200"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-green-400" : "bg-red-400"}`} />
+              {isActive ? "Active" : "Inactive"}
             </span>
           </div>
 
-          {/* Description */}
-          {nodeDatum.attributes.description && (
-            <p className="text-golden-dark70 w-full text-sm font-bold text-center mb-3 line-clamp-3">
-              {shortenText(nodeDatum.attributes.description, 25)}
+          {/* Body: English + Amharic names */}
+          <div className="flex-1 min-w-0 px-3 pt-2.5">
+            <p className="truncate text-[15px] font-bold text-slate-900" title={nodeDatum.name}>
+              {nodeDatum.name}
             </p>
-          )}
+            {name_am ? (
+              <p lang="am" className="truncate text-[13px] font-medium text-golden-deep" title={name_am}>
+                {name_am}
+              </p>
+            ) : (
+              <p className="text-xs italic text-amber-700">No Amharic name — add one</p>
+            )}
+            <p className="mt-1.5 truncate text-xs text-slate-600" title={meta}>{meta}</p>
+          </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-row justify-center gap-3">
-            <button className="flex-1 bg-golden-dark hover:bg-golden-dark text-white font-semibold py-2 rounded-lg transition-colors duration-200 text-xs">
+          {/* Actions */}
+          <div className="flex gap-1.5 px-3 pb-2.5">
+            <button
+              type="button"
+              onClick={run(onDetails)}
+              className="h-[30px] flex-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-primary hover:bg-slate-50"
+            >
               Details
             </button>
+            {onEdit && (
+              <PermissionGuard requireAll={["SECTOR:UPDATE"]}>
+                <button
+                  type="button"
+                  onClick={run(onEdit)}
+                  className="h-[30px] flex-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-primary hover:bg-slate-50"
+                >
+                  Edit
+                </button>
+              </PermissionGuard>
+            )}
             <PermissionGuard requireAll={["SECTOR:CREATE"]}>
               <button
-                onClick={handleAddChild}
-                className="flex-1 bg-golden-dark hover:bg-golden-dark text-white font-semibold py-2 rounded-lg transition-colors duration-200 text-xs"
+                type="button"
+                onClick={run(onAddChild)}
+                className="h-[30px] flex-[1.4] rounded-lg bg-golden-deep text-xs font-semibold text-white hover:bg-golden-deep/90"
               >
-                Add Child
+                + Department
               </button>
             </PermissionGuard>
-
           </div>
         </div>
       </foreignObject>
@@ -154,7 +181,9 @@ const CustomNode: React.FC<CustomNodeProps> = ({
 const HierarchyD3Tree: React.FC<HierarchyD3TreeProps> = ({
   data,
   isLoading = false,
+  onEdit,
 }) => {
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -191,7 +220,7 @@ const HierarchyD3Tree: React.FC<HierarchyD3TreeProps> = ({
   // Generate options for root node selector dropdown
   const rootOptions = rootNodes.map((n) => ({
     value: n.sector_node_id,
-    label: n.name,
+    label: n.name_am ? `${n.name} — ${n.name_am}` : n.name,
   }));
 
   // Auto-select first root node if available and none selected
@@ -309,8 +338,8 @@ const HierarchyD3Tree: React.FC<HierarchyD3TreeProps> = ({
                   translate={translate}
                   orientation="vertical"
                   pathFunc="straight"
-                  separation={{ siblings: 2.5, nonSiblings: 2 }}
-                  nodeSize={{ x: 220, y: 250 }}
+                  separation={{ siblings: 1.6, nonSiblings: 1.8 }}
+                  nodeSize={{ x: 220, y: 230 }}
                   zoom={0.75}
                   scaleExtent={{ min: 0.1, max: 2 }}
                   enableLegacyTransitions={true}
@@ -324,6 +353,8 @@ const HierarchyD3Tree: React.FC<HierarchyD3TreeProps> = ({
                       }
                       toggleNode={props.toggleNode}
                       onAddChild={handleAddChild}
+                      onDetails={(id) => router.push(`/basedata/sectors/${id}`)}
+                      onEdit={onEdit}
                     />
                   )}
                 />

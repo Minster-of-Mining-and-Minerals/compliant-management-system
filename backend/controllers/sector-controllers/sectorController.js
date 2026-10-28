@@ -11,7 +11,7 @@ const { getDepartmentsInFilerSector, resolveFilerSectorNodeId } = require("../..
 const createSectorNode = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { name, description, parent_id, level, head_id } = req.body;
+    const { name, description, name_am, description_am, parent_id, level, head_id } = req.body;
 
     // ===== Check duplicate name under the same parent =====
     const existingNode = await SectorNode.findOne({
@@ -45,6 +45,8 @@ const createSectorNode = async (req, res) => {
         sector_node_id: uuidv4(),
         name,
         description,
+        name_am: name_am?.trim() || null,
+        description_am: description_am || null,
         parent_id: parent_id || null,
         head_id: head_id || null,
         level: level || 1,
@@ -92,6 +94,7 @@ const getSectorNodes = async (req, res) => {
       const searchWhere = {
         [Op.or]: [
           { name: { [Op.iLike]: `%${search}%` } },
+          { name_am: { [Op.iLike]: `%${search}%` } },
           { description: { [Op.iLike]: `%${search}%` } },
         ],
       };
@@ -181,6 +184,7 @@ const getSectorsWithFlatChildren = async (req, res) => {
     if (search) {
       whereClause[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
+        { name_am: { [Op.iLike]: `%${search}%` } },
         { description: { [Op.iLike]: `%${search}%` } },
       ];
     }

@@ -200,6 +200,17 @@ export const DashboardSkeleton = ({ cards }: { cards: number }) => (
   </div>
 );
 
+/** Shown when the user has no sectors in scope yet (e.g. a fresh install) */
+export const NoSectorsState = () => (
+  <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
+    <h2 className="text-base font-semibold text-slate-900">No sectors yet</h2>
+    <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
+      The dashboard summarises complaints and feedback by sector. Create sectors under{" "}
+      <span className="font-medium text-slate-900">Base data</span> and the figures will appear here.
+    </p>
+  </div>
+);
+
 export const DashboardError = ({ onRetry }: { onRetry: () => void }) => (
   <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
     <p className="text-sm text-slate-600">Could not load the dashboard.</p>

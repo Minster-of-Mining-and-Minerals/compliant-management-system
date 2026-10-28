@@ -29,26 +29,16 @@ export default function LocaleSwitcher() {
   };
 
 
-  /* ===== RESTORE LOCALE ON LOAD ===== */
+  /* ===== REMEMBER THE CURRENT LOCALE ===== */
+  // The URL decides the language (/am/... or /en/...). Redirecting to a previously stored
+  // locale sent visitors of /am links back to English, so only record the current one.
+  // (next-intl's NEXT_LOCALE cookie already picks the language when no locale is in the URL.)
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    const storedLocale = localStorage.getItem(LOCALE_KEY) as Locale | null;
-
-    if (
-      storedLocale &&
-      storedLocale !== locale &&
-      routing.locales.includes(storedLocale)
-    ) {
-      startTransition(() => {
-        router.replace(
-          // @ts-expect-error params & pathname always match
-          { pathname, params },
-          { locale: storedLocale }
-        );
-      });
+    if ((routing.locales as readonly string[]).includes(locale)) {
+      setLocaleStorage(locale as Locale);
     }
-  }, [locale, pathname, params, router]);
+  }, [locale]);
 
   /* ===== CHANGE HANDLER ===== */
   function onSelectChange(event: ChangeEvent<HTMLSelectElement>) {
