@@ -2,6 +2,7 @@
 
 import { LogOut, User } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 
-import { performLogout } from "@/utils/logout";
+import { LogoutConfirmModal } from "@/components/common/modals/LogoutConfirmModal";
 import { getFileUrl } from "@/utils/fileUrl";
 import { useGetProfileQuery } from "@/redux/api/profileApi";
 
@@ -37,17 +38,15 @@ const getInitials = (name: string) =>
 export function NavUser({ user }: NavUserProps) {
   const router = useRouter();
   const initials = getInitials(user.name);
-
-  const handleLogout = async () => {
-    await performLogout();
-  };
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const handleProfile = () => {
     router.push("/profile");
   }
   const profileImageUrl = user.avatar ? getFileUrl(user.avatar) : "";
   return (
-    <DropdownMenu>
+    <>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-lg p-2 hover:bg-accent focus:outline-none  ">
           <Avatar className="h-8 w-8 rounded-full">
@@ -89,12 +88,14 @@ export function NavUser({ user }: NavUserProps) {
           Profile
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
+        <DropdownMenuItem onSelect={() => setConfirmLogout(true)}>
           <LogOut className="mr-2 h-4 w-4" />
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <LogoutConfirmModal open={confirmLogout} onOpenChange={setConfirmLogout} />
+    </>
   );
 }
 
@@ -113,6 +114,7 @@ export function SidebarUserCard() {
   const imagePath = profileResponse?.data?.profileImage?.file_path;
   const imageUrl = imagePath ? getFileUrl(imagePath) : "";
   const initials = getInitials(name);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const avatar = (size: string) => (
     <span className="relative shrink-0">
@@ -152,7 +154,7 @@ export function SidebarUserCard() {
           </button>
           <button
             type="button"
-            onClick={() => performLogout()}
+            onClick={() => setConfirmLogout(true)}
             aria-label="Log out"
             title="Log out"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-red-300 transition-colors hover:bg-red-500/15 hover:text-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
@@ -163,7 +165,7 @@ export function SidebarUserCard() {
       </section>
 
       {/* Collapsed (icon) sidebar */}
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
@@ -183,12 +185,14 @@ export function SidebarUserCard() {
             <User className="mr-2 h-4 w-4" />
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => performLogout()} className="text-red-600 focus:text-red-600">
+          <DropdownMenuItem onSelect={() => setConfirmLogout(true)} className="text-red-600 focus:text-red-600">
             <LogOut className="mr-2 h-4 w-4" />
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <LogoutConfirmModal open={confirmLogout} onOpenChange={setConfirmLogout} />
     </>
   );
 }
