@@ -108,7 +108,7 @@ const HeaderBreadcrumb = ({ variant = "light" }: { variant?: "light" | "dark" } 
         return (
             <div className="flex min-w-0 flex-col leading-tight">
                 {parents.length > 0 && (
-                    <nav aria-label="Breadcrumb" className="flex items-center gap-1 truncate text-xs text-slate-400">
+                    <nav aria-label="Breadcrumb" className="hidden items-center gap-1 truncate text-xs text-slate-400 sm:flex">
                         {parents.map((crumb, index) => (
                             <span key={index} className="flex items-center gap-1">
                                 {crumb.path ? (
@@ -124,7 +124,7 @@ const HeaderBreadcrumb = ({ variant = "light" }: { variant?: "light" | "dark" } 
                     </nav>
                 )}
                 {current && (
-                    <span className="truncate text-lg font-bold text-white">{current.title}</span>
+                    <span className="truncate text-base font-bold text-white sm:text-lg">{current.title}</span>
                 )}
             </div>
         );

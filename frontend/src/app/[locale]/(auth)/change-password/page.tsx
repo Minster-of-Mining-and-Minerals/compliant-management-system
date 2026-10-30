@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,14 +12,24 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import { useChangePasswordMutation } from "@/redux/api/userApi";
 import { useRouter } from "@/i18n/navigation";
 import { getSession, useSession } from "next-auth/react";
-import { ArrowLeftIcon, EyeIcon, EyeOffIcon, AlertCircle } from "lucide-react";
+import { ArrowLeftIcon, EyeIcon, EyeOffIcon, Info, KeyRound, Lock, LogOut, ShieldCheck } from "lucide-react";
 import { performLogout } from "@/utils/logout";
 import Loading01 from "@/features/template/component/Loading/Loading01";
+import {
+  AuthIconBadge,
+  AuthInputIcon,
+  AuthShell,
+  AuthSubmitButton,
+  AuthTopButton,
+  authErrorTextClass,
+  authInputClass,
+  authLabelClass,
+} from "@/components/layout/AuthShell";
+import { cn } from "@/lib/utils";
 
 const firstLoginSchema = z
   .object({
@@ -113,95 +122,60 @@ function ChangePasswordForm({ isFirstLogin }: { isFirstLogin: boolean }) {
     }
   };
 
+  const passwordField = (
+    name: "current_password" | "new_password" | "confirm_password",
+    label: string,
+    autoComplete: string,
+    withToggle = false,
+  ) => (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="space-y-0">
+          <FormLabel className={authLabelClass}>{label}</FormLabel>
+          <div className="relative">
+            <AuthInputIcon><Lock /></AuthInputIcon>
+            <FormControl>
+              <input
+                type={showPasswords ? "text" : "password"}
+                autoComplete={autoComplete}
+                placeholder="••••••••"
+                {...field}
+                value={field.value ?? ""}
+                className={cn(authInputClass, withToggle && "pr-12")}
+              />
+            </FormControl>
+            {withToggle && (
+              <button
+                type="button"
+                onClick={() => setShowPasswords(!showPasswords)}
+                aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#B6CBD8] transition-colors hover:text-white"
+              >
+                {showPasswords ? <EyeIcon className="h-5 w-5" /> : <EyeOffIcon className="h-5 w-5" />}
+              </button>
+            )}
+          </div>
+          <FormMessage className={authErrorTextClass} />
+        </FormItem>
+      )}
+    />
+  );
+
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit, onInvalid)}
-        className="space-y-5"
+        className="space-y-4"
       >
-        {!isFirstLogin && (
-          <FormField
-            control={form.control}
-            name="current_password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-golden-dark">
-                  Current Password
-                </FormLabel>
-                <div className="relative">
-                  <FormControl>
-                    <Input
-                      type={showPasswords ? "text" : "password"}
-                      placeholder="••••••••"
-                      {...field}
-                      className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none pr-10"
-                    />
-                  </FormControl>
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(!showPasswords)}
-                    className="absolute top-1/2 right-3 -translate-y-1/2"
-                  >
-                    {showPasswords ? (
-                      <EyeIcon className="h-5 w-5 text-golden-dark" />
-                    ) : (
-                      <EyeOffIcon className="h-5 w-5 text-golden-dark" />
-                    )}
-                  </button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        {!isFirstLogin && passwordField("current_password", "Current password", "current-password", true)}
+        {passwordField("new_password", "New password", "new-password", isFirstLogin)}
+        {passwordField("confirm_password", "Confirm new password", "new-password")}
 
-        <FormField
-          control={form.control}
-          name="new_password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-golden-dark">New Password</FormLabel>
-              <FormControl>
-                <Input
-                  type={showPasswords ? "text" : "password"}
-                  placeholder="••••••••"
-                  {...field}
-                  className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="confirm_password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-golden-dark">
-                Confirm New Password
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type={showPasswords ? "text" : "password"}
-                  placeholder="••••••••"
-                  {...field}
-                  className="w-full h-14 mt-1 px-3 py-2 border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button
-          type="submit"
-          className="w-full bg-primary hover:bg-primary/90 h-14 text-xl text-white font-semibold rounded-md shadow-md transition-all duration-200 mt-6"
-          disabled={isLoading}
-        >
-          {isLoading ? "Processing..." : "Update & Log Out"}
-        </Button>
+        <AuthSubmitButton loading={isLoading} loadingText="Processing..." className="!mt-6">
+          Update &amp; log out
+        </AuthSubmitButton>
       </form>
     </Form>
   );
@@ -223,67 +197,45 @@ export default function ChangePasswordPage() {
   const isFirstLogin = Boolean(session?.user?.is_first_logged_in);
 
   return (
-    <div className="min-h-screen bg-[#F9FBFC] flex items-center justify-center px-4 py-12">
-      <div className="w-full relative max-w-6xl min-h-[80vh] shadow-2xl rounded-2xl border border-[#DCE7F1] overflow-hidden flex flex-col lg:flex-row bg-white">
-        {isFirstLogin ? (
-          <Button
-            onClick={() => performLogout()}
-            className="cursor-pointer shadow-none z-50 bg-transparent hover:bg-red-50 p-2 top-4 left-4 absolute flex items-center gap-1 text-red-600 hover:text-red-700"
-          >
-            <ArrowLeftIcon className="w-5 h-5" />
-            <span className="text-sm font-medium">Logout</span>
-          </Button>
+    <AuthShell
+      topAction={
+        isFirstLogin ? (
+          <AuthTopButton onClick={() => performLogout()} icon={<LogOut />} tone="danger">
+            Log out
+          </AuthTopButton>
         ) : (
-          <Button
-            onClick={() => router.push("/dashboard")}
-            className="cursor-pointer shadow-none z-50 bg-transparent hover:bg-slate-100 p-2 top-4 left-4 absolute flex items-center gap-1"
-          >
-            <ArrowLeftIcon className="w-5 h-5 text-golden-dark" />
-            <span className="text-sm text-golden-dark font-medium">Back</span>
-          </Button>
-        )}
-
-        <div className="w-full bg-[#F9FBFC] p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-[#DCE7F1]">
-          <div className="text-center">
-            <img
-              src="/logo-mom.png"
-              alt="Organization Logo"
-              className="h-64 lg:h-96 mx-auto mb-6 p-2"
-            />
-          </div>
-        </div>
-
-        <div className="w-full px-8 lg:px-16 py-12 flex items-center justify-center">
-          <div className="w-full max-w-md">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-golden-dark mb-2">
-                {isFirstLogin ? "Security Update" : "Change Password"}
-              </h1>
-              <p className="text-sm text-golden-dark/70">
-                {isFirstLogin
-                  ? "Set a new password to continue. Your temporary password will be replaced."
-                  : "Update your password to keep your account secure."}
-              </p>
-            </div>
-
-            {isFirstLogin && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-                <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                  You only need to enter a new password. After updating, you
-                  will be logged out and must sign in again with your new
-                  credentials.
-                </p>
-              </div>
-            )}
-
-            <ChangePasswordForm
-              key={isFirstLogin ? "first-login" : "change-password"}
-              isFirstLogin={isFirstLogin}
-            />
-          </div>
-        </div>
+          <AuthTopButton onClick={() => router.push("/dashboard")} icon={<ArrowLeftIcon />}>
+            Back
+          </AuthTopButton>
+        )
+      }
+    >
+      <div className="mb-6">
+        <AuthIconBadge>{isFirstLogin ? <ShieldCheck /> : <KeyRound />}</AuthIconBadge>
+        <h1 className="mt-4 text-3xl font-bold">
+          {isFirstLogin ? "Set your password" : "Change password"}
+        </h1>
+        <p className="mt-1.5 text-sm leading-relaxed text-[#B6CBD8]">
+          {isFirstLogin
+            ? "Welcome! Replace your temporary password to continue."
+            : "Update your password to keep your account secure."}
+        </p>
       </div>
-    </div>
+
+      {isFirstLogin && (
+        <div className="mb-6 flex gap-3 rounded-xl border border-golden-bright/35 bg-golden-bright/10 p-4">
+          <Info className="h-5 w-5 shrink-0 text-golden-bright" />
+          <p className="text-xs font-medium leading-relaxed text-[#F3E3B5]">
+            You only need to enter a new password. After updating, you will be
+            logged out and must sign in again with your new password.
+          </p>
+        </div>
+      )}
+
+      <ChangePasswordForm
+        key={isFirstLogin ? "first-login" : "change-password"}
+        isFirstLogin={isFirstLogin}
+      />
+    </AuthShell>
   );
 }

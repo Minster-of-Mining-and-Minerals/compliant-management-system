@@ -76,6 +76,11 @@ export const breadcrumbConfig: Record<string, BreadcrumbItem[]> = {
         { title: "Roles", path: "/users/roles" },
         { title: "New Role", path: "/users/roles/new" },
     ],
+    "/users/roles/[id]": [
+        { title: "Users", path: "/users/list" },
+        { title: "Roles", path: "/users/roles" },
+        { title: "Role Details", path: "/users/roles/[id]" },
+    ],
 
     // ================================================
     // Public Routes

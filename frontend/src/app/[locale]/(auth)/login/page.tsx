@@ -2,23 +2,34 @@
 
 import { useEffect, useState } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-
-import { ArrowLeftIcon, EyeIcon, EyeOffIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { signIn } from "@/auth";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  EyeIcon,
+  EyeOffIcon,
+  LockIcon,
+  MailIcon,
+  ShieldCheckIcon,
+} from "lucide-react";
 import { login } from "@/actions/user";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { set } from "react-hook-form";
+import {
+  AuthInputIcon,
+  AuthShell,
+  AuthSubmitButton,
+  AuthTopButton,
+  GemIcon,
+  authInputClass,
+  authLabelClass,
+} from "@/components/layout/AuthShell";
 
 export default function ExternalLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { data: session, status, update } = useSession();
+  const { status, update } = useSession();
 
   const searchParams = useSearchParams();
 
@@ -35,11 +46,10 @@ export default function ExternalLogin() {
   });
 
   const onSubmit = async (e: React.FormEvent) => {
-    setIsLoading(true);
     e.preventDefault();
-    // console.log(formData.email, formData.password, "formData");
+    setIsLoading(true);
+    setAuthError("");
     const result = await login(formData.email as string, formData.password as string);
-    // console.log(result, "result");
     if (result?.error) {
       setAuthError(result.error);
     }
@@ -58,104 +68,97 @@ export default function ExternalLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FBFC]  flex items-center justify-center px-4">
-      <div className="w-full relative max-w-6xl min-h-[80vh] shadow-2xl rounded-2xl border border-[#DCE7F1] overflow-hidden flex flex-col lg:flex-row">
+    <AuthShell
+      topAction={
+        <AuthTopButton onClick={() => router.push("/")} icon={<ArrowLeftIcon />}>
+          Back
+        </AuthTopButton>
+      }
+    >
+      <GemIcon className="hidden h-[42px] w-[42px] lg:block" />
+      <h1 className="mt-3.5 text-3xl font-bold">Sign in</h1>
+      <p className="mt-1 text-sm text-[#B6CBD8]">
+        Welcome back · <span className="text-golden-bright">እንኳን ደህና መጡ</span>
+      </p>
 
-        {/* Back Button */}
-        <Button
-          onClick={() => router.push("/")}
-          className="cursor-pointer shadow-none z-50 bg-transparent hover:bg-slate-100 p-2 top-4 left-4 absolute flex items-center gap-1"
-        >
-          <ArrowLeftIcon className="w-5 h-5 text-golden-dark" />
-          <span className="text-sm text-golden-dark font-medium">Back</span>
-        </Button>
+      {authError && (
+        <div role="alert" className="mt-6 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-sm text-red-100">
+          {authError}
+        </div>
+      )}
 
-        {/* Left Section */}
-        <div className="w-full bg-cover bg-center p-8 flex items-center justify-center">
-          <div className="backdrop-blur-md p-6 rounded-xl text-center">
-            <img
-              src="/logo-mom.png"
-              alt="Organization Logo"
-              className="h-96 mx-auto mb-3 rounded-xl p-2"
+      <form onSubmit={onSubmit} className="mt-7 space-y-4">
+
+        {/* Email */}
+        <div>
+          <label htmlFor="email" className={authLabelClass}>Email</label>
+          <div className="relative">
+            <AuthInputIcon><MailIcon /></AuthInputIcon>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              placeholder="example.xx@gov.et"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              className={authInputClass}
             />
           </div>
         </div>
 
-        {/* Right Section */}
-        <div className="w-full px-16 py-8 flex items-center justify-center">
-          <div className="w-full max-w-md">
-            <h1 className="text-3xl font-bold  font-semibold text-center text-golden-dark mb-6">
-              Login
-            </h1>
-
-            {authError && (
-              <div className="rounded-md w-full text-center bg-red-50 border border-red-200 px-3 py-2 mb-4">
-                <div className="text-sm text-red-700">{authError}</div>
-              </div>
-            )}
-
-            <form onSubmit={onSubmit} className="space-y-4">
-
-              {/* Email */}
-              <div>
-                <Label className="text-golden-dark">Email</Label>
-                <Input
-                  placeholder="example.xx@gov.et"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className="w-full h-14 mt-1 px-3 py-2   rounded-md text-sm border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <Label className="text-golden-dark">Password</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    className="w-full h-14 px-3 py-2 pr-10 border rounded-md text-sm border-golden-dark focus:ring-0 focus:outline-none focus:border-none"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute top-1/2 right-3 -translate-y-1/2"
-                  >
-                    {showPassword ? (
-                      <EyeIcon className="h-5 w-5 text-golden-dark" />
-                    ) : (
-                      <EyeOffIcon className="h-5 w-5 text-golden-dark" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Forgot Password */}
-              <div className="w-full text-right">
-                <Link href="/forgot-password" data-test="forgot-password-link" className="text-sm text-[#0C4A6E] hover:underline font-medium">
-                  Forgot Password?
-                </Link>
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary/90 h-14  text-xl text-white py-2 rounded-md shadow-md"
-              >
-                {isLoading ? "Logging In..." : "Log In"}
-              </button>
-            </form>
-
+        {/* Password */}
+        <div>
+          <label htmlFor="password" className={authLabelClass}>Password</label>
+          <div className="relative">
+            <AuthInputIcon><LockIcon /></AuthInputIcon>
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+              className={`${authInputClass} pr-12`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#B6CBD8] transition-colors hover:text-white"
+            >
+              {showPassword ? (
+                <EyeIcon className="h-5 w-5" />
+              ) : (
+                <EyeOffIcon className="h-5 w-5" />
+              )}
+            </button>
           </div>
         </div>
-      </div>
-    </div>
+
+        {/* Forgot Password */}
+        <div className="w-full text-right">
+          <Link href="/forgot-password" data-test="forgot-password-link" className="text-[13px] font-semibold text-golden-bright hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+
+        {/* Submit */}
+        <AuthSubmitButton loading={isLoading} loadingText="Logging in..." className="!mt-6">
+          Log in
+          <ArrowRightIcon />
+        </AuthSubmitButton>
+      </form>
+
+      <p className="mt-6 flex items-center gap-1.5 text-xs text-[#8FB0C4]">
+        <ShieldCheckIcon className="h-4 w-4 text-golden-bright" />
+        Secure access for Ministry staff only
+      </p>
+    </AuthShell>
   );
 }

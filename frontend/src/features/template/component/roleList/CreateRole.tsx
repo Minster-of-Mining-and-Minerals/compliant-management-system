@@ -87,8 +87,9 @@ export default function CreateRole() {
 
   // Populate form when role data is loaded (edit mode)
   useEffect(() => {
-    if (isEditMode && roleResponse?.data && resourceGroups.length > 0) {
-      const role = roleResponse.data;
+    // getRoleById already unwraps `response.data`, so the query result is the role itself
+    if (isEditMode && roleResponse && resourceGroups.length > 0) {
+      const role = roleResponse as any;
 
       // Normalize role_type to lowercase internal/external
       const type =
@@ -252,7 +253,7 @@ export default function CreateRole() {
         }).unwrap();
 
         toast.success("Role updated successfully!");
-        router.push("/role");
+        router.push("/users/roles");
       } else {
         await createRole({
           name: name.trim(),

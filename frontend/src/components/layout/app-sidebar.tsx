@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 
 import { NAVIGATION, NavItem } from "@/navigation.config";
 import { canAccessItem } from "@/lib/can-access";
@@ -23,6 +24,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 import {
@@ -61,7 +63,28 @@ const groupBySection = (items: NavItem[]) =>
 
 export function AppSidebar() {
   const { permissions: userPermissions } = usePermissions();
-  const pathname = stripLocale(usePathname());
+  const rawPathname = usePathname();
+  const pathname = stripLocale(rawPathname);
+  const { isMobile, setOpenMobile, setOpen } = useSidebar();
+
+  // Phone: close the drawer after navigating, otherwise it stays over the new page
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [rawPathname, setOpenMobile]);
+
+  // Tablet (768–1023px): collapse to the icon rail so the content keeps its width.
+  // Re-expand when the window grows to desktop size. setOpen changes identity on
+  // every toggle, so read it from a ref and subscribe once — otherwise a user
+  // expanding the sidebar on a tablet would be collapsed straight back.
+  const setOpenRef = useRef(setOpen);
+  setOpenRef.current = setOpen;
+  useEffect(() => {
+    const tablet = window.matchMedia("(min-width: 768px) and (max-width: 1023px)");
+    const apply = () => setOpenRef.current(!tablet.matches);
+    if (tablet.matches) setOpenRef.current(false);
+    tablet.addEventListener("change", apply);
+    return () => tablet.removeEventListener("change", apply);
+  }, []);
 
   const visibleNav = NAVIGATION.filter((item) =>
     canAccessItem(item, userPermissions)
@@ -93,6 +116,19 @@ export function AppSidebar() {
             <span className="truncate text-sm font-bold text-white">የማዕድን ሚኒስቴር</span>
             <span className="truncate text-xs text-slate-300">Complaint Management</span>
           </span>
+          {isMobile && (
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={(e) => {
+                e.preventDefault();
+                setOpenMobile(false);
+              }}
+              className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </Link>
       </SidebarHeader>
 

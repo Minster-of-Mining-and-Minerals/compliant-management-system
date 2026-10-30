@@ -6,7 +6,7 @@ import { TableLayout } from "@/features/template/component/tableList/TableLayout
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Plus, MoreHorizontal } from "lucide-react";
+import { Download, Plus, Eye } from "lucide-react";
 
 import { useGetRolesQuery } from "@/redux/api/roleApi";
 import type { Role } from "@/redux/types/auth";
@@ -37,12 +37,22 @@ const columns: ColumnDef<Role>[] = [
       );
     },
   },
+];
+
+const getColumns = (onView: (role: Role) => void): ColumnDef<Role>[] => [
+  ...columns,
   {
     id: "actions",
     header: "Actions",
-    cell: () => (
-      <Button variant="ghost" size="icon">
-        <MoreHorizontal />
+    cell: ({ row }) => (
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-1.5"
+        onClick={() => onView(row.original)}
+      >
+        <Eye className="h-4 w-4" />
+        View
       </Button>
     ),
   },
@@ -118,7 +128,7 @@ export default function RoleList() {
       filterColumnsPerRow={2}
     >
       <DataTable
-        columns={columns}
+        columns={getColumns((role) => router.push(`/users/roles/${role.role_id}`))}
         data={paginatedData}
         totalPageCount={Math.ceil(filteredData.length / pageSize)}
         handlePagination={handlePagination}

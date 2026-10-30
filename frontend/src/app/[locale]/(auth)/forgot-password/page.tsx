@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,11 +12,21 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
-import { useRouter } from "@/i18n/navigation";
-import { ArrowLeftIcon, Mail, ShieldCheck, Lock, EyeIcon, EyeOffIcon } from "lucide-react";
+import { Link, useRouter } from "@/i18n/navigation";
+import { ArrowLeftIcon, ArrowRightIcon, Mail, ShieldCheck, Lock, KeyRound, EyeIcon, EyeOffIcon } from "lucide-react";
 import { useRequestOTPMutation, useVerifyOTPMutation, useResetPasswordMutation } from "@/redux/api/authApi";
+import {
+  AuthIconBadge,
+  AuthInputIcon,
+  AuthShell,
+  AuthSubmitButton,
+  AuthTopButton,
+  authErrorTextClass,
+  authInputClass,
+  authLabelClass,
+} from "@/components/layout/AuthShell";
+import { cn } from "@/lib/utils";
 
 const emailSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -38,6 +47,48 @@ const resetSchema = z.object({
 type EmailValues = z.infer<typeof emailSchema>;
 type OtpValues = z.infer<typeof otpSchema>;
 type ResetValues = z.infer<typeof resetSchema>;
+
+const STEPS = ["Email", "Verify", "New password"];
+
+function StepIndicator({ step }: { step: 1 | 2 | 3 }) {
+  return (
+    <ol className="mb-7 flex items-center gap-2" aria-label={`Step ${step} of 3`}>
+      {STEPS.map((label, i) => {
+        const n = i + 1;
+        const done = n < step;
+        const active = n === step;
+        return (
+          <li key={label} className="flex flex-1 flex-col gap-1.5">
+            <span
+              className={cn(
+                "h-1.5 rounded-full transition-colors",
+                done || active ? "bg-golden-bright" : "bg-white/15"
+              )}
+            />
+            <span
+              className={cn(
+                "text-[11px] font-semibold",
+                active ? "text-golden-bright" : done ? "text-[#DCE7EE]" : "text-[#8FB0C4]"
+              )}
+            >
+              {n}. {label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function StepHeading({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-6">
+      <AuthIconBadge>{icon}</AuthIconBadge>
+      <h1 className="mt-4 text-3xl font-bold">{title}</h1>
+      <p className="mt-1.5 text-sm leading-relaxed text-[#B6CBD8]">{children}</p>
+    </div>
+  );
+}
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -101,186 +152,182 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  const eyeToggle = (
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      aria-label={showPassword ? "Hide password" : "Show password"}
+      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#B6CBD8] transition-colors hover:text-white"
+    >
+      {showPassword ? <EyeIcon className="h-5 w-5" /> : <EyeOffIcon className="h-5 w-5" />}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-[#F9FBFC] flex items-center justify-center px-4 py-12">
-      <div className="w-full relative max-w-6xl min-h-[80vh] shadow-2xl rounded-2xl border border-[#DCE7F1] overflow-hidden flex flex-col lg:flex-row bg-white">
-
-        {/* Back Button */}
-        <Button
-          onClick={() => step === 1 ? router.push("/login") : setStep((prev) => (prev - 1) as any)}
-          className="cursor-pointer shadow-none z-50 bg-transparent hover:bg-slate-100 p-2 top-4 left-4 absolute flex items-center gap-1"
+    <AuthShell
+      topAction={
+        <AuthTopButton
+          onClick={() => step === 1 ? router.push("/login") : setStep((prev) => (prev - 1) as 1 | 2)}
+          icon={<ArrowLeftIcon />}
         >
-          <ArrowLeftIcon className="w-5 h-5 text-golden-dark" />
-          <span className="text-sm text-golden-dark font-medium">Back</span>
-        </Button>
+          Back
+        </AuthTopButton>
+      }
+    >
+      <StepIndicator step={step} />
 
-        {/* Left Section */}
-        <div className="w-full bg-[#F9FBFC] p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-[#DCE7F1]">
-          <div className="text-center">
-            <img
-              src="/logo-mom.png"
-              alt="Organization Logo"
-              className="h-64 lg:h-96 mx-auto mb-6 p-2"
-            />
-          </div>
-        </div>
+      {/* Step 1: Request OTP */}
+      {step === 1 && (
+        <>
+          <StepHeading icon={<Mail />} title="Forgot password?">
+            Enter your email and we&apos;ll send you a 6-digit code to reset your password.
+          </StepHeading>
 
-        {/* Right Section */}
-        <div className="w-full px-8 lg:px-16 py-12 flex items-center justify-center">
-          <div className="w-full max-w-md">
+          <Form {...emailForm}>
+            <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-5">
+              <FormField
+                control={emailForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <FormLabel className={authLabelClass}>Email address</FormLabel>
+                    <div className="relative">
+                      <AuthInputIcon><Mail /></AuthInputIcon>
+                      <FormControl>
+                        <input type="email" autoComplete="email" placeholder="example.xx@gov.et" {...field} className={authInputClass} />
+                      </FormControl>
+                    </div>
+                    <FormMessage className={authErrorTextClass} />
+                  </FormItem>
+                )}
+              />
+              <AuthSubmitButton loading={requesting} loadingText="Sending code...">
+                Send code
+                <ArrowRightIcon />
+              </AuthSubmitButton>
+            </form>
+          </Form>
 
-            {/* Step 1: Request OTP */}
-            {step === 1 && (
-              <div className="space-y-6">
-                <div className="text-center mb-8">
-                  <div className="bg-golden-light/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Mail className="h-8 w-8 text-golden-dark" />
-                  </div>
-                  <h1 className="text-3xl font-bold text-golden-dark mb-2">Forgot Password?</h1>
-                  <p className="text-sm text-golden-dark/70">Enter your email and we'll send you an OTP to reset your password.</p>
-                </div>
+          <p className="mt-6 text-center text-sm text-[#8FB0C4]">
+            Remembered it?{" "}
+            <Link href="/login" className="font-semibold text-golden-bright hover:underline">
+              Back to sign in
+            </Link>
+          </p>
+        </>
+      )}
 
-                <Form {...emailForm}>
-                  <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
-                    <FormField
-                      control={emailForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-golden-dark">Email Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="example@gov.et" {...field} className="h-14 border-golden-dark focus:ring-0" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      className="w-full bg-primary hover:bg-primary/90 h-14 text-xl text-white font-semibold rounded-md shadow-md mt-6"
-                      disabled={requesting}
-                    >
-                      {requesting ? "Sending OTP..." : "Send OTP"}
-                    </Button>
-                  </form>
-                </Form>
-              </div>
-            )}
+      {/* Step 2: Verify OTP */}
+      {step === 2 && (
+        <>
+          <StepHeading icon={<ShieldCheck />} title="Check your email">
+            Enter the 6-digit code sent to <span className="font-semibold text-white">{email}</span>
+          </StepHeading>
 
-            {/* Step 2: Verify OTP */}
-            {step === 2 && (
-              <div className="space-y-6">
-                <div className="text-center mb-8">
-                  <div className="bg-golden-light/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ShieldCheck className="h-8 w-8 text-golden-dark" />
-                  </div>
-                  <h1 className="text-3xl font-bold text-golden-dark mb-2">Verify OTP</h1>
-                  <p className="text-sm text-golden-dark/70">Enter the 6-digit code sent to <span className="font-bold">{email}</span></p>
-                </div>
+          <Form {...otpForm}>
+            <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-5">
+              <FormField
+                control={otpForm.control}
+                name="otp"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <FormLabel className={authLabelClass}>6-digit code</FormLabel>
+                    <FormControl>
+                      <input
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        placeholder="••••••"
+                        maxLength={6}
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value.replace(/\D/g, ""))}
+                        className={cn(authInputClass, "h-16 px-4 text-center font-mono text-2xl tracking-[0.6em] placeholder:tracking-[0.6em]")}
+                      />
+                    </FormControl>
+                    <FormMessage className={authErrorTextClass} />
+                  </FormItem>
+                )}
+              />
+              <AuthSubmitButton loading={verifying} loadingText="Verifying...">
+                Verify code
+                <ArrowRightIcon />
+              </AuthSubmitButton>
+              <p className="text-center text-sm text-[#8FB0C4]">
+                Didn&apos;t receive the code?{" "}
+                <button
+                  type="button"
+                  disabled={requesting}
+                  onClick={() => onEmailSubmit({ email })}
+                  className="font-semibold text-golden-bright hover:underline disabled:opacity-60"
+                >
+                  {requesting ? "Sending..." : "Resend"}
+                </button>
+              </p>
+            </form>
+          </Form>
+        </>
+      )}
 
-                <Form {...otpForm}>
-                  <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-4">
-                    <FormField
-                      control={otpForm.control}
-                      name="otp"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-golden-dark">6-Digit OTP</FormLabel>
-                          <FormControl>
-                            <Input placeholder="123456" maxLength={6} {...field} className="h-14 text-center text-2xl tracking-[1em] border-golden-dark focus:ring-0" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      className="w-full bg-primary hover:bg-primary/90 h-14 text-xl text-white font-semibold rounded-md shadow-md mt-6"
-                      disabled={verifying}
-                    >
-                      {verifying ? "Verifying..." : "Verify OTP"}
-                    </Button>
-                    <p className="text-center text-sm text-golden-dark/70 mt-4">
-                      Didn't receive code? <button type="button" onClick={() => onEmailSubmit({ email })} className="text-golden-dark font-bold hover:underline">Resend</button>
-                    </p>
-                  </form>
-                </Form>
-              </div>
-            )}
+      {/* Step 3: Reset Password */}
+      {step === 3 && (
+        <>
+          <StepHeading icon={<KeyRound />} title="New password">
+            Set a strong password of at least 8 characters to secure your account.
+          </StepHeading>
 
-            {/* Step 3: Reset Password */}
-            {step === 3 && (
-              <div className="space-y-6">
-                <div className="text-center mb-8">
-                  <div className="bg-golden-light/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Lock className="h-8 w-8 text-golden-dark" />
-                  </div>
-                  <h1 className="text-3xl font-bold text-golden-dark mb-2">New Password</h1>
-                  <p className="text-sm text-golden-dark/70">Set a strong password to secure your account.</p>
-                </div>
-
-                <Form {...resetForm}>
-                  <form onSubmit={resetForm.handleSubmit(onResetSubmit)} className="space-y-4">
-                    <FormField
-                      control={resetForm.control}
-                      name="newPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-golden-dark">New Password</FormLabel>
-                          <div className="relative">
-                            <FormControl>
-                              <Input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="••••••••"
-                                {...field}
-                                className="h-14 border-golden-dark focus:ring-0 pr-10"
-                              />
-                            </FormControl>
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute top-1/2 right-3 -translate-y-1/2"
-                            >
-                              {showPassword ? <EyeIcon className="h-5 w-5 text-golden-dark" /> : <EyeOffIcon className="h-5 w-5 text-golden-dark" />}
-                            </button>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={resetForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-golden-dark">Confirm Password</FormLabel>
-                          <FormControl>
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              placeholder="••••••••"
-                              {...field}
-                              className="h-14 border-golden-dark focus:ring-0"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      className="w-full bg-primary hover:bg-primary/90 h-14 text-xl text-white font-semibold rounded-md shadow-md mt-6"
-                      disabled={resetting}
-                    >
-                      {resetting ? "Resetting..." : "Reset Password"}
-                    </Button>
-                  </form>
-                </Form>
-              </div>
-            )}
-
-          </div>
-        </div>
-      </div>
-    </div>
+          <Form {...resetForm}>
+            <form onSubmit={resetForm.handleSubmit(onResetSubmit)} className="space-y-4">
+              <FormField
+                control={resetForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <FormLabel className={authLabelClass}>New password</FormLabel>
+                    <div className="relative">
+                      <AuthInputIcon><Lock /></AuthInputIcon>
+                      <FormControl>
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          placeholder="••••••••"
+                          {...field}
+                          className={cn(authInputClass, "pr-12")}
+                        />
+                      </FormControl>
+                      {eyeToggle}
+                    </div>
+                    <FormMessage className={authErrorTextClass} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={resetForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <FormLabel className={authLabelClass}>Confirm password</FormLabel>
+                    <div className="relative">
+                      <AuthInputIcon><Lock /></AuthInputIcon>
+                      <FormControl>
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          placeholder="••••••••"
+                          {...field}
+                          className={authInputClass}
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage className={authErrorTextClass} />
+                  </FormItem>
+                )}
+              />
+              <AuthSubmitButton loading={resetting} loadingText="Resetting..." className="!mt-6">
+                Reset password
+              </AuthSubmitButton>
+            </form>
+          </Form>
+        </>
+      )}
+    </AuthShell>
   );
 }
