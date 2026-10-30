@@ -72,12 +72,6 @@ const PublicHeader = ({ variant = "light" }: PublicHeaderProps) => {
         : "bg-white/90 backdrop-blur-md shadow-md border-b border-gray-100"
         }`}
     >
-      {/* Ethiopian flag stripe */}
-      <div aria-hidden className="grid h-1 grid-cols-3">
-        <span className="bg-[#078930]" />
-        <span className="bg-[#FCDD09]" />
-        <span className="bg-[#DA121A]" />
-      </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
         {/* Logo */}

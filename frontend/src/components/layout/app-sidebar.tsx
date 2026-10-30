@@ -99,12 +99,6 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" variant="sidebar" className="border-r-0">
       {/* ---------- HEADER ---------- */}
       <SidebarHeader className="gap-0 p-0">
-        {/* Ethiopian flag stripe */}
-        <div aria-hidden className="grid h-1 grid-cols-3">
-          <span className="bg-[#078930]" />
-          <span className="bg-[#FCDD09]" />
-          <span className="bg-[#DA121A]" />
-        </div>
         <Link
           href="/dashboard"
           className="flex h-16 items-center gap-3 border-b border-white/10 px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
