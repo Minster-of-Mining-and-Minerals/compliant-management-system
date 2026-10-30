@@ -14,6 +14,7 @@ const {
   getUserPositions,
 } = require("../../controllers/user-controllers/userController");
 const { authenticateToken } = require("../../middlewares/authMiddleware");
+const { validateUpdateUser } = require("../../validators/user-validators/userValidator");
 
 // Middleware for authentication if needed (example)
 // const { authenticate } = require("../middlewares/authMiddleware");
@@ -182,7 +183,7 @@ router.post("/", createUser);
  *       200:
  *         description: User updated
  */
-router.put("/:id", updateUser);
+router.put("/:id", authenticateToken, validateUpdateUser, updateUser);
 
 /**
  * @swagger

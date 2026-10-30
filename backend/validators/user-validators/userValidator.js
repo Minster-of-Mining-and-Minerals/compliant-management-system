@@ -59,6 +59,12 @@ const updateUserSchema = Joi.object({
         "Phone number must be a valid Ethiopian format (e.g., +2519XXXXXXXX or 09XXXXXXXX).",
     }),
   user_type_id: Joi.string().guid({ version: "uuidv4" }).optional(),
+  sector_node_id: Joi.string().guid({ version: "uuidv4" }).optional().messages({
+    "string.guid": "Sector node ID must be a valid UUID.",
+  }),
+  department_id: Joi.string().guid({ version: "uuidv4" }).optional().messages({
+    "string.guid": "Department ID must be a valid UUID.",
+  }),
   // Allow updating assigned roles
   role_ids: Joi.array()
     .items(Joi.string().guid({ version: "uuidv4" }))

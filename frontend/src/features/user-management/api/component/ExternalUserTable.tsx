@@ -6,16 +6,18 @@ import { TableLayout } from "@/features/template/component/tableList/TableLayout
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Plus, Eye, Edit, Trash, Users } from "lucide-react";
+import { Download, Plus, Eye, Edit, Users } from "lucide-react";
 
 import type { FilterField, ActionButton } from "@/types/tableLayout";
 import { useExportUsersMutation, useGetUsersQuery, useGetUserTypesQuery } from "@/redux/api/userApi";
 import { User } from "@/redux/types/user";
 import { CreateUserModal } from "@/components/common/modals/CreateUserModal";
+import Link from "next/link";
+import { EditUserModal } from "@/components/common/modals/EditUserModal";
 import { formatStatus } from "@/utils/statusFormatter";
 import { useSearchParams } from "next/navigation";
 
-const columns: ColumnDef<User>[] = [
+const getColumns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
     {
         accessorKey: "full_name",
         header: "Full Name",
@@ -51,16 +53,15 @@ const columns: ColumnDef<User>[] = [
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-            <div className="flex items-center">
-                <Button variant="ghost" size="icon">
-                    <Eye className="h-4 w-4" />
-                </Button>
-                {/* <Button variant="ghost" size="icon">
+            <div className="flex items-center gap-1">
+                <Link href={`/users/list/${row.original.user_id}`}>
+                    <Button variant="ghost" size="icon" title="View" aria-label="View user">
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                </Link>
+                <Button variant="ghost" size="icon" title="Edit" aria-label="Edit user" onClick={() => onEdit(row.original)}>
                     <Edit className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon">
-                    <Trash className="h-4 w-4" />
-                </Button> */}
             </div>
         ),
     },
@@ -108,6 +109,7 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
     }, [searchQuery]);
 
     const [isModalOpen, setModalOpen] = useState(false);
+    const [editUserId, setEditUserId] = useState<string | null>(null);
     const handlePagination = (index: number, size: number) => {
         setPageIndex(index);
         setPageSize(size);
@@ -182,7 +184,7 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
                 filterColumnsPerRow={1}
             >
                 <DataTable
-                    columns={columns}
+                    columns={getColumns((user) => setEditUserId(user.user_id))}
                     data={filteredData}
                     totalPageCount={totalPages}
                     handlePagination={handlePagination}
@@ -194,6 +196,11 @@ export default function ExternalUserTable({ sideActions }: UserTableProps) {
                 user_type="external"
                 isOpen={isModalOpen}
                 onClose={() => setModalOpen(false)}
+            />
+            <EditUserModal
+                userId={editUserId}
+                userType="external"
+                onClose={() => setEditUserId(null)}
             />
         </>
     );
